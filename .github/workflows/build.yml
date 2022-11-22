@@ -1,27 +1,22 @@
-# This is a basic workflow to help you get started with Actions
+name: "Reusable Workflow to Build Mythfrontednd"
 
-name: CI
-
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-#  schedule:
-#    - cron: '0 0 * * 0'
-
-# A workflow run is made up of several jobs that execute in parallel
-jobs:      
-  build:
+  workflow_call:
+    inputs:
+      MYTHVERS:
+        required: true
+        type: string
+        default: master
+      VERSNUM:
+        required: true
+        type: string
+        default: 33
+jobs:
+  build_mythtv:
     strategy:
       matrix:
-        os: ['macos-11', 'macos-12']
+        os: ['macos-10.15', 'macos-11', 'macos-12']
         arch: ['X86']
-        MYTHVERS: ['fixes/32', 'master']
-        #os: ['macos-11', 'macos-12', 'macos-13']
-        #arch: ['ARM64', 'X86']
       fail-fast: false
     runs-on: ${{ matrix.os }}
     env:
@@ -29,49 +24,105 @@ jobs:
       PYDOTVERS: "3.10"
       DBVERS: "mysql8"
     steps:
-    - uses: actions/checkout@v2
-    - name: "Sets env vars for Master"
+    - uses: actions/checkout@master
+    - name: "Unpack input variables"
       run: |
-        echo "VERSNUM=33" >> $GITHUB_ENV
-      if: ${{ matrix.MYTHVERS == 'master' }}
-    - name: "Sets env vars Fixes/32"
+        echo "MYTHVERS=${{ inputs.MYTHVERS }}" >> $GITHUB_ENV
+        echo "VERSNUM=${{ inputs.VERSNUM }}" >> $GITHUB_ENV
+    - name: "Setup environemental variables"
       run: |
-        echo "VERSNUM=32" >> $GITHUB_ENV
-      if: ${{ matrix.MYTHVERS == 'fixes/32' }}
-    - name: "Install / Update MacPorts"
+        echo "BLD_FLGS=--skip-ansible=true --repo-prefix=${GITHUB_WORKSPACE} --version=${MYTHVERS} --python-version=${PYVERS} --database-version=${DBVERS}" >> $GITHUB_ENV
+        echo "PKGARCH=$(/usr/bin/uname -m)" >> $GITHUB_ENV
+        echo "OS_VERS=$(/usr/bin/sw_vers -productVersion)" >> $GITHUB_ENV
+        echo "ARCH=$(/usr/bin/uname -m)" >> $GITHUB_ENV
+    - name: "Setup deployment variables"
+      run: |
+        # setup destination folders
+        BASE_PATH="/home/frs/project/m/my/mythtvformacosx"
+        case $OS_VERS in
+          10.15*)
+            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS 10.15 Catalina/"
+          ;;
+          11*)
+            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS 11 Big Sur/"
+          ;;
+          12*)
+            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS 12 Monterey/"
+          ;;
+          13*)
+            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS 13 Ventura/"
+          ;;
+          *)
+            DEST_PATH="$BASE_PATH/test/"
+          ;;
+        esac
+
+        # check is we're ARM based
+        case $ARCH in
+          arm*)
+            DEST_PATH="$DEST_PATH/ARM64/"
+          ;;
+        esac
+        echo "DEST_PATH=$DEST_PATH" >> $GITHUB_ENV
+    - name: Check ccache
+      uses: actions/cache@v3
+      with:
+        path: $HOME/.ccache
+        key: ${{ matrix.os }}-${{ matrix.arch }}-ccache-${{ github.sha }}
+        restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-ccache
+    - name: Checkout ports
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 64
+        path: ports
+    - name: "Bootstrap MacPorts"
       run: |
         if hash port 2>/dev/null; then
-          echo "Macport is already installed" - skipping install
+          echo "Macport is already installed"
         else
           curl -LJO https://raw.githubusercontent.com/GiovanniBussi/macports-ci/master/macports-ci
           source ./macports-ci install
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" --force
         fi
-    - name: "Update MacPorts and install required ports"
-      run: |
         sudo port selfupdate
-        #sudo port upgrade outdated
-        #sudo port -N install py${PYVERS}-ansible-core
-        #git clone https://github.com/MythTV/ansible.git
-        #sudo ansible-playbook-${PYDOTVERS} ansible/mythtv.yml --extra-vars="database_version=${DBVERS} install_webkit=true" --limit=localhost
+        sudo port upgrade outdated
+    - name: "Install required ports"
+      run: |
+        sudo port -N install rsync gsed ccache py${PYVERS}-ansible py${PYVERS}-py2app
+        sudo port select --set python python${PYVERS}
+        sudo port select --set python3 python${PYVERS}
+        sudo port select --set ansible py${PYVERS}-ansible
+        git clone https://github.com/MythTV/ansible.git
+        cd ansible
+        sudo ./mythtv.yml --extra-vars="database_version=${DBVERS} install_qtwebkit=true" --limit=localhost
+    - name: ccache statistics [pre]
+      run: |
+        ccache -sV
     - name: "Build MythTV with Plugins"
       run: |
         # First build with plugins
-        /bin/zsh ./compileMythfrontendAnsible.zsh --skip-ansible=true --repo-prefix=${GITHUB_WORKSPACE}  --version=${{matrix.MYTHVERS}} --python-version=${PYVERS} --database-version=${DBVERS} --build-plugins=${{matrix.PLUGINS}}
+        /bin/zsh ./compileMythfrontendAnsible.zsh $BLD_FLGS --build-plugins=true
         mkdir with_plugins
         ditto $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv/mythtv/programs/mythfrontend/mythfrontend.app with_plugins/mythfrontend.app
     - name: "Re-Build MythTV without Plugins"
       run: |
         # Now make it without plugins
-        /bin/zsh ./compileMythfrontendAnsible.zsh --skip-build=true --skip-ansible=true --repo-prefix=${GITHUB_WORKSPACE}  --version=${{matrix.MYTHVERS}} --python-version=${PYVERS} --database-version=${DBVERS} --build-plugins=${{matrix.PLUGINS}}
+        /bin/zsh ./compileMythfrontendAnsible.zsh $BLD_FLGS --build-plugins=false  --skip-build=true
         mkdir without_plugins
         ditto $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv/mythtv/programs/mythfrontend/mythfrontend.app without_plugins/mythfrontend.app
-    - name: "Setup Signing Certifiactes"
+
+        FULLVERS=$(with_plugins/mythfrontend.app/Contents/MacOS/mythfrontend --version|grep "MythTV Version"|gsed "s/^.*Version : *//")
+        echo "FULLVERS=$FULLVERS" >> $GITHUB_ENV
+    - name: "Sign App Bundles"
       # Extract the secrets we defined earlier as environment variables
       env:
         MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
         MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
         MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
         MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
+        PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
+        PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
+        PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
       run: |
         # Turn our base64-encoded certificate back to a regular .p12 file
         echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
@@ -80,35 +131,140 @@ jobs:
         # with a UI dialog asking for the certificate password, which we can't
         # use in a headless CI environment
         if [ -f ~/Library/Keychains/build.keychain-db ]; then
-          security delete-keychain build.keychain 
-        fi    
-        security create-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain 
-        security set-keychain-settings -lut 21600 build.keychain 
+          security delete-keychain build.keychain
+        fi
+        security create-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+        security default-keychain -s build.keychain
         security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
         security import certificate.p12 -P "$MACOS_CERTIFICATE_PWD" -A -t cert -f pkcs12 -k build.keychain
         security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" build.keychain
-    - name: "Setup Notarization"
-      env: 
+
+        echo "Code Sign App Bundles"
+        for APP in "with_plugins/mythfrontend.app" "without_plugins/mythfrontend.app"
+        do
+          APP_RSRC_DIR=$APP/Contents/Resources
+          APP_FMWK_DIR=$APP/Contents/Frameworks
+          APP_EXE_DIR=$APP/Contents/MacOS
+          APP_PLUGINS_DIR=$APP/PlugIns/
+
+          # Per the Apple developer notes on codesigning, you must codesign from the inside out
+          # macdeployqt misses the python .so files in the Resources directory, so do that first
+          find $APP_RSRC_DIR -name '*.so' -print0 |
+            while IFS= read -r -d '' line; do
+              /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue "$line"
+            done
+          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/Qt*
+          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/*.framework
+          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/*.dylib
+          # only plugins has dylibs in the top level of plugins
+          case $APP in
+            with_*)
+              /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/PlugIns/*.dylib
+            ;;
+          esac
+          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/PlugIns/*/*.dylib
+          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/python
+          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythutil
+          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythpreviewgen
+          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythfrontend
+          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythfrontend.sh
+          # finally sign the application
+          codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist $APP
+          # verify that the codesigning took
+          codesign --verify -vv --deep $APP
+
+          # create file for submission
+          /usr/bin/ditto -c -k --keepParent $APP $APP.zip
+        done
+    - name: "Notarize App Bundles"
+      if: "!contains(matrix.os, '10.15')"
+      env:
         PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
         PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
         PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
       run: |
+        # setup notarization keychain
         echo "Create keychain profile"
-        #security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD"
-        xcrun notarytool store-credentials "MYTHFRONTEND_APP_PWD" --apple-id "$PROD_MACOS_NOTARIZATION_APPLE_ID" --team-id "$PROD_MACOS_NOTARIZATION_TEAM_ID" --password "$PROD_MACOS_NOTARIZATION_PWD"
+        xcrun notarytool store-credentials "notarytool-profile" --apple-id "$PROD_MACOS_NOTARIZATION_APPLE_ID" --team-id "$PROD_MACOS_NOTARIZATION_TEAM_ID" --password "$PROD_MACOS_NOTARIZATION_PWD"
 
-    - name: "Codesign App Bundles"
+        echo "Notarize Applications"
+        for APP in "with_plugins/mythfrontend.app" "without_plugins/mythfrontend.app"
+        do
+          xcrun notarytool submit "$APP.zip" --keychain-profile "notarytool-profile" --wait
+          xcrun stapler staple "$APP"
+        done
+    - name: "Generate the DMGs"
+      env:
+        MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
       run: |
-        export CODESIGN_ID=$MACOS_CERTIFICATE_NAME
-        export APP_BNDL_ID="org.mythtv.mythfrontend"
-        export DISTRO_ID=$PROD_MACOS_NOTARIZATION_TEAM_ID
-        export APPLE_ID=$PROD_MACOS_NOTARIZATION_APPLE_ID
+        for APP in "with_plugins/mythfrontend.app" "without_plugins/mythfrontend.app"
+        do
+          case $APP in
+            with_*)
+              VOL_NAME=MythFrontend-${VERSNUM}-$ARCH-$OS_VERS-$FULLVERS-with-plugins
+              echo "DMG_WITH=$VOL_NAME.dmg" >> $GITHUB_ENV
+              ;;
+            without_*)
+              VOL_NAME=MythFrontend-${VERSNUM}-$ARCH-$OS_VERS-$FULLVERS
+              echo "DMG_WITHOUT=$VOL_NAME.dmg" >> $GITHUB_ENV
+              ;;
+          esac
 
-        /bin/zsh ./codesignAndPackage.zsh with_plugins/mythfrontend.app
-        /bin/zsh ./codesignAndPackage.zsh without_plugins/mythfrontend.app
+          # Generate the .dmg file
+          hdiutil create -volname "$VOL_NAME" -srcfolder "$APP" -ov -format UDRO "$VOL_NAME"
 
-    #- name: "Upload files to repository"
-    #- name: "Clean Up"
-
-
-
+          # codesign the dmg file
+          codesign --deep --force --verify --verbose --timestamp --sign "$MACOS_CERTIFICATE_NAME" $VOL_NAME.dmg
+        done
+    - name: "Notarize the DMGs"
+      if: "!contains(matrix.os, '10.15')"
+      run: |
+        echo "Notarizing DMGS"
+        # First with plugins
+        xcrun notarytool submit "$DMG_WITH" --keychain-profile "notarytool-profile" --wait
+        xcrun stapler staple "$DMG_WITH"
+        # Next without plugins
+        xcrun notarytool submit "$DMG_WITHOUT" --keychain-profile "notarytool-profile" --wait
+        xcrun stapler staple "$DMG_WITHOUT"
+    - name: "Setup SSH Key"
+      env:
+        PRIVATE_SSH_KEY: ${{ secrets.SF_PRIV_KEY }}
+        PUBLIC_SSH_KEY: ${{ secrets.SF_PUB_KEY }}
+      run: |
+        # setup ssh keys
+        SSH_PATH="$HOME/.ssh"
+        mkdir "$SSH_PATH"
+        echo "$PUBLIC_SSH_KEY" > "$SSH_PATH/deploy_key"
+        chmod 600 "$SSH_PATH/deploy_key"
+        echo "DEPLOY_KEY=$SSH_PATH/deploy_key" >> $GITHUB_ENV
+    - name: "Archive previous SourceForge files"
+      continue-on-error: true
+      env:
+        HOST: ${{ secrets.SF_HOST }}
+        USER: ${{ secrets.SF_LOGIN }}
+      run: |
+        # Archive previous build - if this isn't a test build
+        echo "Archiving off any previous dmg files"
+        if [[ "$DEST_PATH" == *"test"* ]]; then
+          ssh -i $DEPLOY_KEY $USER@HOST 'mv "$DEST_PATH/*.dmg" "$DEST_PATH/Archive/"'
+        fi
+    - name: "rsync to SourceForge"
+      continue-on-error: true
+      env:
+        HOST: ${{ secrets.SF_HOST }}
+        USER: ${{ secrets.SF_LOGIN }}
+      run: |
+        # send files via rsync
+        echo "Transmitting new dmg files"
+        rsync -av -e 'ssh -i $SSH_PATH/deploy_key -o StrictHostKeyChecking=no' "*.dmg" "$USER@$HOST":"$DEST_PATH"
+    - name: "Clean up keychain, certificate, and ssh keys"
+      if: ${{ always() }}
+      continue-on-error: true
+      run: |
+        # for ephemeral runners, this stup is unnecessary...
+        security delete-keychain build.keychain
+        rm -RF ~/.ssh
+        rm certificate.p12
+    - name: ccache statistics [post]
+      run: |
+        ccache -sV

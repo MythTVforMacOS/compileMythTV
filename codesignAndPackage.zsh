@@ -96,6 +96,8 @@ checkNotarization(){
   echo $retval
 }
 
+/usr/bin/security unlock-keychain
+
 # make sure we have a valid path to mythfrontent.app
 APP_NAME=$(basename $APP)
 FILE_EXT=${APP_NAME##*.}
