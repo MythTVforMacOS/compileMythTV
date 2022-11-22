@@ -1,0 +1,114 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+#  schedule:
+#    - cron: '0 0 * * 0'
+
+# A workflow run is made up of several jobs that execute in parallel
+jobs:      
+  build:
+    strategy:
+      matrix:
+        os: ['macos-11', 'macos-12']
+        arch: ['X86']
+        MYTHVERS: ['fixes/32', 'master']
+        #os: ['macos-11', 'macos-12', 'macos-13']
+        #arch: ['ARM64', 'X86']
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    env:
+      PYVERS: "310"
+      PYDOTVERS: "3.10"
+      DBVERS: "mysql8"
+    steps:
+    - uses: actions/checkout@v2
+    - name: "Sets env vars for Master"
+      run: |
+        echo "VERSNUM=33" >> $GITHUB_ENV
+      if: ${{ matrix.MYTHVERS == 'master' }}
+    - name: "Sets env vars Fixes/32"
+      run: |
+        echo "VERSNUM=32" >> $GITHUB_ENV
+      if: ${{ matrix.MYTHVERS == 'fixes/32' }}
+    - name: "Install / Update MacPorts"
+      run: |
+        if hash port 2>/dev/null; then
+          echo "Macport is already installed" - skipping install
+        else
+          curl -LJO https://raw.githubusercontent.com/GiovanniBussi/macports-ci/master/macports-ci
+          source ./macports-ci install
+        fi
+    - name: "Update MacPorts and install required ports"
+      run: |
+        sudo port selfupdate
+        #sudo port upgrade outdated
+        #sudo port -N install py${PYVERS}-ansible-core
+        #git clone https://github.com/MythTV/ansible.git
+        #sudo ansible-playbook-${PYDOTVERS} ansible/mythtv.yml --extra-vars="database_version=${DBVERS} install_webkit=true" --limit=localhost
+    - name: "Build MythTV with Plugins"
+      run: |
+        # First build with plugins
+        /bin/zsh ./compileMythfrontendAnsible.zsh --skip-ansible=true --repo-prefix=${GITHUB_WORKSPACE}  --version=${{matrix.MYTHVERS}} --python-version=${PYVERS} --database-version=${DBVERS} --build-plugins=${{matrix.PLUGINS}}
+        mkdir with_plugins
+        ditto $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv/mythtv/programs/mythfrontend/mythfrontend.app with_plugins/mythfrontend.app
+    - name: "Re-Build MythTV without Plugins"
+      run: |
+        # Now make it without plugins
+        /bin/zsh ./compileMythfrontendAnsible.zsh --skip-build=true --skip-ansible=true --repo-prefix=${GITHUB_WORKSPACE}  --version=${{matrix.MYTHVERS}} --python-version=${PYVERS} --database-version=${DBVERS} --build-plugins=${{matrix.PLUGINS}}
+        mkdir without_plugins
+        ditto $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv/mythtv/programs/mythfrontend/mythfrontend.app without_plugins/mythfrontend.app
+    - name: "Setup Signing Certifiactes"
+      # Extract the secrets we defined earlier as environment variables
+      env:
+        MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
+        MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
+        MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
+        MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
+      run: |
+        # Turn our base64-encoded certificate back to a regular .p12 file
+        echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
+
+        # We need to create a new keychain, otherwise using the certificate will prompt
+        # with a UI dialog asking for the certificate password, which we can't
+        # use in a headless CI environment
+        if [ -f ~/Library/Keychains/build.keychain-db ]; then
+          security delete-keychain build.keychain 
+        fi    
+        security create-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain 
+        security set-keychain-settings -lut 21600 build.keychain 
+        security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+        security import certificate.p12 -P "$MACOS_CERTIFICATE_PWD" -A -t cert -f pkcs12 -k build.keychain
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+    - name: "Setup Notarization"
+      env: 
+        PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
+        PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
+        PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
+      run: |
+        echo "Create keychain profile"
+        #security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD"
+        xcrun notarytool store-credentials "MYTHFRONTEND_APP_PWD" --apple-id "$PROD_MACOS_NOTARIZATION_APPLE_ID" --team-id "$PROD_MACOS_NOTARIZATION_TEAM_ID" --password "$PROD_MACOS_NOTARIZATION_PWD"
+
+    - name: "Codesign App Bundles"
+      run: |
+        export CODESIGN_ID=$MACOS_CERTIFICATE_NAME
+        export APP_BNDL_ID="org.mythtv.mythfrontend"
+        export DISTRO_ID=$PROD_MACOS_NOTARIZATION_TEAM_ID
+        export APPLE_ID=$PROD_MACOS_NOTARIZATION_APPLE_ID
+
+        /bin/zsh ./codesignAndPackage.zsh with_plugins/mythfrontend.app
+        /bin/zsh ./codesignAndPackage.zsh without_plugins/mythfrontend.app
+
+    #- name: "Upload files to repository"
+    #- name: "Clean Up"
+
+
+
