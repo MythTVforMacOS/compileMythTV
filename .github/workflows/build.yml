@@ -3,7 +3,7 @@ name: "Reusable Workflow to Build Mythfrontednd"
 on:
   workflow_call:
     inputs:
-      MYTHVERS:
+      MYTHBRANCH:
         required: true
         type: string
         default: master
@@ -11,6 +11,7 @@ on:
         required: true
         type: string
         default: 33
+
 jobs:
   build_mythtv:
     strategy:
@@ -25,32 +26,44 @@ jobs:
       DBVERS: "mysql8"
     steps:
     - uses: actions/checkout@master
+    # Make sure the @v0.4.1 matches the current version of the
+    # action
+    - uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.SF_PRIV_KEY }}
     - name: "Unpack input variables"
       run: |
-        echo "MYTHVERS=${{ inputs.MYTHVERS }}" >> $GITHUB_ENV
+        echo "MYTHBRANCH=${{ inputs.MYTHBRANCH }}" >> $GITHUB_ENV
         echo "VERSNUM=${{ inputs.VERSNUM }}" >> $GITHUB_ENV
     - name: "Setup environemental variables"
       run: |
-        echo "BLD_FLGS=--skip-ansible=true --repo-prefix=${GITHUB_WORKSPACE} --version=${MYTHVERS} --python-version=${PYVERS} --database-version=${DBVERS}" >> $GITHUB_ENV
+        echo "BLD_FLGS=--skip-ansible=true --repo-prefix=${GITHUB_WORKSPACE} --version=${MYTHBRANCH} --python-version=${PYVERS} --database-version=${DBVERS}" >> $GITHUB_ENV
         echo "PKGARCH=$(/usr/bin/uname -m)" >> $GITHUB_ENV
         echo "OS_VERS=$(/usr/bin/sw_vers -productVersion)" >> $GITHUB_ENV
         echo "ARCH=$(/usr/bin/uname -m)" >> $GITHUB_ENV
+        echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
+    - name: Check ccache
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: mythtv-ccache-${{ env.VERSNUM }}-${{ matrix.os }}-${{ matrix.arch }}-${{ github.sha }}
+        restore-keys: mythtv-ccache-${{ env.VERSNUM }}-${{ matrix.os }}-${{ matrix.arch }}-
     - name: "Setup deployment variables"
       run: |
         # setup destination folders
         BASE_PATH="/home/frs/project/m/my/mythtvformacosx"
         case $OS_VERS in
           10.15*)
-            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS 10.15 Catalina/"
+            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS\ 10.15\ Catalina"
           ;;
           11*)
-            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS 11 Big Sur/"
+            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS\ 11\ Big\ Sur"
           ;;
           12*)
-            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS 12 Monterey/"
+            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS\ 12\ Monterey"
           ;;
           13*)
-            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS 13 Ventura/"
+            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS\ 13\ Ventura"
           ;;
           *)
             DEST_PATH="$BASE_PATH/test/"
@@ -64,17 +77,6 @@ jobs:
           ;;
         esac
         echo "DEST_PATH=$DEST_PATH" >> $GITHUB_ENV
-    - name: Check ccache
-      uses: actions/cache@v3
-      with:
-        path: $HOME/.ccache
-        key: ${{ matrix.os }}-${{ matrix.arch }}-ccache-${{ github.sha }}
-        restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-ccache
-    - name: Checkout ports
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 64
-        path: ports
     - name: "Bootstrap MacPorts"
       run: |
         if hash port 2>/dev/null; then
@@ -101,14 +103,15 @@ jobs:
     - name: "Build MythTV with Plugins"
       run: |
         # First build with plugins
+        export CCACHE_DIR=${{ env.CCACHE_DIR }}
         /bin/zsh ./compileMythfrontendAnsible.zsh $BLD_FLGS --build-plugins=true
-        mkdir with_plugins
+        mkdir -p with_plugins
         ditto $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv/mythtv/programs/mythfrontend/mythfrontend.app with_plugins/mythfrontend.app
     - name: "Re-Build MythTV without Plugins"
       run: |
         # Now make it without plugins
-        /bin/zsh ./compileMythfrontendAnsible.zsh $BLD_FLGS --build-plugins=false  --skip-build=true
-        mkdir without_plugins
+        /bin/zsh ./compileMythfrontendAnsible.zsh $BLD_FLGS --build-plugins=false --skip-build=true
+        mkdir -p without_plugins
         ditto $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv/mythtv/programs/mythfrontend/mythfrontend.app without_plugins/mythfrontend.app
 
         FULLVERS=$(with_plugins/mythfrontend.app/Contents/MacOS/mythfrontend --version|grep "MythTV Version"|gsed "s/^.*Version : *//")
@@ -201,11 +204,11 @@ jobs:
         do
           case $APP in
             with_*)
-              VOL_NAME=MythFrontend-${VERSNUM}-$ARCH-$OS_VERS-$FULLVERS-with-plugins
+              VOL_NAME=MythFrontend-$ARCH-$OS_VERS-$FULLVERS-with-plugins
               echo "DMG_WITH=$VOL_NAME.dmg" >> $GITHUB_ENV
               ;;
             without_*)
-              VOL_NAME=MythFrontend-${VERSNUM}-$ARCH-$OS_VERS-$FULLVERS
+              VOL_NAME=MythFrontend-$ARCH-$OS_VERS-$FULLVERS
               echo "DMG_WITHOUT=$VOL_NAME.dmg" >> $GITHUB_ENV
               ;;
           esac
@@ -226,44 +229,19 @@ jobs:
         # Next without plugins
         xcrun notarytool submit "$DMG_WITHOUT" --keychain-profile "notarytool-profile" --wait
         xcrun stapler staple "$DMG_WITHOUT"
-    - name: "Setup SSH Key"
-      env:
-        PRIVATE_SSH_KEY: ${{ secrets.SF_PRIV_KEY }}
-        PUBLIC_SSH_KEY: ${{ secrets.SF_PUB_KEY }}
+    - name: "Upload to SourceForge"
       run: |
-        # setup ssh keys
-        SSH_PATH="$HOME/.ssh"
-        mkdir "$SSH_PATH"
-        echo "$PUBLIC_SSH_KEY" > "$SSH_PATH/deploy_key"
-        chmod 600 "$SSH_PATH/deploy_key"
-        echo "DEPLOY_KEY=$SSH_PATH/deploy_key" >> $GITHUB_ENV
-    - name: "Archive previous SourceForge files"
-      continue-on-error: true
-      env:
-        HOST: ${{ secrets.SF_HOST }}
-        USER: ${{ secrets.SF_LOGIN }}
-      run: |
-        # Archive previous build - if this isn't a test build
-        echo "Archiving off any previous dmg files"
-        if [[ "$DEST_PATH" == *"test"* ]]; then
-          ssh -i $DEPLOY_KEY $USER@HOST 'mv "$DEST_PATH/*.dmg" "$DEST_PATH/Archive/"'
-        fi
-    - name: "rsync to SourceForge"
-      continue-on-error: true
-      env:
-        HOST: ${{ secrets.SF_HOST }}
-        USER: ${{ secrets.SF_LOGIN }}
-      run: |
-        # send files via rsync
+        # send files via scp
         echo "Transmitting new dmg files"
-        rsync -av -e 'ssh -i $SSH_PATH/deploy_key -o StrictHostKeyChecking=no' "*.dmg" "$USER@$HOST":"$DEST_PATH"
+        sh -c "scp -o StrictHostKeyChecking=no $DMG_WITH ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
+        sh -c "scp -o StrictHostKeyChecking=no $DMG_WITHOUT ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
     - name: "Clean up keychain, certificate, and ssh keys"
       if: ${{ always() }}
       continue-on-error: true
       run: |
         # for ephemeral runners, this stup is unnecessary...
         security delete-keychain build.keychain
-        rm -RF ~/.ssh
+        rm -Rf ~/.ssh
         rm certificate.p12
     - name: ccache statistics [post]
       run: |

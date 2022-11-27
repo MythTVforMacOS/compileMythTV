@@ -1,0 +1,33 @@
+name: "Upload Test"
+
+on: [workflow_dispatch]
+
+jobs:
+  archive_DMGs:
+    runs-on: 'macos-latest'
+    steps:
+    - uses: actions/checkout@master
+    - uses: webfactory/ssh-agent@v0.4.1
+      with:
+        ssh-private-key: ${{ secrets.SF_PRIV_KEY }}
+    - name: "Upload to SourceForge"
+      continue-on-error: true
+      env:
+        USER: ${{ secrets.SF_LOGIN }}
+      run: |
+        VERSNUM=32
+        BASE_PATH="/home/frs/project/m/my/mythtvformacosx"
+        DEST_PATH="$BASE_PATH/v$VERSNUM/macOS\ 10.15\ Catalina/"
+        TEST_PATH=$BASE_PATH/test
+        DMG_WITH=text.dmg
+        touch $DMG_WITH
+        # send files via scp
+        echo "Transmitting new dmg files"
+        echo "CMD: scp -o StrictHostKeyChecking=no $DMG_WITH ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:$DEST_PATH"
+        sh -c "scp -o StrictHostKeyChecking=no $DMG_WITH ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:$TEST_PATH"
+        sh -c "scp -o StrictHostKeyChecking=no $DMG_WITH ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
+    - name: "Clean up keychain, certificate, and ssh keys"
+      if: ${{ always() }}
+      continue-on-error: true
+      run: |
+        rm -Rf ~/.ssh
