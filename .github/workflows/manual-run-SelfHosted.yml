@@ -1,0 +1,17 @@
+name: "Manual build - Self Hosted"
+
+on: [workflow_dispatch]
+
+jobs:
+  build-mythtv-master:
+    uses: ./.github/workflows/buildSelfHosted.yml
+    with:
+      MYTHBRANCH: "master"
+      VERSNUM: 33
+    secrets: inherit
+  build-mythtv-fixes:
+    uses: ./.github/workflows/buildSelfHosted.yml
+    with:
+      MYTHBRANCH: "fixes/32"
+      VERSNUM: 32
+    secrets: inherit

@@ -3,7 +3,7 @@ name: "Manual build (fixes)"
 on: [workflow_dispatch]
 
 jobs:
-  build-mythtv-master:
+  build-mythtv-fixes:
     uses: ./.github/workflows/build.yml
     with:
       MYTHBRANCH: "fixes/32"
