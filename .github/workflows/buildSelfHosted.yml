@@ -155,6 +155,11 @@ jobs:
             while IFS= read -r -d '' line; do
               /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue "$line"
             done
+          # Also missed are any dylibs in the Resources directory,
+          find $APP_RSRC_DIR -name '*.dylib' -print0 |
+            while IFS= read -r -d '' line; do
+              /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue "$line"
+            done
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/Qt*
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/*.framework
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/*.dylib
