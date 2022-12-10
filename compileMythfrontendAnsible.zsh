@@ -373,6 +373,17 @@ else
   esac
 fi
 
+# get the version of python installed by MacPorts
+PYTHON_RUNTIME_BIN="./python$PYTHON_DOT_VERS"
+
+# also get the location of the framework - /opt/local because this is where MacPorts stores its packages
+# and its site packages
+PYTHON_MACOS_SP_LOC=$PYTHON_VENV_PATH/lib/python$PYTHON_DOT_VERS/site-packages
+
+# and the destination for where the python bits get copied into the application framework and site_packages
+PYTHON_APP_FWRK=$APP_FMWK_DIR/Python.framework
+PYTHON_APP_SP_LOC="$APP_RSRC_DIR/lib/python$PYTHON_DOT_VERS/site-packages"
+
 echo "------------ Create Python Virtual Environment ------------"
 # check if Python virtualenv is installed, if not install it
 if ! [ -x "$(command -v virtualenv-$PYTHON_DOT_VERS)" ]; then
@@ -384,24 +395,11 @@ else
 fi
 PYTHON_VENV_PATH=$REPO_DIR/mythtv-python
 $PYTHON_PKMGR_BIN -m venv --copies --clear $PYTHON_VENV_PATH
-
 source $PYTHON_VENV_PATH/bin/activate
-
 pip3 install wheel py2app
 pip3 install $PIP_PKGS
-
-# get the version of python installed by MacPorts
 PYTHON_VENV_BIN=$PYTHON_VENV_PATH/bin/python3
-PYTHON_RUNTIME_BIN="./python$PYTHON_DOT_VERS"
 PY2APPLET_BIN=$PYTHON_VENV_PATH/bin/py2applet
-
-# also get the location of the framework - /opt/local because this is where MacPorts stores its packages
-# and its site packages
-PYTHON_MACOS_SP_LOC=$PYTHON_VENV_PATH/lib/python$PYTHON_DOT_VERS/site-packages
-
-# and the destination for where the python bits get copied into the application framework and site_packages
-PYTHON_APP_FWRK=$APP_FMWK_DIR/Python.framework
-PYTHON_APP_SP_LOC="$APP_RSRC_DIR/lib/python$PYTHON_DOT_VERS/site-packages"
 
 echo "------------ Cloning / Updating Mythtv Git Repository ------------"
 # setup mythtv source from git
