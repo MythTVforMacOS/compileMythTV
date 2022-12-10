@@ -323,11 +323,9 @@ fi
 # check if ANSIBLE_PB_EXE is installed, if not install it
 if ! [ -x "$(command -v $ANSIBLE_PB_EXE)" ]; then
   echo "    Installing python and ansilble"
-  sudo port -N install py$PYTHON_VERS-ansible $PYTHON_VERS-virtualenv
+  sudo port -N install py$PYTHON_VERS-ansible
   sudo port select --set python python$PYTHON_VERS
   sudo port select --set python3 python$PYTHON_VERS
-  sudo port select --set ansible py$PYTHON_VERS-ansible
-  sudo port select --set virtualenv virtualenv$PYTHON_VERS
 else
   echo "    Skipping ansible install - it is already installed"
 fi
@@ -381,6 +379,14 @@ else
 fi
 
 echo "------------ Create Python Virtual Environment ------------"
+# check if Python virtualenv is installed, if not install it
+if ! [ -x "$(command -v virtualenv-$PYTHON_DOT_VERS)" ]; then
+  echo "    Installing Python Virtual Environment"
+  sudo port -N install py$PYTHON_VERS-virtualenv
+  sudo port select --set virtualenv virtualenv$PYTHON_VERS
+else
+  echo "    Skipping python virtualenv install - it is already installed"
+fi
 PYTHON_VENV_PATH=$REPO_DIR/mythtv-python
 $PYTHON_PKMGR_BIN -m venv --copies --clear $PYTHON_VENV_PATH
 
@@ -671,6 +677,8 @@ cd $APP_DIR
 rm -Rf PYTHON_APP
 echo "    Copying in Site Packages from Virtual Enironment"
 cp -RL $PYTHON_VENV_PATH/lib/python3.10/site-packages/* $APP_RSRC_DIR/lib/python$PYTHON_DOT_VERS/site-packages 
+# do not need/want py2app in the application
+rm -Rf $APP_RSRC_DIR/lib/python$PYTHON_DOT_VERS/site-packages/py2app
 
 echo "------------ Replace application perl/python paths to relative paths inside the application   ------------"
 # mythtv "fixes" the shebang in all python scripts to an absolute path on the compiling system.  We need to

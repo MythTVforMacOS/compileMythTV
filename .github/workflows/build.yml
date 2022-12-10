@@ -90,15 +90,14 @@ jobs:
         sudo port upgrade outdated
     - name: "Install required ports"
       run: |
-        sudo port -N install rsync gsed ccache py${PYVERS}-ansible py${PYVERS}-py2app py${PYVERS}-pip
+        sudo port -N install rsync gsed ccache py${PYVERS}-ansible py$PYTHON_VERS-virtualenv
         sudo port select --set python python${PYVERS}
         sudo port select --set python3 python${PYVERS}
-        sudo port select --set pip3 pip${PYVERS}
         sudo port select --set ansible py${PYVERS}-ansible
+        sudo port select --set virtualenv virtualenv${PYVERS}
         git clone https://github.com/MythTV/ansible.git
         cd ansible
         sudo ./mythtv.yml --extra-vars="database_version=${DBVERS} install_qtwebkit=true" --limit=localhost
-        sudo pip3 install requests-cache==0.5.2
     - name: ccache statistics [pre]
       run: |
         ccache -sV
