@@ -135,14 +135,9 @@ PYTHON_DOT_VERS="${PYTHON_VERS:0:1}.${PYTHON_VERS:1:4}"
 PYTHON_PKMGR_BIN="$PKGMGR_INST_PATH/bin/python$PYTHON_DOT_VERS"
 ANSIBLE_PB_EXE="$PKGMGR_INST_PATH/bin/ansible-playbook-$PYTHON_DOT_VERS"
 
-PIP_PKGS=( 'wheel' 'pycurl' 'requests-cache==0.5.2' 'urllib3' 'future' 'lxml' 'oauthlib' 'requests' 'simplejson' 'audiofile' \
+PIP_PKGS=( 'mysqlclient' 'pycurl' 'requests-cache==0.5.2' 'urllib3' 'future' 'lxml' 'oauthlib' 'requests' 'simplejson' 'audiofile' \
           'bs4' 'argparse' 'common' 'configparser' 'datetime' 'discid' 'et' 'features' 'HTMLParser' 'httplib2' 'musicbrainzngs' \
-          'port' 'put' 'traceback2' 'markdown' 'py2app' 'python-dateutil'  'importlib-metadata') 
-PY2APP_PKGS=$(echo $PIP_PKGS| gsed "s/ py2app//g")
-PY2APP_PKGS=$(echo $PY2APP_PKGS| gsed "s/ /,/g")
-PY2APP_PKGS=$(echo $PY2APP_PKGS| gsed "s/python-//g")
-PY2APP_PKGS=$(echo $PY2APP_PKGS| gsed "s/-/_/g")
-PY2APP_PKGS=$(echo $PY2APP_PKGS| gsed "s/=[^,+]*,/,/")
+          'port' 'put' 'traceback2' 'markdown' 'python-dateutil'  'importlib-metadata') 
 
 # Specify mythtv version to pull from git
 # if we're building on master - get release number from the git tags
@@ -391,6 +386,8 @@ PYTHON_VENV_PATH=$REPO_DIR/mythtv-python
 $PYTHON_PKMGR_BIN -m venv --copies --clear $PYTHON_VENV_PATH
 
 source $PYTHON_VENV_PATH/bin/activate
+
+pip3 install wheel py2app
 pip3 install $PIP_PKGS
 
 # get the version of python installed by MacPorts
@@ -658,7 +655,11 @@ echo "    Creating a temporary application from $MYTHTV_PYTHON_SCRIPT"
 # from one of the python scripts which will copy in all the required libraries for running
 # and will make a standalone python executable not tied to the system ttvdb4 seems to be more
 # particular than others (tmdb3)...
-
+PY2APP_PKGS=$(echo $PIP_PKGS| gsed "s/mysqlclient/MySQLdb/g")
+PY2APP_PKGS=$(echo $PY2APP_PKGS| gsed "s/ /,/g")
+PY2APP_PKGS=$(echo $PY2APP_PKGS| gsed "s/python-//g")
+PY2APP_PKGS=$(echo $PY2APP_PKGS| gsed "s/-/_/g")
+PY2APP_PKGS=$(echo $PY2APP_PKGS| gsed "s/=[^,+]*,/,/")
 $PY2APPLET_BIN -i $PY2APP_PKGS -p $PY2APP_PKGS --use-pythonpath --no-report-missing-conditional-import --make-setup $INSTALL_DIR/share/mythtv/metadata/Television/$MYTHTV_PYTHON_SCRIPT.py
 $PYTHON_VENV_BIN setup.py -q py2app 2>&1 > /dev/null
 
