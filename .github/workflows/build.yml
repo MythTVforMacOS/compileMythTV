@@ -98,6 +98,9 @@ jobs:
         git clone https://github.com/MythTV/ansible.git
         cd ansible
         sudo ./mythtv.yml --extra-vars="database_version=${DBVERS} install_qtwebkit=true" --limit=localhost
+        echo "Cleaning up macports builds"
+        sudo rm -rf /opt/local/var/macports/build/*
+        sudo rm -rf /opt/local/var/macports/distfiles/*
     - name: ccache statistics [pre]
       run: |
         ccache -sV
@@ -117,6 +120,9 @@ jobs:
 
         FULLVERS=$(with_plugins/mythfrontend.app/Contents/MacOS/mythfrontend --version|grep "MythTV Version"|gsed "s/^.*Version : *//")
         echo "FULLVERS=$FULLVERS" >> $GITHUB_ENV
+
+        echo "Cleaning up workspace"
+        rm -Rf $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv
     - name: "Sign App Bundles"
       # Extract the secrets we defined earlier as environment variables
       env:
@@ -201,6 +207,7 @@ jobs:
         do
           xcrun notarytool submit "$APP.zip" --keychain-profile "notarytool-profile" --wait
           xcrun stapler staple "$APP"
+          rm "$APP.zip"
         done
     - name: "Generate the DMGs"
       env:
