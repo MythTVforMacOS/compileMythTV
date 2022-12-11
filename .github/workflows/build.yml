@@ -117,10 +117,6 @@ jobs:
         /bin/zsh ./compileMythfrontendAnsible.zsh $BLD_FLGS --build-plugins=false --skip-build=true
         mkdir -p without_plugins
         ditto $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv/mythtv/programs/mythfrontend/mythfrontend.app without_plugins/mythfrontend.app
-
-        FULLVERS=$(with_plugins/mythfrontend.app/Contents/MacOS/mythfrontend --version|grep "MythTV Version"|gsed "s/^.*Version : *//")
-        echo "FULLVERS=$FULLVERS" >> $GITHUB_ENV
-
         echo "Cleaning up workspace"
         rm -Rf $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv
     - name: "Sign App Bundles"
@@ -213,25 +209,22 @@ jobs:
       env:
         MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
       run: |
-        for APP in "with_plugins/mythfrontend.app" "without_plugins/mythfrontend.app"
-        do
-          case $APP in
-            with_*)
-              VOL_NAME=MythFrontend-$ARCH-$OS_VERS-$FULLVERS-with-plugins
-              echo "DMG_WITH=$VOL_NAME.dmg" >> $GITHUB_ENV
-              ;;
-            without_*)
-              VOL_NAME=MythFrontend-$ARCH-$OS_VERS-$FULLVERS
-              echo "DMG_WITHOUT=$VOL_NAME.dmg" >> $GITHUB_ENV
-              ;;
-          esac
+        echo "Generating DMG for Application with plugins"
+        APP="with_plugins/mythfrontend.app"
+        FULLVERS=$($APP/Contents/MacOS/mythfrontend --version|grep "MythTV Version"|gsed "s/^.*Version : *//")
+        VOL_NAME_WITH=MythFrontend-$ARCH-$OS_VERS-$FULLVERS-with-plugins
+        echo "DMG_WITH=$VOL_NAME_WITH.dmg" >> $GITHUB_ENV
+        hdiutil create -volname "$VOL_NAME_WITH" -srcfolder "$APP" -ov -format UDRO "$VOL_NAME_WITH"
+        echo "Codesigning DMG - with plugins"
+        codesign --force --sign "$MACOS_CERTIFICATE_NAME" $VOL_NAME_WITH.dmg
 
-          # Generate the .dmg file
-          hdiutil create -volname "$VOL_NAME" -srcfolder "$APP" -ov -format UDRO "$VOL_NAME"
-
-          # codesign the dmg file
-          codesign --deep --force --verify --verbose --timestamp --sign "$MACOS_CERTIFICATE_NAME" $VOL_NAME.dmg
-        done
+        echo "Generating DMG for Application without plugins"
+        APP="without_plugins/mythfrontend.app"
+        VOL_NAME_WITHOUT=MythFrontend-$ARCH-$OS_VERS-$FULLVERS
+        echo "DMG_WITHOUT=$VOL_NAME_WITHOUT.dmg" >> $GITHUB_ENV
+        hdiutil create -volname "$VOL_NAME_WITHOUT" -srcfolder "$APP" -ov -format UDRO "$VOL_NAME_WITHOUT"
+        echo "Codesigning DMG - without plugins"
+        codesign --force --sign "$MACOS_CERTIFICATE_NAME" $VOL_NAME_WITHOUT.dmg
     - name: "Notarize the DMGs"
       if: "!contains(matrix.os, '10.15')"
       run: |
