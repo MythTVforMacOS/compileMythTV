@@ -126,9 +126,6 @@ jobs:
         MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
         MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
         MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
-        PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
-        PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
-        PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
       run: |
         # Turn our base64-encoded certificate back to a regular .p12 file
         echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
@@ -148,40 +145,37 @@ jobs:
         echo "Code Sign App Bundles"
         for APP in "with_plugins/mythfrontend.app" "without_plugins/mythfrontend.app"
         do
-          APP_RSRC_DIR=$APP/Contents/Resources
           APP_FMWK_DIR=$APP/Contents/Frameworks
           APP_EXE_DIR=$APP/Contents/MacOS
           APP_PLUGINS_DIR=$APP/PlugIns/
 
           # Per the Apple developer notes on codesigning, you must codesign from the inside out
-          # macdeployqt misses the python .so files in the Resources directory, so do that first
-          find $APP_RSRC_DIR -name '*.so' -print0 |
+          # Search the Applocation for so
+          find $APP -name '*.so' -print0 |
             while IFS= read -r -d '' line; do
               /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue "$line"
             done
-          # Also missed are any dylibs in the Resources directory,
-          find $APP_RSRC_DIR -name '*.dylib' -print0 |
+          # Search again for dylibs
+          find $APP -name '*.dylib' -print0 |
             while IFS= read -r -d '' line; do
               /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue "$line"
             done
+
+          # Now sign the all frameworks and QT packages in the Frameworks directory
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/Qt*
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/*.framework
-          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/*.dylib
-          # only plugins has dylibs in the top level of plugins
-          case $APP in
-            with_*)
-              /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/PlugIns/*.dylib
-            ;;
-          esac
-          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/PlugIns/*/*.dylib
+
+          # Next any files in the MacOS directory (binaries/scripts)
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/python
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythutil
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythpreviewgen
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythfrontend
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythfrontend.sh
+          
           # finally sign the application
           codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist $APP
           # verify that the codesigning took
+          echo "Verifying code signing"
           codesign --verify -vv --deep $APP
 
           # create file for submission
@@ -190,12 +184,14 @@ jobs:
     - name: "Notarize App Bundles"
       if: "!contains(matrix.os, '10.15')"
       env:
+        MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
         PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
         PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
         PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
       run: |
         # setup notarization keychain
         echo "Create keychain profile"
+        security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
         xcrun notarytool store-credentials "notarytool-profile" --apple-id "$PROD_MACOS_NOTARIZATION_APPLE_ID" --team-id "$PROD_MACOS_NOTARIZATION_TEAM_ID" --password "$PROD_MACOS_NOTARIZATION_PWD"
 
         echo "Notarize Applications"
@@ -206,33 +202,41 @@ jobs:
           rm "$APP.zip"
         done
     - name: "Generate the DMGs"
-      env:
-        MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
       run: |
         echo "Generating DMG for Application with plugins"
         APP="with_plugins/mythfrontend.app"
         FULLVERS=$($APP/Contents/MacOS/mythfrontend --version|grep "MythTV Version"|gsed "s/^.*Version : *//")
         VOL_NAME_WITH=MythFrontend-$ARCH-$OS_VERS-$FULLVERS-with-plugins
-        echo "DMG_WITH=$VOL_NAME_WITH.dmg" >> $GITHUB_ENV
         hdiutil create -volname "$VOL_NAME_WITH" -srcfolder "$APP" -ov -format UDRO "$VOL_NAME_WITH"
-        echo "Codesigning DMG - with plugins"
-        codesign --force --sign "$MACOS_CERTIFICATE_NAME" $VOL_NAME_WITH.dmg
+        echo "DMG_WITH=$VOL_NAME_WITH.dmg" >> $GITHUB_ENV
 
         echo "Generating DMG for Application without plugins"
         APP="without_plugins/mythfrontend.app"
         VOL_NAME_WITHOUT=MythFrontend-$ARCH-$OS_VERS-$FULLVERS
-        echo "DMG_WITHOUT=$VOL_NAME_WITHOUT.dmg" >> $GITHUB_ENV
         hdiutil create -volname "$VOL_NAME_WITHOUT" -srcfolder "$APP" -ov -format UDRO "$VOL_NAME_WITHOUT"
-        echo "Codesigning DMG - without plugins"
-        codesign --force --sign "$MACOS_CERTIFICATE_NAME" $VOL_NAME_WITHOUT.dmg
-    - name: "Notarize the DMGs"
+        echo "DMG_WITHOUT=$VOL_NAME_WITHOUT.dmg" >> $GITHUB_ENV
+    - name: "Sign and Notarize the DMGs"
       if: "!contains(matrix.os, '10.15')"
+      env:
+        MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
+        MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
+        MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
+        MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
       run: |
         echo "Notarizing DMGS"
         # First with plugins
+        echo "Codesigning $DMG_WITH"
+        security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+        codesign --force --sign "$MACOS_CERTIFICATE_NAME" "$DMG_WITH"
+        echo "Notarizing $DMG_WITH"
         xcrun notarytool submit "$DMG_WITH" --keychain-profile "notarytool-profile" --wait
         xcrun stapler staple "$DMG_WITH"
+
         # Next without plugins
+        echo "Codesigning $DMG_WITHOUT"
+        security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+        codesign --force --sign "$MACOS_CERTIFICATE_NAME" "$DMG_WITHOUT"
+        echo "Notarizing $DMG_WITHOUT"
         xcrun notarytool submit "$DMG_WITHOUT" --keychain-profile "notarytool-profile" --wait
         xcrun stapler staple "$DMG_WITHOUT"
     - name: "Upload to SourceForge"
