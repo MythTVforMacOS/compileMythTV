@@ -40,13 +40,17 @@ EOF
   exit 0
 }
 
+OS_VERS=$(/usr/bin/sw_vers -productVersion)
+OS_MAJOR=(${(@s:.:)OS_VERS})
+OS_MINOR=$OS_MAJOR[2]
+OS_MAJOR=$OS_MAJOR[1]
+
 # setup default variables
 BUILD_PLUGINS=false
 PYTHON_VERS="310"
 UPDATE_PORTS=false
 MYTHTV_VERS="master"
 MYTHTV_PYTHON_SCRIPT="ttvdb4"
-DATABASE_VERS=mysql8
 QT_VERS=qt5
 GENERATE_APP=true
 GENERATE_DMG=false
@@ -60,6 +64,12 @@ PACK_PATCH_DIR=""
 PLUGINS_PATCH_DIR=""
 REPO_PREFIX=~
 
+# maports doesn't support mysql 8 for older versions of macOS, for those installs default to mariadb (unless the user overries)
+if [ $OS_MAJOR -le 10 ] && [ $OS_MINOR -le 15 ]; then
+  DATABASE_VERS=mariadb-10.5
+else
+  DATABASE_VERS=mysql8
+fi
 
 # parse user inputs into variables
 for i in "$@"; do
@@ -134,7 +144,6 @@ PKGMGR_INST_PATH=/opt/local
 PYTHON_DOT_VERS="${PYTHON_VERS:0:1}.${PYTHON_VERS:1:4}"
 PYTHON_PKMGR_BIN="$PKGMGR_INST_PATH/bin/python$PYTHON_DOT_VERS"
 ANSIBLE_PB_EXE="$PKGMGR_INST_PATH/bin/ansible-playbook-$PYTHON_DOT_VERS"
-
 PIP_PKGS=( 'mysqlclient' 'pycurl' 'requests-cache==0.5.2' 'urllib3' 'future' 'lxml' 'oauthlib' 'requests' 'simplejson' 'audiofile' \
           'bs4' 'argparse' 'common' 'configparser' 'datetime' 'discid' 'et' 'features' 'HTMLParser' 'httplib2' 'musicbrainzngs' \
           'port' 'put' 'traceback2' 'markdown' 'python-dateutil'  'importlib-metadata') 
@@ -197,7 +206,6 @@ THEME_DIR=$REPO_DIR/mythtv/myththemes
 PKGING_DIR=$REPO_DIR/mythtv/packaging
 OSX_PKGING_DIR=$PKGING_DIR/OSX/build
 export PATH=$PKGMGR_INST_PATH/lib/$DATABSE_VERS/bin:$PATH
-OS_VERS=$(/usr/bin/sw_vers -productVersion)
 
 # macOS internal appliction paths
 APP_DIR=$SRC_DIR/programs/mythfrontend
