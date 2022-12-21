@@ -14,9 +14,9 @@ Options: [defaults in brackets after descriptions]
 Standard options:
   --help                                 Print this message
   --build-plugins=BUILD_PLUGINS          Build Mythtvplugins (false)
-  --python-version=PYTHON_VERS           Desired Python 3 Version (38)
+  --python-version=PYTHON_VERS           Desired Python 3 Version (310)
   --version=MYTHTV_VERS                  Requested mythtv git repo (master)
-  --database-version=DATABASE_VERS       Requested version of mariadb/mysql to build agains (mariadb-10.2)
+  --database-version=DATABASE_VERS       Requested version of mariadb/mysql to build agains (mysql8)
   --qt-version=qt5                       Select Qt version to build against (qt5)
   --repo-prefix=REPO_PREFIX              Directory base to install the working repository (~)
   --generate-app=GENERATE_APP            Generate .app bundles for executables (true)
