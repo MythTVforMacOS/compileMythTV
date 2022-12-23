@@ -152,7 +152,7 @@ PIP_PKGS=( 'mysqlclient' 'pycurl' 'requests-cache==0.5.2' 'urllib3' 'future' 'lx
 # if we're building on master - get release number from the git tags
 # otherwise extract it from the MYTHTV_VERS
 case $MYTHTV_VERS in
-    master*|*33*)
+    master*)
       VERS=$(git ls-remote --tags  https://github.com/MythTV/mythtv.git|tail -n 1)
       VERS=${VERS##*/v}
       VERS=$(echo $VERS|tr -dc '0-9')
@@ -162,6 +162,9 @@ case $MYTHTV_VERS in
       VERS=${MYTHTV_VERS: -2}
       EXTRA_MYTHPLUGIN_FLAG="--enable-fftw"
     ;;
+    *)
+      VERS=${MYTHTV_VERS: -2}
+      EXTRA_MYTHPLUGIN_FLAG=""
 esac
 ARCH=$(/usr/bin/uname -m)
 REPO_DIR=$REPO_PREFIX/mythtv-$VERS
