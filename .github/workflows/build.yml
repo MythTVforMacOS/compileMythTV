@@ -90,7 +90,7 @@ jobs:
         sudo port upgrade outdated
     - name: "Install required ports"
       run: |
-        sudo port -N install rsync gsed ccache py${PYVERS}-ansible py{$PYTHON_VERS}-virtualenv
+        sudo port -N install rsync gsed ccache py${PYVERS}-ansible py${PYVERS}-virtualenv
         sudo port select --set python python${PYVERS}
         sudo port select --set python3 python${PYVERS}
         sudo port select --set ansible py${PYVERS}-ansible
