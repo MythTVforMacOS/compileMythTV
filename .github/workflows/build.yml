@@ -84,10 +84,8 @@ jobs:
         else
           curl -LJO https://raw.githubusercontent.com/GiovanniBussi/macports-ci/master/macports-ci
           source ./macports-ci install
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" --force
+          /bin/bash -c "$(sudo curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" --force
         fi
-        sudo port selfupdate
-        sudo port upgrade outdated
     - name: "Install required ports"
       run: |
         sudo port -N install rsync gsed ccache py${PYVERS}-ansible py${PYVERS}-virtualenv
