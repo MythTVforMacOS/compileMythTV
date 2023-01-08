@@ -574,11 +574,11 @@ fi
 if [ -z $ENABLE_MAC_BUNDLE ]; then
   echo "    Mac Bundle disabled - Skipping app bundling commands"
   echo "    Rebasing @rpath to $RUNPREFIX"
-	for mythExec in $INSTALL_DIR/bin/myth*; do
+  for mythExec in $INSTALL_DIR/bin/myth*; do
         echo "     rebasing $mythExec"
         rebaseLibs $mythExec
-	done
-	echo "Done"
+  done
+  echo "Done"
     exit 0
 fi
 # Assume that all commands past this point only apply to app bundling
