@@ -95,7 +95,7 @@ jobs:
         sudo port select --set virtualenv virtualenv${PYVERS}
         git clone https://github.com/MythTV/ansible.git
         cd ansible
-        sudo /opt/local/bin/ansible-playbook-${PYDOTVERS} mythtv.yml --extra-vars="database_version=${DBVERS} install_qtwebkit=true" --limit=localhost
+        sudo ansible-playbook-${PYDOTVERS} mythtv.yml --extra-vars="ansible_python_interpreter=/opt/local/bin/python${PYDOTVERS} database_version=${DBVERS} install_qtwebkit=true" --limit=localhost
         echo "Cleaning up macports builds"
         sudo rm -rf /opt/local/var/macports/build/*
         sudo rm -rf /opt/local/var/macports/distfiles/*
