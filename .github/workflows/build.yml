@@ -37,7 +37,7 @@ jobs:
         echo "VERSNUM=${{ inputs.VERSNUM }}" >> $GITHUB_ENV
     - name: "Setup environemental variables"
       run: |
-        echo "--repo-prefix=${GITHUB_WORKSPACE} --version=${MYTHBRANCH} --python-version=${PYVERS} --database-version=${DBVERS}" >> $GITHUB_ENV
+        echo "BLD_FLGS=--repo-prefix=${GITHUB_WORKSPACE} --version=${MYTHBRANCH} --python-version=${PYVERS} --database-version=${DBVERS}" >> $GITHUB_ENV
         echo "PKGARCH=$(/usr/bin/uname -m)" >> $GITHUB_ENV
         echo "OS_VERS=$(/usr/bin/sw_vers -productVersion)" >> $GITHUB_ENV
         echo "ARCH=$(/usr/bin/uname -m)" >> $GITHUB_ENV
@@ -108,13 +108,13 @@ jobs:
         export CCACHE_DIR=${{ env.CCACHE_DIR }}
         /bin/zsh ./compileMythfrontendAnsible.zsh $BLD_FLGS --build-plugins=true
         mkdir -p with_plugins
-        ditto $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv/mythtv/programs/mythfrontend/mythfrontend.app with_plugins/mythfrontend.app
+        ditto "$GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv/mythtv/programs/mythfrontend/mythfrontend.app" with_plugins/mythfrontend.app
     - name: "Re-Build MythTV without Plugins"
       run: |
         # Now make it without plugins
         /bin/zsh ./compileMythfrontendAnsible.zsh $BLD_FLGS --build-plugins=false
         mkdir -p without_plugins
-        ditto $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv/mythtv/programs/mythfrontend/mythfrontend.app without_plugins/mythfrontend.app
+        ditto "$GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv/mythtv/programs/mythfrontend/mythfrontend.app" without_plugins/mythfrontend.app
         echo "Cleaning up workspace"
         rm -Rf $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv
     - name: "Sign App Bundles"
