@@ -37,7 +37,7 @@ jobs:
         echo "VERSNUM=${{ inputs.VERSNUM }}" >> $GITHUB_ENV
     - name: "Setup environemental variables"
       run: |
-        echo "BLD_FLGS=--skip-ansible=true --repo-prefix=${GITHUB_WORKSPACE} --version=${MYTHBRANCH} --python-version=${PYVERS} --database-version=${DBVERS}" >> $GITHUB_ENV
+        echo "--repo-prefix=${GITHUB_WORKSPACE} --version=${MYTHBRANCH} --python-version=${PYVERS} --database-version=${DBVERS}" >> $GITHUB_ENV
         echo "PKGARCH=$(/usr/bin/uname -m)" >> $GITHUB_ENV
         echo "OS_VERS=$(/usr/bin/sw_vers -productVersion)" >> $GITHUB_ENV
         echo "ARCH=$(/usr/bin/uname -m)" >> $GITHUB_ENV
@@ -112,7 +112,7 @@ jobs:
     - name: "Re-Build MythTV without Plugins"
       run: |
         # Now make it without plugins
-        /bin/zsh ./compileMythfrontendAnsible.zsh $BLD_FLGS --build-plugins=false --skip-build=true
+        /bin/zsh ./compileMythfrontendAnsible.zsh $BLD_FLGS --build-plugins=false
         mkdir -p without_plugins
         ditto $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv/mythtv/programs/mythfrontend/mythfrontend.app without_plugins/mythfrontend.app
         echo "Cleaning up workspace"
