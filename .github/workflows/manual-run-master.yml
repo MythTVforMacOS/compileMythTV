@@ -7,5 +7,5 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       MYTHBRANCH: "master"
-      VERSNUM: 33
+      VERSNUM: 34
     secrets: inherit

@@ -12,10 +12,10 @@ jobs:
     runs-on: 'macos-latest'
     env:
       MASTER_BRANCH: "master"
-      MASTER_VERS_NUM: 33
+      MASTER_VERS_NUM: 34
       UPDATE_MASTER: "false"
-      FIXES_BRANCH: "fixes/32"
-      FIXES_VERS_NUM: 32
+      FIXES_BRANCH: "fixes/33"
+      FIXES_VERS_NUM: 33
       UPDATE_FIXES: "false"
     outputs:
       MASTER_BRANCH: ${{ env.MASTER_BRANCH }}

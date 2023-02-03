@@ -6,6 +6,6 @@ jobs:
   build-mythtv-fixes:
     uses: ./.github/workflows/build.yml
     with:
-      MYTHBRANCH: "fixes/32"
-      VERSNUM: 32
+      MYTHBRANCH: "fixes/33"
+      VERSNUM: 33
     secrets: inherit

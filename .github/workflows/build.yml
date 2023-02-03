@@ -10,7 +10,7 @@ on:
       VERSNUM:
         required: true
         type: string
-        default: 33
+        default: 34
 
 jobs:
   build_mythtv:
@@ -169,7 +169,7 @@ jobs:
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythpreviewgen
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythfrontend
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythfrontend.sh
-          
+
           # finally sign the application
           codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist $APP
           # verify that the codesigning took
