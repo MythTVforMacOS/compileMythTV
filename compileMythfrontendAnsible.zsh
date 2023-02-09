@@ -14,10 +14,10 @@ Options: [defaults in brackets after descriptions]
 Standard options:
   --help                                 Print this message
   --build-plugins=BUILD_PLUGINS          Build Mythtvplugins (false)
-  --python-version=PYTHON_VERS           Desired Python 3 Version (311)
+  --python-version=PYTHON_VERS           Desired Python 3 Version (${2})
   --version=MYTHTV_VERS                  Requested mythtv git repo (${1})
-  --database-version=DATABASE_VERS       Requested version of mariadb/mysql to build agains (mysql8)
-  --qt-version=qt5                       Select Qt version to build against (qt5)
+  --database-version=DATABASE_VERS       Requested version of mariadb/mysql to build agains (${3})
+  --qt-version=qt5                       Select Qt version to build against (${4})
   --repo-prefix=REPO_PREFIX              Directory base to install the working repository (~)
   --generate-app=GENERATE_APP            Generate .app bundles for executables (true)
   --generate-dmg=GENERATE_DMG            Generate a DMG file for distribution (false)
@@ -72,7 +72,7 @@ fi
 for i in "$@"; do
   case $i in
       -h|--help)
-        show_help ${MYTHTV_VERS}
+        show_help ${MYTHTV_VERS} ${PYTHON_VERS} ${MYTHTV_VERS} ${QT_VERS}
         exit 0
       ;;
       --build-plugins=*)
@@ -218,7 +218,7 @@ PKG_CONFIG_SYSTEM_INCLUDE_PATH=$PKGMGR_INST_PATH/include
 APP_DFLT_BNDL_ID="org.mythtv.mythfrontend"
 
 
-# installLibs finds all @rpath dylibs for the input binary/dylib
+# installLibs finds all@rpath dylibs for the input binary/dylib
 # copying any missing ones in the application's FrameWork directory
 # then updates the binary/dylib's internal link to point to copy location
 installLibs(){
@@ -265,7 +265,7 @@ installLibs(){
     # update the link in the app/executable to the new interal Framework
     echo "    Updating $lib link to internal lib"
     # its already been copied in, we just need to update the link
-    install_name_tool $binFile -change $dep $newLink
+    install_name_tool -change $dep $newLink $binFile
   done <<< "$pathDepList"
 }
 
@@ -276,7 +276,7 @@ rebaseLibs(){
     while read -r dep; do
         lib=${dep##*/}
         if [ -n $lib ]; then
-            install_name_tool $binFile -change $dep $RUNPREFIX/lib/$lib
+            install_name_tool -change $dep $RUNPREFIX/lib/$lib $binFile
         fi
     done <<< "$rpathDepList"
 }
@@ -541,7 +541,7 @@ fi
 
 if [ -z $ENABLE_MAC_BUNDLE ]; then
   echo "    Mac Bundle disabled - Skipping app bundling commands"
-  echo "    Rebasing @rpath to $RUNPREFIX"
+  echo "    Rebasing@rpath to $RUNPREFIX"
   for mythExec in $INSTALL_DIR/bin/myth*; do
         echo "     rebasing $mythExec"
         rebaseLibs $mythExec
@@ -552,7 +552,7 @@ fi
 # Assume that all commands past this point only apply to app bundling
 
 echo "------------ Update Mythfrontend.app to use internal dylibs ------------"
-# find all mythtv dylibs linked via @rpath in mythfrontend, move them into the
+# find all mythtv dylibs linked via@rpath in mythfrontend, move them into the
 # application application Framwork dir and update the internal link to point to
 # the application
 cd $APP_EXE_DIR
@@ -648,7 +648,7 @@ mv -n $APP_DIR/PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/Resources/* $A
 cd $APP_DIR
 rm -Rf PYTHON_APP
 echo "    Copying in Site Packages from Virtual Enironment"
-cp -RL $PYTHON_VENV_PATH/lib/python3.10/site-packages/* $APP_RSRC_DIR/lib/python$PYTHON_DOT_VERS/site-packages 
+cp -RL $PYTHON_VENV_PATH/lib/python$PYTHON_DOT_VERS/site-packages/* $APP_RSRC_DIR/lib/python$PYTHON_DOT_VERS/site-packages 
 # do not need/want py2app in the application
 rm -Rf $APP_RSRC_DIR/lib/python$PYTHON_DOT_VERS/site-packages/py2app
 
@@ -694,6 +694,35 @@ $QT_PATH/bin/macdeployqt $APP \
 # we'll set the QT_QPA_PLATFORM_PLUGIN_PATH to point the app to the new location
 mv $APP/Contents/PlugIns/* $APP_PLUGINS_DIR
 gsed -i "2c\Plugins = Frameworks/PlugIns" $APP_RSRC_DIR/qt.conf
+
+echo "------------ Update libmythtv* rpath's to point internally ------------"
+# find all mythtv dylibs linked via@rpath in Frameworks/libmyth*.dylib updating
+# the internal link to point to the application
+cd $APP_FMWK_DIR
+for dylib in $APP_FMWK_DIR/libmyth*.dylib; do
+  installLibs $dylib
+done
+# This now copies in perl resources which are redundant to thoes in the Resources folder
+# Delete those to avoid codesiging throwing an error
+if [ -d $APP_FMWK_DIR/perl ]; then
+  rm -Rf $APP_FMWK_DIR/perl*
+fi
+if [ -d $APP_FMWK_DIR/perl5 ]; then
+  rm -Rf $APP_FMWK_DIR/perl*
+fi
+# This now copies in perl resources which are redundant to those in the Resources folder
+# Also, codesigning does not like not binary resources in Frameworks, so delete these
+if [ -d $APP_FMWK_DIR/python ]; then
+  rm -Rf $APP_FMWK_DIR/python*
+fi
+if [ -d $APP_FMWK_DIR/python$PYTHON_DOT_VERS ]; then
+  rm -Rf $APP_FMWK_DIR/python*
+fi
+# This now copies in perl resources which are redundant to those in the Resources folder
+# Also, codesigning does not like not binary resources in Frameworks, so delete these
+if [ -d $APP_FMWK_DIR/mythtv ]; then
+  rm -Rf $APP_FMWK_DIR/mythtv*
+fi
 
 echo "------------ Searching Applicaition for missing libraries ------------"
 # Do one last sweep for missing dylibs in the Framework Directory

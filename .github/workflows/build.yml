@@ -21,12 +21,12 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.os }}
     env:
-      PYVERS: "310"
-      PYDOTVERS: "3.10"
+      PYVERS: "311"
+      PYDOTVERS: "3.11"
       DBVERS: "mysql8"
     steps:
     - uses: actions/checkout@master
-    # Make sure the @v0.4.1 matches the current version of the
+    # Make sure the@v0.4.1 matches the current version of the
     # action
     - uses: webfactory/ssh-agent@v0.7.0
       with:
@@ -149,28 +149,33 @@ jobs:
 
           # Per the Apple developer notes on codesigning, you must codesign from the inside out
           # Search the Applocation for so
+          echo "Codesigning sos"
           find $APP -name '*.so' -print0 |
             while IFS= read -r -d '' line; do
               /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue "$line"
             done
-          # Search again for dylibs
+          # Search for dylibs
+          echo "Codesigning dylibs"
           find $APP -name '*.dylib' -print0 |
             while IFS= read -r -d '' line; do
               /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue "$line"
             done
 
           # Now sign the all frameworks and QT packages in the Frameworks directory
+          echo "Codesigning Qt"
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/Qt*
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/*.framework
 
           # Next any files in the MacOS directory (binaries/scripts)
+          echo "Codesigning Executables"
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/python
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythutil
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythpreviewgen
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythfrontend
-          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythfrontend.sh
+          #/usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_EXE_DIR/mythfrontend.sh
 
           # finally sign the application
+          echo "Codesigning Application"
           codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist $APP
           # verify that the codesigning took
           echo "Verifying code signing"
@@ -204,6 +209,10 @@ jobs:
         echo "Generating DMG for Application with plugins"
         APP="with_plugins/mythfrontend.app"
         FULLVERS=$($APP/Contents/MacOS/mythfrontend --version|grep "MythTV Version"|gsed "s/^.*Version : *//")
+        if [ -z "$var" ]
+          echo "mythfrontend is not-executable"
+          exit 1
+        fi
         VOL_NAME_WITH=MythFrontend-$ARCH-$OS_VERS-$FULLVERS-with-plugins
         hdiutil create -volname "$VOL_NAME_WITH" -srcfolder "$APP" -ov -format UDRO "$VOL_NAME_WITH"
         echo "DMG_WITH=$VOL_NAME_WITH.dmg" >> $GITHUB_ENV
