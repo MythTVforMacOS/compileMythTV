@@ -8,4 +8,5 @@ jobs:
     with:
       MYTHBRANCH: "fixes/32"
       VERSNUM: 32
+      DEBUGBUILD: false
     secrets: inherit

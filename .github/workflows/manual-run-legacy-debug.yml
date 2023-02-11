@@ -1,4 +1,4 @@
-name: "Manual build (fixes)"
+name: "Manual debug build (legacy)"
 
 on: [workflow_dispatch]
 
@@ -6,7 +6,7 @@ jobs:
   build-mythtv-fixes:
     uses: ./.github/workflows/build.yml
     with:
-      MYTHBRANCH: "fixes/33"
-      VERSNUM: 33
-      DEBUGBUILD: false
+      MYTHBRANCH: "fixes/32"
+      VERSNUM: 32
+      DEBUGBUILD: true
     secrets: inherit

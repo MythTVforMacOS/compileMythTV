@@ -1,4 +1,4 @@
-name: "Manual build (master)"
+name: "Manual debug build (master)"
 
 on: [workflow_dispatch]
 
@@ -8,5 +8,5 @@ jobs:
     with:
       MYTHBRANCH: "master"
       VERSNUM: 34
-      DEBUGBUILD: false
+      DEBUGBUILD: true
     secrets: inherit

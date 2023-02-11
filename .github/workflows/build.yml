@@ -11,6 +11,10 @@ on:
         required: true
         type: string
         default: 34
+      DEBUGBUILD:
+        required: true
+        type: string
+        default: false
 
 jobs:
   build_mythtv:
@@ -23,7 +27,7 @@ jobs:
     env:
       PYVERS: "311"
       PYDOTVERS: "3.11"
-      DBVERS: "mariadb-10.5"
+      DBVERS: "mysql8"
     steps:
     - uses: actions/checkout@master
     # Make sure the@v0.4.1 matches the current version of the
@@ -35,9 +39,14 @@ jobs:
       run: |
         echo "MYTHBRANCH=${{ inputs.MYTHBRANCH }}" >> $GITHUB_ENV
         echo "VERSNUM=${{ inputs.VERSNUM }}" >> $GITHUB_ENV
+        echo "DEBUGBUILD=${{ inputs.DEBUGBUILD }}" >> $GITHUB_ENV
     - name: "Setup environemental variables"
       run: |
-        echo "BLD_FLGS=--repo-prefix=${GITHUB_WORKSPACE} --version=${MYTHBRANCH} --python-version=${PYVERS} --database-version=${DBVERS}" >> $GITHUB_ENV
+        BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} --version=${MYTHBRANCH} --python-version=${PYVERS} --database-version=${DBVERS}"
+        if [ $DEBUGBUILD ]; then
+          BLD_FLGS="$BLD_FLGS --extra-conf-flags=--compile-type=debug"
+        fi
+        echo "BLD_FLGS=${BLD_FLGS}" >> $GITHUB_ENV
         echo "PKGARCH=$(/usr/bin/uname -m)" >> $GITHUB_ENV
         echo "OS_VERS=$(/usr/bin/sw_vers -productVersion)" >> $GITHUB_ENV
         echo "ARCH=$(/usr/bin/uname -m)" >> $GITHUB_ENV
@@ -66,9 +75,13 @@ jobs:
             DEST_PATH="$BASE_PATH/v$VERSNUM/macOS\ 13\ Ventura"
           ;;
           *)
-            DEST_PATH="$BASE_PATH/test/"
+            DEST_PATH="$BASE_PATH/debug/"
           ;;
         esac
+        # override destination if DEBUGBUILD is true
+        if [ $DEBUGBUILD ]; then
+          DEST_PATH="$BASE_PATH/debug/"
+        fi
 
         # check is we're ARM based
         case $ARCH in

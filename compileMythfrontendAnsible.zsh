@@ -25,6 +25,7 @@ Build Options
   --update-git=UPDATE_GIT                Update git repositories to latest (true)
   --skip-build=SKIP_BUILD                Skip configure and make - used when you just want to repackage (false)
   --macports-clang=MP_CLANG              Flag to specify clang version to build with (default)
+  --extra-conf-flags=XTRA_CONF_FLAGS     Addtional configure flags for mythtv ("")
 Patch Options
   --apply-patches=APPLY_PATCHES          Apply patches specified in additional arguments (false)
   --mythtv-patch-dir=MYTHTV_PATCH_DIR    Directory containing patch files to be applied to Mythtv
@@ -55,6 +56,7 @@ GENERATE_DMG=false
 UPDATE_GIT=true
 SKIP_BUILD=false
 MP_CLANG=default
+XTRA_CONF_FLAGS=""
 APPLY_PATCHES=false
 MYTHTV_PATCH_DIR=""
 PACK_PATCH_DIR=""
@@ -62,7 +64,7 @@ PLUGINS_PATCH_DIR=""
 REPO_PREFIX=$HOME
 
 # maports doesn't support mysql 8 for older versions of macOS, for those installs default to mariadb (unless the user overries)
-if [ $OS_MAJOR -le 11 ]; then
+if [ $OS_MAJOR -le 11 ] && [ $OS_MINOR -le 15 ]; then
   DATABASE_VERS=mariadb-10.5
 else
   DATABASE_VERS=mysql8
@@ -89,6 +91,9 @@ for i in "$@"; do
       ;;
       --macports-clang=*)
         MP_CLANG="${i#*=}"
+      ;;
+      --extra-conf-flags=*)
+        XTRA_CONF_FLAGS="${i#*=}"
       ;;
       --version=*)
         MYTHTV_VERS="${i#*=}"
@@ -193,8 +198,8 @@ esac
 
 # Add some flags for the compiler to find the package manager locations
 export LDFLAGS="-L$PKGMGR_INST_PATH/libexec/$QT_VERS/lib -L$PKGMGR_INST_PATH/lib"
-export C_INCLUDE_PATH=$PKGMGR_INST_PATH/libexec/$QT_VERS/include/:$PKGMGR_INST_PATH/include:$PKGMGR_INST_PATH/include/libbluray:$PKGMGR_INST_PATH/include/libhdhomerun
-export CPLUS_INCLUDE_PATH=$PKGMGR_INST_PATH/libexec/$QT_VERS/include/:$PKGMGR_INST_PATH/include:$PKGMGR_INST_PATH/include/libbluray:$PKGMGR_INST_PATH/include/libhdhomerun
+export C_INCLUDE_PATH=$PKGMGR_INST_PATH/libexec/$QT_VERS/include/:$PKGMGR_INST_PATH/include:$PKGMGR_INST_PATH/include/libbluray:$PKGMGR_INST_PATH/include/libhdhomerun:$PKGMGR_INST_PATH/include/glslang
+export CPLUS_INCLUDE_PATH=$PKGMGR_INST_PATH/libexec/$QT_VERS/include/:$PKGMGR_INST_PATH/include:$PKGMGR_INST_PATH/include/libbluray:$PKGMGR_INST_PATH/include/libhdhomerun:$PKGMGR_INST_PATH/include/glslang
 export LIBRARY_PATH=$PKGMGR_INST_PATH/libexec/$QT_VERS/lib/:$PKGMGR_INST_PATH/lib
 
 # setup some paths to make the following commands easier to understand
@@ -451,6 +456,7 @@ else
   ./configure --prefix=$INSTALL_DIR \
               --runprefix=$RUNPREFIX \
               $ENABLE_MAC_BUNDLE \
+              $XTRA_CONF_FLAGS \
               --qmake=$QMAKE_CMD \
               --cc=$CLANG_CMD \
               --cxx=$CLANGPP_CMD \
