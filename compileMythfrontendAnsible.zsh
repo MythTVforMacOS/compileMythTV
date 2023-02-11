@@ -62,7 +62,7 @@ PLUGINS_PATCH_DIR=""
 REPO_PREFIX=$HOME
 
 # maports doesn't support mysql 8 for older versions of macOS, for those installs default to mariadb (unless the user overries)
-if [ $OS_MAJOR -le 10 ] && [ $OS_MINOR -le 15 ]; then
+if [ $OS_MAJOR -le 11 ]; then
   DATABASE_VERS=mariadb-10.5
 else
   DATABASE_VERS=mysql8
@@ -224,7 +224,7 @@ APP_DFLT_BNDL_ID="org.mythtv.mythfrontend"
 installLibs(){
   binFile=$1
   # find all externally-linked lib
-  pathDepList=$(/usr/bin/otool -L $binFile|grep -e rpath -e $PKGMGR_INST_PATH/lib -e $INSTALL_DIR)
+  pathDepList=$(/usr/bin/otool -L $binFile|grep -e rpath -e $PKGMGR_INST_PATH/lib -e $INSTALL_DIR -e "/usr/lib/")
   pathDepList=$(echo $pathDepList| gsed 's/(.*//')
   # loop over each lib
   while read -r dep; do
@@ -694,35 +694,6 @@ $QT_PATH/bin/macdeployqt $APP \
 # we'll set the QT_QPA_PLATFORM_PLUGIN_PATH to point the app to the new location
 mv $APP/Contents/PlugIns/* $APP_PLUGINS_DIR
 gsed -i "2c\Plugins = Frameworks/PlugIns" $APP_RSRC_DIR/qt.conf
-
-echo "------------ Update libmythtv* rpath's to point internally ------------"
-# find all mythtv dylibs linked via@rpath in Frameworks/libmyth*.dylib updating
-# the internal link to point to the application
-cd $APP_FMWK_DIR
-for dylib in $APP_FMWK_DIR/libmyth*.dylib; do
-  installLibs $dylib
-done
-# This now copies in perl resources which are redundant to thoes in the Resources folder
-# Delete those to avoid codesiging throwing an error
-if [ -d $APP_FMWK_DIR/perl ]; then
-  rm -Rf $APP_FMWK_DIR/perl*
-fi
-if [ -d $APP_FMWK_DIR/perl5 ]; then
-  rm -Rf $APP_FMWK_DIR/perl*
-fi
-# This now copies in perl resources which are redundant to those in the Resources folder
-# Also, codesigning does not like not binary resources in Frameworks, so delete these
-if [ -d $APP_FMWK_DIR/python ]; then
-  rm -Rf $APP_FMWK_DIR/python*
-fi
-if [ -d $APP_FMWK_DIR/python$PYTHON_DOT_VERS ]; then
-  rm -Rf $APP_FMWK_DIR/python*
-fi
-# This now copies in perl resources which are redundant to those in the Resources folder
-# Also, codesigning does not like not binary resources in Frameworks, so delete these
-if [ -d $APP_FMWK_DIR/mythtv ]; then
-  rm -Rf $APP_FMWK_DIR/mythtv*
-fi
 
 echo "------------ Searching Applicaition for missing libraries ------------"
 # Do one last sweep for missing dylibs in the Framework Directory

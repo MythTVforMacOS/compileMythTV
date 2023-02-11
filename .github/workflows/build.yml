@@ -23,7 +23,7 @@ jobs:
     env:
       PYVERS: "311"
       PYDOTVERS: "3.11"
-      DBVERS: "mysql8"
+      DBVERS: "mariadb-10.5"
     steps:
     - uses: actions/checkout@master
     # Make sure the@v0.4.1 matches the current version of the
