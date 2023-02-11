@@ -1,4 +1,4 @@
-name: "Manual debug build (legacy)"
+name: "Manual debug build (legacy - 32)"
 
 on: [workflow_dispatch]
 
