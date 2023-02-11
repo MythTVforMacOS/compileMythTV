@@ -234,14 +234,13 @@ installLibs(){
   # loop over each lib
   while read -r dep; do
     lib=${dep##*/}
-    # we have four types of libs to work with, QT5, QT6, package managed, and mythtv
-    # setup the correct source / destination / linking schema for each
+    # we have multiple types of libs to work with, QT5, QT6, package managed, mythtv,
+    # and system setup the correct source / destination / linking schema for each
     case "$dep" in
       *Qt*)
         case "$QT_VERS" in
           *qt5*)
             sourcePath="$QT_PATH/lib/$lib.framework"
-            destinPath=$APP_FMWK_DIR
             newLink="@executable_path/../Frameworks/$lib.framework/Versions/5/$lib"
           ;;
           *)
@@ -253,15 +252,19 @@ installLibs(){
       ;;
       *libmyth*|*$INSTALL_DIR*)
         sourcePath=$INSTALL_DIR/lib
-        destinPath=$APP_FMWK_DIR
         newLink="@executable_path/../Frameworks/$lib"
       ;;
       *$PKGMGR_INST_PATH*)
         sourcePath=$PKGMGR_INST_PATH/lib
-        destinPath=$APP_FMWK_DIR
+        newLink="@executable_path/../Frameworks/$lib"
+      ;;
+      *"/usr/lib/")
+        sourcePath=/usr/lib
         newLink="@executable_path/../Frameworks/$lib"
       ;;
     esac
+    destinPath=$APP_FMWK_DIR
+
     # check to see if the lib is already copied in, if not do so
     if [ ! -f "$destinPath/$lib" ] && [ ! -f "$destinPath/$lib.framework" ] ; then
       echo "    Installing $lib into app"
