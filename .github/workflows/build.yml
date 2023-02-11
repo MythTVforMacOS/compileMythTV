@@ -209,10 +209,6 @@ jobs:
         echo "Generating DMG for Application with plugins"
         APP="with_plugins/mythfrontend.app"
         FULLVERS=$($APP/Contents/MacOS/mythfrontend --version|grep "MythTV Version"|gsed "s/^.*Version : *//")
-        if [ -z "$var" ]
-          echo "mythfrontend is not-executable"
-          exit 1
-        fi
         VOL_NAME_WITH=MythFrontend-$ARCH-$OS_VERS-$FULLVERS-with-plugins
         hdiutil create -volname "$VOL_NAME_WITH" -srcfolder "$APP" -ov -format UDRO "$VOL_NAME_WITH"
         echo "DMG_WITH=$VOL_NAME_WITH.dmg" >> $GITHUB_ENV
