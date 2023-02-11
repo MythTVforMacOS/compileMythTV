@@ -258,7 +258,7 @@ installLibs(){
         sourcePath=$PKGMGR_INST_PATH/lib
         newLink="@executable_path/../Frameworks/$lib"
       ;;
-      *"/usr/lib/")
+      *usr/lib*)
         sourcePath=/usr/lib
         newLink="@executable_path/../Frameworks/$lib"
       ;;
