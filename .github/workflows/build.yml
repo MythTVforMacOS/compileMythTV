@@ -90,6 +90,11 @@ jobs:
           ;;
         esac
         echo "DEST_PATH=$DEST_PATH" >> $GITHUB_ENV
+    - name: Install X11 dependencies on MacOS
+      if: runner.os == 'macOS'
+      run: |
+        # this must be done before we remove homebrew in the macports Bootstrap phase
+        brew --cask install xquartz
     - name: "Bootstrap MacPorts"
       run: |
         if hash port 2>/dev/null; then
@@ -97,7 +102,10 @@ jobs:
         else
           curl -LJO https://raw.githubusercontent.com/GiovanniBussi/macports-ci/master/macports-ci
           source ./macports-ci install
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" --force
+          echo "PKGMGR_INST_PATH=/opt/local" >> $GITHUB_ENV
+          echo "PKGMGR_BIN_PATH=/opt/local/bin" >> $GITHUB_ENV
+          # now remove homebrew to prevent python conflicts
+          #/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" --force
         fi
     - name: "Install required ports"
       run: |
@@ -108,10 +116,10 @@ jobs:
         sudo port select --set virtualenv virtualenv${PYVERS}
         git clone https://github.com/MythTV/ansible.git
         cd ansible
-        sudo ansible-playbook-${PYDOTVERS} mythtv.yml --extra-vars="ansible_python_interpreter=/opt/local/bin/python${PYDOTVERS} database_version=${DBVERS} install_qtwebkit=true" --limit=localhost
+        sudo ${PKGMGR_BIN_PATH}/ansible-playbook-${PYDOTVERS} mythtv.yml --extra-vars="ansible_python_interpreter=${PKGMGR_BIN_PATH}/python${PYDOTVERS} database_version=${DBVERS} install_qtwebkit=true" --limit=localhost
         echo "Cleaning up macports builds"
-        sudo rm -rf /opt/local/var/macports/build/*
-        sudo rm -rf /opt/local/var/macports/distfiles/*
+        sudo rm -rf ${PKGMGR_INST_PATH}/var/macports/build/*
+        sudo rm -rf ${PKGMGR_INST_PATH}/var/macports/distfiles/*
     - name: ccache statistics [pre]
       run: |
         ccache -sV
@@ -123,6 +131,7 @@ jobs:
         mkdir -p with_plugins
         ditto "$GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv/mythtv/programs/mythfrontend/mythfrontend.app" with_plugins/mythfrontend.app
     - name: "Re-Build MythTV without Plugins"
+      if: ${{ env.DEBUGBUILD == 'false' }}
       run: |
         # Now make it without plugins
         /bin/zsh ./compileMythfrontendAnsible.zsh $BLD_FLGS --build-plugins=false
@@ -131,6 +140,7 @@ jobs:
         echo "Cleaning up workspace"
         rm -Rf $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv
     - name: "Sign App Bundles"
+      if: ${{ env.DEBUGBUILD == 'false' }}
       # Extract the secrets we defined earlier as environment variables
       env:
         MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
@@ -198,16 +208,16 @@ jobs:
 
           # finally sign the application
           echo "Codesigning Application"
-          codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist $APP
+          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist $APP
           # verify that the codesigning took
           echo "Verifying code signing"
-          codesign --verify -vv --deep $APP
+          /usr/bin/codesign --verify -vv --deep $APP
 
           # create file for submission
           /usr/bin/ditto -c -k --keepParent $APP $APP.zip
         done
     - name: "Notarize App Bundles"
-      if: "!contains(matrix.os, '10.15')"
+      if: ${{ !contains(matrix.os, '10.15') && env.DEBUGBUILD == 'false' }}
       env:
         MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
         PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
@@ -227,6 +237,7 @@ jobs:
           rm "$APP.zip"
         done
     - name: "Generate the DMGs"
+      if: ${{ env.DEBUGBUILD == 'false' }}
       run: |
         echo "Generating DMG for Application with plugins"
         APP="with_plugins/mythfrontend.app"
@@ -241,7 +252,7 @@ jobs:
         hdiutil create -volname "$VOL_NAME_WITHOUT" -srcfolder "$APP" -ov -format UDRO "$VOL_NAME_WITHOUT"
         echo "DMG_WITHOUT=$VOL_NAME_WITHOUT.dmg" >> $GITHUB_ENV
     - name: "Sign and Notarize the DMGs"
-      if: "!contains(matrix.os, '10.15')"
+      if: ${{ !contains(matrix.os, '10.15') && env.DEBUGBUILD == 'false' }}
       env:
         MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
         MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
@@ -264,12 +275,21 @@ jobs:
         echo "Notarizing $DMG_WITHOUT"
         xcrun notarytool submit "$DMG_WITHOUT" --keychain-profile "notarytool-profile" --wait
         xcrun stapler staple "$DMG_WITHOUT"
-    - name: "Upload to SourceForge"
+    - name: "Upload DMGs to SourceForge"
+      if: ${{ env.DEBUGBUILD == 'false' }}
       run: |
         # send files via scp
         echo "Transmitting new dmg files"
         sh -c "scp -o StrictHostKeyChecking=no $DMG_WITH ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
         sh -c "scp -o StrictHostKeyChecking=no $DMG_WITHOUT ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
+    - name: "DEBUG: Zip build dir and upload toSourceForge"
+      if: ${{ env.DEBUGBUILD == 'false' }}
+      run: |
+        /usr/bin/ditto -c -k --keepParent $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv ${APP}_DEBUG.zip
+        # send files via scp
+        echo "Transmitting new dmg files"
+        sh -c "scp -o StrictHostKeyChecking=no ${APP}_DEBUG.zip ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
+        sh -c "scp -o StrictHostKeyChecking=no ${APP}_DEBUG.zip ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
     - name: "Clean up keychain, certificate, and ssh keys"
       if: ${{ always() }}
       continue-on-error: true
