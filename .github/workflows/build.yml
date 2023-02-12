@@ -7,13 +7,9 @@ on:
         required: true
         type: string
         default: master
-      VERSNUM:
-        required: true
-        type: string
-        default: 34
       DEBUGBUILD:
         required: true
-        type: string
+        type: boolean
         default: false
 
 jobs:
@@ -39,7 +35,6 @@ jobs:
     - name: "Unpack input variables"
       run: |
         echo "MYTHBRANCH=${{ inputs.MYTHBRANCH }}" >> $GITHUB_ENV
-        echo "VERSNUM=${{ inputs.VERSNUM }}" >> $GITHUB_ENV
         echo "DEBUGBUILD=${{ inputs.DEBUGBUILD }}" >> $GITHUB_ENV
     - name: "Default compiler override check"
       if: ${{ contains(matrix.os, '11') }}
@@ -52,11 +47,24 @@ jobs:
         if [ $DEBUGBUILD ]; then
           BLD_FLGS="$BLD_FLGS --extra-conf-flags=--compile-type=debug"
         fi
+        case $MYTHBRANCH in
+          *fixes*)
+            VERSNUM=${MYTHBRANCH#*/}
+          ;;
+          *master*)
+            VERSNUM=34
+          ;;
+          *)
+            echo "Bad MYTHVERS"
+            exit 1
+          ;;
+        esac
         echo "BLD_FLGS=${BLD_FLGS}" >> $GITHUB_ENV
         echo "PKGARCH=$(/usr/bin/uname -m)" >> $GITHUB_ENV
         echo "OS_VERS=$(/usr/bin/sw_vers -productVersion)" >> $GITHUB_ENV
         echo "ARCH=$(/usr/bin/uname -m)" >> $GITHUB_ENV
         echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
+        echo "VERSNUM=${VERSNUM}" >> $GITHUB_ENV
     - name: Check ccache
       uses: actions/cache@v3
       with:

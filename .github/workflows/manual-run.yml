@@ -1,0 +1,22 @@
+name: "Manual build"
+
+on:
+  workflow_dispatch:
+    inputs:
+      mythbranch:
+        type: choice
+        description: "Choose a MythTV Version"
+        options:
+        - "fixes/32"
+        - "fixes/33"
+        - "master"
+      debug:
+        type: boolean
+        description: "Debug Build"
+jobs:
+  build-mythtv-fixes:
+    uses: ./.github/workflows/build.yml
+    with:
+      MYTHBRANCH: ${{ inputs.mythbranch }}
+      DEBUGBUILD: ${{ inputs.debug }}
+    secrets: inherit

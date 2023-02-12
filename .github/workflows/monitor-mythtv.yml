@@ -12,10 +12,8 @@ jobs:
     runs-on: 'macos-latest'
     env:
       MASTER_BRANCH: "master"
-      MASTER_VERS_NUM: 34
       UPDATE_MASTER: "false"
       FIXES_BRANCH: "fixes/33"
-      FIXES_VERS_NUM: 33
       UPDATE_FIXES: "false"
     outputs:
       MASTER_BRANCH: ${{ env.MASTER_BRANCH }}
@@ -88,7 +86,7 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
-      VERSNUM: ${{ needs.check-mythtv.outputs.MASTER_VERS_NUM }}
+      DEBUGBUILD: false
     secrets: inherit
   build-mythtv-fixes:
     needs: check-mythtv
@@ -96,5 +94,5 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
-      VERSNUM: ${{ needs.check-mythtv.outputs.FIXES_VERS_NUM }}
+      DEBUGBUILD: false
     secrets: inherit
