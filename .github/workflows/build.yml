@@ -93,7 +93,7 @@ jobs:
           ;;
         esac
         # override destination if DEBUGBUILD is true
-        if [ $DEBUGBUILD ]; then
+        if [ $DEBUGBUILD == "true" ]; then
           DEST_PATH="$BASE_PATH/debug/"
         fi
 
