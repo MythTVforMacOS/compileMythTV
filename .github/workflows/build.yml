@@ -312,9 +312,11 @@ jobs:
       continue-on-error: true
       run: |
         # for ephemeral runners, this stup is unnecessary...
-        security delete-keychain build.keychain
+        if [ $DEBUGBUILD == "false" ]; then
+          security delete-keychain build.keychain
+          rm certificate.p12
+        fi
         rm -Rf ~/.ssh
-        rm certificate.p12
     - name: ccache statistics [post]
       run: |
         ccache -sV
