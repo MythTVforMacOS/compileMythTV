@@ -94,7 +94,7 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         # this must be done before we remove homebrew in the macports Bootstrap phase
-        brew --cask install xquartz
+        brew install --cask xquartz
     - name: "Bootstrap MacPorts"
       run: |
         if hash port 2>/dev/null; then
