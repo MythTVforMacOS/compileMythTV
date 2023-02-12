@@ -299,7 +299,7 @@ jobs:
         echo "Transmitting new dmg files"
         sh -c "scp -o StrictHostKeyChecking=no $DMG_WITH ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
         sh -c "scp -o StrictHostKeyChecking=no $DMG_WITHOUT ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
-    - name: "DEBUG: Zip build dir and upload toSourceForge"
+    - name: "DEBUG: Zip build dir and upload to SourceForge"
       if: ${{ env.DEBUGBUILD == 'true' }}
       run: |
         /usr/bin/ditto -c -k --keepParent $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv ${APP}_DEBUG.zip
