@@ -305,8 +305,8 @@ jobs:
         /usr/bin/ditto -c -k --keepParent $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv ${APP}_DEBUG.zip
         # send files via scp
         echo "Transmitting new dmg files"
-        sh -c "scp -o StrictHostKeyChecking=no ${APP}_DEBUG.zip ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
-        sh -c "scp -o StrictHostKeyChecking=no ${APP}_DEBUG.zip ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
+        sh -c "scp -o StrictHostKeyChecking=no MythFrontend-$ARCH-$OS_VERS_DEBUG.zip ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
+        sh -c "scp -o StrictHostKeyChecking=no MythFrontend-$ARCH-$OS_VERS_DEBUG.zip ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
     - name: "Clean up keychain, certificate, and ssh keys"
       if: ${{ always() }}
       continue-on-error: true
