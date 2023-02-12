@@ -183,7 +183,7 @@ fi
 case $MP_CLANG in
     clang-mp*)
       CLANG_CMD=$PKGMGR_INST_PATH/bin/$MP_CLANG
-      CLANGPP_CMD=$PKGMGR_INST_PATH/bin/${MP_CLANG//clang/clang++}
+      CLANGPP_CMD=$PKGMGR_INST_PATH/bin/${MP_CLANG/clang/clang++}
       # check is specified compiler is installed 
       if ! [ -x "$(command -v $CLANG_CMD)" ]; then
         CLANG_PORT=${MP_CLANG//clang-mp/clang}
