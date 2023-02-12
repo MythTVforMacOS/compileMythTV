@@ -44,7 +44,7 @@ jobs:
     - name: "Setup environemental variables"
       run: |
         BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} --version=${MYTHBRANCH} --python-version=${PYVERS} --database-version=${DBVERS} --macports-clang=${COMPILER}"
-        if [ $DEBUGBUILD ]; then
+        if [ $DEBUGBUILD == "true" ]; then
           BLD_FLGS="$BLD_FLGS --extra-conf-flags=--compile-type=debug"
         fi
         case $MYTHBRANCH in
@@ -293,14 +293,14 @@ jobs:
         xcrun notarytool submit "$DMG_WITHOUT" --keychain-profile "notarytool-profile" --wait
         xcrun stapler staple "$DMG_WITHOUT"
     - name: "Upload DMGs to SourceForge"
-      if: ${{ env.DEBUGBUILD == 'true' }}
+      if: ${{ env.DEBUGBUILD == 'false' }}
       run: |
         # send files via scp
         echo "Transmitting new dmg files"
         sh -c "scp -o StrictHostKeyChecking=no $DMG_WITH ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
         sh -c "scp -o StrictHostKeyChecking=no $DMG_WITHOUT ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
     - name: "DEBUG: Zip build dir and upload toSourceForge"
-      if: ${{ env.DEBUGBUILD == 'false' }}
+      if: ${{ env.DEBUGBUILD == 'true' }}
       run: |
         /usr/bin/ditto -c -k --keepParent $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv ${APP}_DEBUG.zip
         # send files via scp
