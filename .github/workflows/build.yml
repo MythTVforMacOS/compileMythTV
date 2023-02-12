@@ -176,14 +176,18 @@ jobs:
           # Now sign the all frameworks and QT packages in the Frameworks directory
           echo "Codesigning Frameworks"
           find "${FRAMEWORKS_DIR}" -depth -type d -name "*.framework" -or -name "*.dylib" -or -name "*.bundle" | sed -e "s/\(.*framework\)/\1\/Versions\/A\//"|
-          while IFS= read -r -d '' line; do
+            while IFS= read -r -d '' line; do
               /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue "$line"
             done
+
+          find $APP  -type f -print0 | xargs -0 file | grep executable |
+            while IFS= read -r -d '' line; do
+              /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue "$line"
+            done
+
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/Qt*
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/*.framework
           /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/*.dylib
-          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/PlugIns/*.dylib
-          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" -v --timestamp --options runtime --entitlements entitlement.plist --continue $APP_FMWK_DIR/PlugIns/*/*.dylib
       
           # Next any files in the MacOS directory (binaries/scripts)
           echo "Codesigning Executables"
