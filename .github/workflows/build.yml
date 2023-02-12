@@ -276,7 +276,7 @@ jobs:
         xcrun notarytool submit "$DMG_WITHOUT" --keychain-profile "notarytool-profile" --wait
         xcrun stapler staple "$DMG_WITHOUT"
     - name: "Upload DMGs to SourceForge"
-      if: ${{ env.DEBUGBUILD == 'false' }}
+      if: ${{ env.DEBUGBUILD == 'true' }}
       run: |
         # send files via scp
         echo "Transmitting new dmg files"
