@@ -105,7 +105,7 @@ jobs:
           echo "PKGMGR_INST_PATH=/opt/local" >> $GITHUB_ENV
           echo "PKGMGR_BIN_PATH=/opt/local/bin" >> $GITHUB_ENV
           # now remove homebrew to prevent python conflicts
-          #/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" --force
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" --force
         fi
     - name: "Install required ports"
       run: |
