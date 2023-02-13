@@ -183,7 +183,7 @@ fi
 case $MP_CLANG in
     clang-mp*)
       CLANG_CMD=$PKGMGR_INST_PATH/bin/$MP_CLANG
-      CLANGPP_CMD=$PKGMGR_INST_PATH/bin/${MP_CLANG/clang/clang++}
+      CLANGPP_CMD=$PKGMGR_INST_PATH/bin/${MP_CLANG//clang/clang++}
       # check is specified compiler is installed 
       if ! [ -x "$(command -v $CLANG_CMD)" ]; then
         CLANG_PORT=${MP_CLANG//clang-mp/clang}
@@ -223,24 +223,25 @@ PKG_CONFIG_SYSTEM_INCLUDE_PATH=$PKGMGR_INST_PATH/include
 APP_DFLT_BNDL_ID="org.mythtv.mythfrontend"
 
 
-# installLibs finds all@rpath dylibs for the input binary/dylib
+# installLibs finds all @rpath dylibs for the input binary/dylib
 # copying any missing ones in the application's FrameWork directory
 # then updates the binary/dylib's internal link to point to copy location
 installLibs(){
   binFile=$1
   # find all externally-linked lib
-  pathDepList=$(/usr/bin/otool -L $binFile|grep -e rpath -e $PKGMGR_INST_PATH/lib -e $INSTALL_DIR -e "/usr/lib/")
+  pathDepList=$(/usr/bin/otool -L $binFile|grep -e rpath -e $PKGMGR_INST_PATH/lib -e $INSTALL_DIR)
   pathDepList=$(echo $pathDepList| gsed 's/(.*//')
   # loop over each lib
   while read -r dep; do
     lib=${dep##*/}
-    # we have multiple types of libs to work with, QT5, QT6, package managed, mythtv,
-    # and system setup the correct source / destination / linking schema for each
+    # we have multiple types of libs to work with, QT5, QT6, package managed, and mythtv
+    # setup the correct source / destination / linking schema for each
     case "$dep" in
       *Qt*)
         case "$QT_VERS" in
           *qt5*)
             sourcePath="$QT_PATH/lib/$lib.framework"
+            destinPath=$APP_FMWK_DIR
             newLink="@executable_path/../Frameworks/$lib.framework/Versions/5/$lib"
           ;;
           *)
@@ -252,19 +253,15 @@ installLibs(){
       ;;
       *libmyth*|*$INSTALL_DIR*)
         sourcePath=$INSTALL_DIR/lib
+        destinPath=$APP_FMWK_DIR
         newLink="@executable_path/../Frameworks/$lib"
       ;;
       *$PKGMGR_INST_PATH*)
         sourcePath=$PKGMGR_INST_PATH/lib
-        newLink="@executable_path/../Frameworks/$lib"
-      ;;
-      *usr/lib*)
-        sourcePath=/usr/lib
+        destinPath=$APP_FMWK_DIR
         newLink="@executable_path/../Frameworks/$lib"
       ;;
     esac
-    destinPath=$APP_FMWK_DIR
-
     # check to see if the lib is already copied in, if not do so
     if [ ! -f "$destinPath/$lib" ] && [ ! -f "$destinPath/$lib.framework" ] ; then
       echo "    Installing $lib into app"
@@ -550,7 +547,7 @@ fi
 
 if [ -z $ENABLE_MAC_BUNDLE ]; then
   echo "    Mac Bundle disabled - Skipping app bundling commands"
-  echo "    Rebasing@rpath to $RUNPREFIX"
+  echo "    Rebasing @rpath to $RUNPREFIX"
   for mythExec in $INSTALL_DIR/bin/myth*; do
         echo "     rebasing $mythExec"
         rebaseLibs $mythExec
@@ -561,7 +558,7 @@ fi
 # Assume that all commands past this point only apply to app bundling
 
 echo "------------ Update Mythfrontend.app to use internal dylibs ------------"
-# find all mythtv dylibs linked via@rpath in mythfrontend, move them into the
+# find all mythtv dylibs linked via @rpath in mythfrontend, move them into the
 # application application Framwork dir and update the internal link to point to
 # the application
 cd $APP_EXE_DIR

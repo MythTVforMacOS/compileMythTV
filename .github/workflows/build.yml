@@ -40,7 +40,7 @@ jobs:
       if: ${{ contains(matrix.os, '11') }}
       run: |
         # Bug Sur's build in compiler suddenly started having issues in 11.7.3...
-        echo "COMPILER=clang-15" >> $GITHUB_ENV
+        echo "COMPILER=clang-mp-15" >> $GITHUB_ENV
     - name: "Setup environemental variables"
       run: |
         BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} --version=${MYTHBRANCH} --python-version=${PYVERS} --database-version=${DBVERS} --macports-clang=${COMPILER}"
@@ -129,7 +129,8 @@ jobs:
         sudo port select --set ansible py${PYVERS}-ansible
         sudo port select --set virtualenv virtualenv${PYVERS}
         if [ $COMPILER != "default" ];then
-          sudo port install $COMPILER
+          CLANG_PORT=${COMPILER//clang-mp/clang}
+          sudo port install $CLANG_PORT
         fi
         git clone https://github.com/MythTV/ansible.git
         cd ansible
