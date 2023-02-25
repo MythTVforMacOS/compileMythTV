@@ -69,27 +69,28 @@ jobs:
     - name: "Setup deployment variables"
       run: |
         # setup destination folders
-        BASE_PATH="/home/frs/project/m/my/mythtvformacosx"
+        SF_PROJ_PATH="/home/frs/project/m/my/mythtvformacosx"
         case $OS_VERS in
           10.15*)
-            SF_PATH="$BASE_PATH/v$VERSNUM/macOS\ 10.15\ Catalina"
+            SF_PATH="$SF_PROJ_PATH/v$VERSNUM/RSYNC_DIR/macOS\ 10.15\ Catalina"
           ;;
           11*)
-            SF_PATH="$BASE_PATH/v$VERSNUM/macOS\ 11\ Big\ Sur"
+            SF_PATH="$SF_PROJ_PATH/v$VERSNUM/RSYNC_DIR/macOS\ 11\ Big\ Sur"
           ;;
           12*)
-            SF_PATH="$BASE_PATH/v$VERSNUM/macOS\ 12\ Monterey"
+            SF_PATH="$SF_PROJ_PATH/v$VERSNUM/RSYNC_DIR/macOS\ 12\ Monterey"
           ;;
           13*)
-            SF_PATH="$BASE_PATH/v$VERSNUM/macOS\ 13\ Ventura"
+            SF_PATH="$SF_PROJ_PATH/v$VERSNUM/RSYNC_DIR/macOS\ 13\ Ventura"
           ;;
           *)
-            SF_PATH="$BASE_PATH/debug/"
+            SF_PATH="$SF_PROJ_PATH/debug"
           ;;
         esac
+
         # override destination if DEBUGBUILD is true
         if [ $DEBUGBUILD == "true" ]; then
-          SF_PATH="$BASE_PATH/debug/"
+          SF_PATH="$SF_PROJ_PATH/debug/"
         fi
 
         # check is we're ARM based
@@ -290,18 +291,16 @@ jobs:
         echo "Notarizing $DMG_WITHOUT"
         xcrun notarytool submit "$DMG_WITHOUT" --keychain-profile "notarytool-profile" --wait
         xcrun stapler staple "$DMG_WITHOUT"
-    - name: "Archive Previous SourceForge Build"
-      if: ${{ env.DEBUGBUILD == 'false' }}
-      run: |
-        echo "Transmitting new dmg files"
-        sh -c "scp -o StrictHostKeyChecking=no ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_PATH/*.dmg' ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_ARCH_PATH'"
     - name: "Upload DMGs to SourceForge"
       if: ${{ env.DEBUGBUILD == 'false' }}
       run: |
-        # send files via scp
+        # Copy files to the archive dir first with git tag
         echo "Transmitting new dmg files"
-        sh -c "scp -o StrictHostKeyChecking=no $DMG_WITH ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_PATH'"
-        sh -c "scp -o StrictHostKeyChecking=no $DMG_WITHOUT ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_PATH'"
+        sh -c "scp -o StrictHostKeyChecking=no $DMG_WITH ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_ARCH_PATH'"
+        sh -c "scp -o StrictHostKeyChecking=no $DMG_WITHOUT ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_ARCH_PATH'"
+        # Next copy to the latest dir without the git version tag
+        sh -c "scp -o StrictHostKeyChecking=no $DMG_WITH ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_PATH/MythFrontend-$ARCH-$OS_VERS-v$VERSNUM-with-plugins.dmg'"
+        sh -c "scp -o StrictHostKeyChecking=no $DMG_WITHOUT ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_PATH/MythFrontend-$ARCH-$OS_VERS-v$VERSNUM.dmg'"
     - name: "DEBUG: Zip build dir and upload to SourceForge"
       if: ${{ env.DEBUGBUILD == 'true' }}
       run: |
