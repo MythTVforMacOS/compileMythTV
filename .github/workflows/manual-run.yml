@@ -7,9 +7,9 @@ on:
         type: choice
         description: "Choose a MythTV Version"
         options:
-        - "fixes/32"
-        - "fixes/33"
         - "master"
+        - "fixes/33"
+        - "fixes/32"
       debug:
         type: boolean
         description: "Debug Build"

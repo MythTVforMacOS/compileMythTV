@@ -299,7 +299,7 @@ jobs:
       if: ${{ env.DEBUGBUILD == 'false' }}
       run: |
         echo "Transmitting new dmg files"
-        sh -c "scp -o StrictHostKeyChecking=no ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_PATH/*.dmg'" ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_ARCH_PATH'"
+        sh -c "scp -o StrictHostKeyChecking=no ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_PATH/*.dmg' ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_ARCH_PATH'"
     - name: "Upload DMGs to SourceForge"
       if: ${{ env.DEBUGBUILD == 'false' }}
       run: |
