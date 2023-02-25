@@ -36,11 +36,6 @@ jobs:
       run: |
         echo "MYTHBRANCH=${{ inputs.MYTHBRANCH }}" >> $GITHUB_ENV
         echo "DEBUGBUILD=${{ inputs.DEBUGBUILD }}" >> $GITHUB_ENV
-    - name: "Default compiler override check"
-      if: ${{ contains(matrix.os, '11') }}
-      run: |
-        # Bug Sur's build in compiler suddenly started having issues in 11.7.3...
-        echo "COMPILER=clang-mp-15" >> $GITHUB_ENV
     - name: "Setup environemental variables"
       run: |
         BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} --version=${MYTHBRANCH} --python-version=${PYVERS} --database-version=${DBVERS} --macports-clang=${COMPILER}"
