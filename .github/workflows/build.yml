@@ -77,33 +77,35 @@ jobs:
         BASE_PATH="/home/frs/project/m/my/mythtvformacosx"
         case $OS_VERS in
           10.15*)
-            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS\ 10.15\ Catalina"
+            SF_PATH="$BASE_PATH/v$VERSNUM/macOS\ 10.15\ Catalina"
           ;;
           11*)
-            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS\ 11\ Big\ Sur"
+            SF_PATH="$BASE_PATH/v$VERSNUM/macOS\ 11\ Big\ Sur"
           ;;
           12*)
-            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS\ 12\ Monterey"
+            SF_PATH="$BASE_PATH/v$VERSNUM/macOS\ 12\ Monterey"
           ;;
           13*)
-            DEST_PATH="$BASE_PATH/v$VERSNUM/macOS\ 13\ Ventura"
+            SF_PATH="$BASE_PATH/v$VERSNUM/macOS\ 13\ Ventura"
           ;;
           *)
-            DEST_PATH="$BASE_PATH/debug/"
+            SF_PATH="$BASE_PATH/debug/"
           ;;
         esac
         # override destination if DEBUGBUILD is true
         if [ $DEBUGBUILD == "true" ]; then
-          DEST_PATH="$BASE_PATH/debug/"
+          SF_PATH="$BASE_PATH/debug/"
         fi
 
         # check is we're ARM based
         case $ARCH in
           arm*)
-            DEST_PATH="$DEST_PATH/ARM64/"
+            SF_PATH="$SF_PATH/ARM64/"
           ;;
         esac
-        echo "DEST_PATH=$DEST_PATH" >> $GITHUB_ENV
+        SF_ARCH_PATH="$SF_PATH/Archive/"
+        echo "SF_PATH=$SF_PATH" >> $GITHUB_ENV
+        echo "SF_ARCH_PATH=$SF_PATH" >> $GITHUB_ENV
     - name: Install X11 dependencies on MacOS
       if: runner.os == 'macOS'
       run: |
@@ -293,21 +295,26 @@ jobs:
         echo "Notarizing $DMG_WITHOUT"
         xcrun notarytool submit "$DMG_WITHOUT" --keychain-profile "notarytool-profile" --wait
         xcrun stapler staple "$DMG_WITHOUT"
+    - name: "Archive Previous SourceForge Build"
+      if: ${{ env.DEBUGBUILD == 'false' }}
+      run: |
+        echo "Transmitting new dmg files"
+        sh -c "scp -o StrictHostKeyChecking=no ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_PATH/*.dmg'" ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_ARCH_PATH'"
     - name: "Upload DMGs to SourceForge"
       if: ${{ env.DEBUGBUILD == 'false' }}
       run: |
         # send files via scp
         echo "Transmitting new dmg files"
-        sh -c "scp -o StrictHostKeyChecking=no $DMG_WITH ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
-        sh -c "scp -o StrictHostKeyChecking=no $DMG_WITHOUT ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
+        sh -c "scp -o StrictHostKeyChecking=no $DMG_WITH ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_PATH'"
+        sh -c "scp -o StrictHostKeyChecking=no $DMG_WITHOUT ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_PATH'"
     - name: "DEBUG: Zip build dir and upload to SourceForge"
       if: ${{ env.DEBUGBUILD == 'true' }}
       run: |
         /usr/bin/ditto -c -k --keepParent $GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv ${APP}_DEBUG.zip
         # send files via scp
         echo "Transmitting new dmg files"
-        sh -c "scp -o StrictHostKeyChecking=no MythFrontend-$ARCH-$OS_VERS_DEBUG.zip ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
-        sh -c "scp -o StrictHostKeyChecking=no MythFrontend-$ARCH-$OS_VERS_DEBUG.zip ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$DEST_PATH'"
+        sh -c "scp -o StrictHostKeyChecking=no MythFrontend-$ARCH-$OS_VERS_DEBUG.zip ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_PATH'"
+        sh -c "scp -o StrictHostKeyChecking=no MythFrontend-$ARCH-$OS_VERS_DEBUG.zip ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_PATH'"
     - name: "Clean up keychain, certificate, and ssh keys"
       if: ${{ always() }}
       continue-on-error: true
