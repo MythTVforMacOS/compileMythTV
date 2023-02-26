@@ -72,16 +72,16 @@ jobs:
         SF_PROJ_PATH="/home/frs/project/m/my/mythtvformacosx"
         case $OS_VERS in
           10.15*)
-            SF_PATH="$SF_PROJ_PATH/v$VERSNUM/RSYNC_DIR/macOS\ 10.15\ Catalina"
+            SF_PATH="$SF_PROJ_PATH/v$VERSNUM/macOS\ 10.15\ Catalina"
           ;;
           11*)
-            SF_PATH="$SF_PROJ_PATH/v$VERSNUM/RSYNC_DIR/macOS\ 11\ Big\ Sur"
+            SF_PATH="$SF_PROJ_PATH/v$VERSNUM/macOS\ 11\ Big\ Sur"
           ;;
           12*)
-            SF_PATH="$SF_PROJ_PATH/v$VERSNUM/RSYNC_DIR/macOS\ 12\ Monterey"
+            SF_PATH="$SF_PROJ_PATH/v$VERSNUM/macOS\ 12\ Monterey"
           ;;
           13*)
-            SF_PATH="$SF_PROJ_PATH/v$VERSNUM/RSYNC_DIR/macOS\ 13\ Ventura"
+            SF_PATH="$SF_PROJ_PATH/v$VERSNUM/macOS\ 13\ Ventura"
           ;;
           *)
             SF_PATH="$SF_PROJ_PATH/debug"
@@ -121,7 +121,7 @@ jobs:
         fi
     - name: "Install required ports"
       run: |
-        sudo port -N install rsync gsed ccache py${PYVERS}-ansible py${PYVERS}-virtualenv
+        sudo port -N install gsed ccache py${PYVERS}-ansible py${PYVERS}-virtualenv
         sudo port select --set python python${PYVERS}
         sudo port select --set python3 python${PYVERS}
         sudo port select --set ansible py${PYVERS}-ansible
@@ -136,9 +136,6 @@ jobs:
         echo "Cleaning up macports builds"
         sudo rm -rf ${PKGMGR_INST_PATH}/var/macports/build/*
         sudo rm -rf ${PKGMGR_INST_PATH}/var/macports/distfiles/*
-    - name: ccache statistics [pre]
-      run: |
-        ccache -sV
     - name: "Build MythTV with Plugins"
       run: |
         # First build with plugins
@@ -319,6 +316,3 @@ jobs:
           rm certificate.p12
         fi
         rm -Rf ~/.ssh
-    - name: ccache statistics [post]
-      run: |
-        ccache -sV
