@@ -99,9 +99,9 @@ jobs:
             SF_PATH="$SF_PATH/ARM64/"
           ;;
         esac
-        SF_ARCH_PATH="$SF_PATH/Archive/"
+        SF_ARCH_PATH="$SF_PATH/Archive"
         echo "SF_PATH=$SF_PATH" >> $GITHUB_ENV
-        echo "SF_ARCH_PATH=$SF_PATH" >> $GITHUB_ENV
+        echo "SF_ARCH_PATH=$SF_ARCH_PATH" >> $GITHUB_ENV
     - name: Install X11 dependencies on MacOS
       if: runner.os == 'macOS'
       run: |
