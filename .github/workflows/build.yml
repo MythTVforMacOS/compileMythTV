@@ -82,7 +82,8 @@ jobs:
             SF_PATH="$SF_PATH/macOS\ 12\ Monterey"
           ;;
           13*)
-            SF_PATH="$SF_PATH/macOS\ 13\ Ventura"
+            # Apparently the Ventura builders do not neet the escape "\"
+            SF_PATH="$SF_PATH/macOS 13 Ventura"
           ;;
           *)
             SF_PATH="$SF_PROJ_PATH/debug"
