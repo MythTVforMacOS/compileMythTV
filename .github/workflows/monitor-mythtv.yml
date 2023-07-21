@@ -1,4 +1,4 @@
-name: "Monitor MythTV - Master Repository"
+name: "Monitor and Build MythTV"
 
 on:
   schedule:
