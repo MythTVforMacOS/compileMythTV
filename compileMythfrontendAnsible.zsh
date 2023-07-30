@@ -184,7 +184,7 @@ case $MP_CLANG in
     clang-mp*)
       CLANG_CMD=$PKGMGR_INST_PATH/bin/$MP_CLANG
       CLANGPP_CMD=$PKGMGR_INST_PATH/bin/${MP_CLANG//clang/clang++}
-      # check is specified compiler is installed 
+      # check is specified compiler is installed
       if ! [ -x "$(command -v $CLANG_CMD)" ]; then
         CLANG_PORT=${MP_CLANG//clang-mp/clang}
         sudo port -N install $CLANG_PORT
@@ -374,10 +374,10 @@ else
          ANSIBLE_EXTRA_FLAGS="--extra-vars 'ansible_python_interpreter=$PYTHON_PKMGR_BIN database_version=$DATABASE_VERS install_qtwebkit=$BUILD_PLUGINS'"
       ;;
       *)
-         ANSIBLE_EXTRA_FLAGS="--extra-vars ansible_python_interpreter=$PYTHON_PKMGR_BIN database_version=$DATABASE_VERS" 
+         ANSIBLE_EXTRA_FLAGS="--extra-vars ansible_python_interpreter=$PYTHON_PKMGR_BIN database_version=$DATABASE_VERS"
       ;;
   esac
-  $ANSIBLE_PB_EXE $ANSIBLE_QT $ANSIBLE_FLAGS 
+  $ANSIBLE_PB_EXE $ANSIBLE_QT $ANSIBLE_FLAGS
 fi
 
 echo "------------ Source the Python Virtual Environment ------------"
@@ -654,7 +654,7 @@ mv -n $APP_DIR/PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/Resources/* $A
 cd $APP_DIR
 rm -Rf PYTHON_APP
 echo "    Copying in Site Packages from Virtual Enironment"
-cp -RL $PYTHON_VENV_PATH/lib/python$PYTHON_DOT_VERS/site-packages/* $APP_RSRC_DIR/lib/python$PYTHON_DOT_VERS/site-packages 
+cp -RL $PYTHON_VENV_PATH/lib/python$PYTHON_DOT_VERS/site-packages/* $APP_RSRC_DIR/lib/python$PYTHON_DOT_VERS/site-packages
 # do not need/want py2app in the application
 rm -Rf $APP_RSRC_DIR/lib/python$PYTHON_DOT_VERS/site-packages/py2app
 
