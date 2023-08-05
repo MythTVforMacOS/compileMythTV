@@ -171,6 +171,8 @@ case $MYTHTV_VERS in
       VERS=$(git ls-remote --tags  https://github.com/MythTV/mythtv.git|tail -n 1)
       VERS=${VERS##*/v}
       VERS=$(echo $VERS|tr -dc '0-9')
+      EXTRA_CONF_FLAGS =  --disable-qtwebkit \
+                          --disable-qtscript
     ;;
     # this condition covers supported versions prior to v33 where the fftw was removed
     *32*|*31*)
@@ -508,8 +510,6 @@ else
               --enable-libx265 \
               --enable-libvpx \
               --enable-bdjava \
-              --disable-qtwebkit \
-              --disable-qtscript \
               --python=$PYTHON_VENV_BIN
   echo "------------ Compiling Mythtv ------------"
   #compile mythfrontend
