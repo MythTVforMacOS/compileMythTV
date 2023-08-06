@@ -253,6 +253,7 @@ jobs:
         echo "Notarize Applications"
         for APP in "with_plugins/mythfrontend.app" "without_plugins/mythfrontend.app"
         do
+          security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
           xcrun notarytool submit "$APP.zip" --keychain-profile "notarytool-profile" --wait
           xcrun stapler staple "$APP"
           rm "$APP.zip"
