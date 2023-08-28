@@ -137,7 +137,7 @@ jobs:
         fi
         git clone https://github.com/MythTV/ansible.git
         cd ansible
-        sudo ${PKGMGR_BIN_PATH}/ansible-playbook-${PYDOTVERS} mythtv.yml --extra-vars="ansible_python_interpreter=${PKGMGR_BIN_PATH}/python${PYDOTVERS} database_version=${DBVERS} install_qtwebkit=true" --limit=localhost
+        ${PKGMGR_BIN_PATH}/ansible-playbook-${PYDOTVERS} mythtv.yml --extra-vars="ansible_python_interpreter=${PKGMGR_BIN_PATH}/python${PYDOTVERS} database_version=${DBVERS} install_qtwebkit=true" --limit=localhost
         echo "Cleaning up macports builds"
         # force ownership for the users ansible / mythtv temp directories (in case ansible sets these to root)
         sudo chown $(id -u):$(id -g) ~/.ansible
