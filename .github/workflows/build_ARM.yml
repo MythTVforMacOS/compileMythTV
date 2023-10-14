@@ -1,4 +1,4 @@
-name: "Reusable Workflow to Build Mythfrontednd - ARM64"
+name: "Reusable WF: Build Mythfrontednd (ARM)"
 
 on:
   workflow_call:
@@ -98,7 +98,7 @@ jobs:
         # check is we're ARM based
         case $ARCH in
           arm*)
-            SF_PATH="$SF_PATH/ARM64/"
+            SF_PATH="$SF_PATH/ARM64"
           ;;
         esac
         SF_ARCH_PATH="$SF_PATH/Archive/"

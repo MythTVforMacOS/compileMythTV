@@ -23,14 +23,14 @@ on:
 run-name: "Manual Build: ${{ inputs.mythbranch }} - Debug=${{ inputs.debug }} by @${{ github.actor }}"
 
 jobs:
-  build-mythtv-fixes-intel:
+  build-mythtv-intel:
     if: ${{ github.event.inputs.build_intel == 'true' }}
     uses: ./.github/workflows/build.yml
     with:
       MYTHBRANCH: ${{ inputs.mythbranch }}
       DEBUGBUILD: ${{ inputs.debug }}
     secrets: inherit
-  build-mythtv-fixes-arm64:
+  build-mythtv-arm64:
     if: ${{ github.event.inputs.build_arm64 == 'true' }}
     uses: ./.github/workflows/build_ARM.yml
     with:
