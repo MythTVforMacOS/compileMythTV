@@ -23,63 +23,62 @@ jobs:
       FIXES_VERS_NUM: ${{ env.FIXES_VERS_NUM }}
       UPDATE_FIXES: ${{ env.UPDATE_FIXES }}
     steps:
-    - uses: actions/checkout@master
-    - name: "Setup environmental variables"
-      run: |
-        echo "GIT_CACHE_DIR=$HOME/mythtv" >> $GITHUB_ENV
-    - name: "Setup Mythtv Repo Cache"
-      id: cache
-      env:
-        cache-name: mythtv
-      uses: actions/cache@v3
-      with:
-        path: ${{ env.GIT_CACHE_DIR }}
-        key: mythtv-git-${{ github.sha }}
-        restore-keys: mythtv-git-
-    - name: "Check for mythtv git repository updates"
-      id: gitcheck
-      run: |
-        if [ ! -d "$GIT_CACHE_DIR/master" ]; then
-          echo "Master: First time run or cache was deleted"
-          mkdir -p "$GIT_CACHE_DIR/master"
-          cd $GIT_CACHE_DIR/master
-          git clone -b "$MASTER_BRANCH" https://github.com/MythTV/mythtv.git
-          UPDATE_MASTER="true"
-        else
-          cd "$GIT_CACHE_DIR/master/mythtv"
-          MASTER_STATUS=$(git pull)
-          if [[ $MASTER_STATUS == *"Already up to date."* ]]; then
-            echo "master was not updated"
-            UPDATE_MASTER=false
-          else
-            echo "master was updated"
+      - uses: actions/checkout@master
+      - name: "Setup environmental variables"
+        run: |
+          echo "GIT_CACHE_DIR=$HOME/mythtv" >> $GITHUB_ENV
+      - name: "Setup Mythtv Repo Cache"
+        id: cache
+        env:
+          cache-name: mythtv
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.GIT_CACHE_DIR }}
+          key: mythtv-git-${{ github.sha }}
+          restore-keys: mythtv-git-
+      - name: "Check for mythtv git repository updates"
+        id: gitcheck
+        run: |
+          if [ ! -d "$GIT_CACHE_DIR/master" ]; then
+            echo "Master: First time run or cache was deleted"
+            mkdir -p "$GIT_CACHE_DIR/master"
+            cd $GIT_CACHE_DIR/master
+            git clone -b "$MASTER_BRANCH" https://github.com/MythTV/mythtv.git
             UPDATE_MASTER="true"
-          fi
-        fi
-        echo "UPDATE_MASTER=$UPDATE_MASTER" >> $GITHUB_ENV
-
-        if [ ! -d "$GIT_CACHE_DIR/fixes" ]; then
-          echo "Fixes: First time run or cache was deleted"
-          mkdir -p "$GIT_CACHE_DIR/fixes"
-          cd $GIT_CACHE_DIR/fixes
-          git clone -b "$FIXES_BRANCH" https://github.com/MythTV/mythtv.git
-          UPDATE_FIXES="true"
-        else
-          cd "$GIT_CACHE_DIR/fixes/mythtv"
-          FIXES_STATUS=$(git pull)
-          if [[ $FIXES_STATUS == *"Already up to date."* ]]; then
-            echo "fixes was not updated"
-            UPDATE_FIXES=false
           else
-            echo "fixes was updated"
-            UPDATE_FIXES="true"
+            cd "$GIT_CACHE_DIR/master/mythtv"
+            MASTER_STATUS=$(git pull)
+            if [[ $MASTER_STATUS == *"Already up to date."* ]]; then
+              echo "master was not updated"
+              UPDATE_MASTER=false
+            else
+              echo "master was updated"
+              UPDATE_MASTER="true"
+            fi
           fi
-        fi
-        echo "UPDATE_FIXES=$UPDATE_FIXES" >> $GITHUB_ENV
-    - name: "debug"
-      run: |
-        echo "MAST $UPDATE_MASTER"
-        echo "FIXES $UPDATE_FIXES"
+          echo "UPDATE_MASTER=$UPDATE_MASTER" >> $GITHUB_ENV
+            if [ ! -d "$GIT_CACHE_DIR/fixes" ]; then
+              echo "Fixes: First time run or cache was deleted"
+              mkdir -p "$GIT_CACHE_DIR/fixes"
+              cd $GIT_CACHE_DIR/fixes
+              git clone -b "$FIXES_BRANCH" https://github.com/MythTV/mythtv.git
+              UPDATE_FIXES="true"
+            else
+              cd "$GIT_CACHE_DIR/fixes/mythtv"
+              FIXES_STATUS=$(git pull)
+              if [[ $FIXES_STATUS == *"Already up to date."* ]]; then
+                echo "fixes was not updated"
+                UPDATE_FIXES=false
+              else
+                echo "fixes was updated"
+                UPDATE_FIXES="true"
+              fi
+            fi
+          echo "UPDATE_FIXES=$UPDATE_FIXES" >> $GITHUB_ENV
+      - name: "debug"
+        run: |
+          echo "MAST $UPDATE_MASTER"
+          echo "FIXES $UPDATE_FIXES"
   build-mythtv-master:
     needs: check-mythtv
     if: needs.check-mythtv.outputs.UPDATE_MASTER == 'true'
