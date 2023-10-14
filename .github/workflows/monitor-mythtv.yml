@@ -1,4 +1,4 @@
-name: "Monitor and Build MythTV"
+name: "Monitor and Build MythTV (Intel)"
 
 on:
   schedule:
