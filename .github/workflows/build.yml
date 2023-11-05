@@ -98,12 +98,10 @@ jobs:
             # check is we're ARM based
             case $ARCH in
               arm*)
-                SF_PATH="$SF_PATH/ARM64/"
+                SF_PATH="$SF_PATH/ARM64"
               ;;
             esac
-            SF_ARCH_PATH="$SF_PATH/Archive/"
             echo "SF_PATH=$SF_PATH" >> $GITHUB_ENV
-            echo "SF_ARCH_PATH=$SF_ARCH_PATH" >> $GITHUB_ENV
       - name: Install X11 dependencies on MacOS
         if: runner.os == 'macOS'
         run: |
@@ -303,11 +301,8 @@ jobs:
       - name: "Upload DMGs to SourceForge"
         if: ${{ env.DEBUGBUILD == 'false' }}
         run: |
-          # Copy files to the archive dir first with git tag
+          # Copy files to the SourceForge
           echo "Transmitting new dmg files"
-          sh -c "scp -o StrictHostKeyChecking=no $DMG_WITH ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_ARCH_PATH'"
-          sh -c "scp -o StrictHostKeyChecking=no $DMG_WITHOUT ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_ARCH_PATH'"
-          # Next copy to the latest dir without the git version tag
           sh -c "scp -o StrictHostKeyChecking=no $DMG_WITH ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_PATH/MythFrontend-$ARCH-$OS_VERS-v$VERSNUM-with-plugins.dmg'"
           sh -c "scp -o StrictHostKeyChecking=no $DMG_WITHOUT ${{ secrets.SF_LOGIN }}@frs.sourceforge.net:'$SF_PATH/MythFrontend-$ARCH-$OS_VERS-v$VERSNUM.dmg'"
       - name: "DEBUG: Zip build dir and upload to SourceForge"
