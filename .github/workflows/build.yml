@@ -132,6 +132,9 @@ jobs:
           fi
           git clone https://github.com/MythTV/ansible.git
           cd ansible
+          export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/opt/local/lib/mysql8/pkgconfig/
+          export MYSQLCLIENT_LDFLAGS=$(pkg-config --libs mysqlclient)
+          export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags mysqlclient)
           ${PKGMGR_BIN_PATH}/ansible-playbook-${PYDOTVERS} mythtv.yml --extra-vars="ansible_python_interpreter=${PKGMGR_BIN_PATH}/python${PYDOTVERS} database_version=${DBVERS} install_qtwebkit=true" --limit=localhost
           echo "Cleaning up macports builds"
           # force ownership for the users ansible / mythtv temp directories (in case ansible sets these to root)
@@ -139,12 +142,6 @@ jobs:
           sudo chown $(id -u):$(id -g) ~/.mythtv
           sudo rm -rf ${PKGMGR_INST_PATH}/var/macports/build/*
           sudo rm -rf ${PKGMGR_INST_PATH}/var/macports/distfiles/*
-          # mysql81 now needs some extra variables set to help phgconfig
-          if []; then
-            export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/opt/local/lib/mysql8/pkgconfig/
-            export MYSQLCLIENT_LDFLAGS=$(pkg-config --libs mysqlclient)
-            export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags mysqlclient)
-          fi
       - name: "Build MythTV with Plugins"
         run: |
           # First build with plugins
