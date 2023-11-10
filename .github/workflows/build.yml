@@ -128,9 +128,6 @@ jobs:
           sudo port select --set python3 python${PYVERS}
           sudo port select --set ansible py${PYVERS}-ansible
           sudo port select --set virtualenv virtualenv${PYVERS}
-          export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/opt/local/lib/mysql8/pkgconfig/
-          export MYSQLCLIENT_LDFLAGS=$(pkg-config --libs mysqlclient)
-          export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags mysqlclient)
           if [ $COMPILER != "default" ];then
             CLANG_PORT=${COMPILER//clang-mp/clang}
             sudo port install $CLANG_PORT
@@ -144,6 +141,12 @@ jobs:
           sudo chown $(id -u):$(id -g) ~/.mythtv
           sudo rm -rf ${PKGMGR_INST_PATH}/var/macports/build/*
           sudo rm -rf ${PKGMGR_INST_PATH}/var/macports/distfiles/*
+          # mysql81 now needs some extra variables set to help phgconfig
+          if []; then
+            export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/opt/local/lib/mysql8/pkgconfig/
+            export MYSQLCLIENT_LDFLAGS=$(pkg-config --libs mysqlclient)
+            export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags mysqlclient)
+          fi
       - name: "Build MythTV with Plugins"
         run: |
           # First build with plugins
