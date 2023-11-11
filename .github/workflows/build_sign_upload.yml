@@ -1,0 +1,146 @@
+---
+name: "Reusable WF: Build Sign and Upload Mythfrontend"
+
+on:  # yamllint disable-line rule:truthy
+  workflow_call:
+    inputs:
+      BUILD_x86_64:
+        required: true
+        type: boolean
+        default: false
+      BUILD_ARM64:
+        required: true
+        type: boolean
+        default: false
+      MYTHBRANCH:
+        required: true
+        type: string
+        default: master
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['macos-11', 'macos-12', 'macos-13', 'macos-13-xlarge']
+        arch: ['x86_64', 'arm64']
+        build_x86_64:
+          - ${{ inputs.BUILD_x86_64 }}
+        build_ARM64:
+          - ${{ inputs.BUILD_ARM64 }}
+        exclude:
+          - os: 'macos-11'
+            arch: 'arm64'
+          - os: 'macos-12'
+            arch: 'arm64'
+          - os: 'macos-13'
+            arch: 'arm64'
+          - os: 'macos-13-xlarge'
+            arch: 'x86_64'
+          - build_x86_64: false
+            os: 'macos-11'
+          - build_x86_64: false
+            os: 'macos-12'
+          - build_x86_64: false
+            os: 'macos-13'
+          - build_ARM64: false
+            os: 'macos-13-xlarge'
+    runs-on: ${{ matrix.os }}
+    env:
+      PYVERS: "311"
+      PYDOTVERS: "3.11"
+      DBVERS: "mysql8"
+      COMPILER: "default"
+      APP_OUT_DIR: "output_dir"
+      MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
+    steps:
+      - uses: actions/checkout@master
+      - name: "Setup environemental variables"
+        run: |
+          APP_OUT_DIR=$HOME/$APP_OUT_DIR
+          BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} \
+            --version=${MYTHBRANCH} \
+            --python-version=${PYVERS} \
+            --database-version=${DBVERS} \
+            --macports-clang=${COMPILER}"
+          case $MYTHBRANCH in
+            *fixes*)
+              VERSNUM=${MYTHBRANCH#*/}
+            ;;
+            *master*)
+              VERSNUM=34
+            ;;
+            *)
+              echo "Bad MYTHVERS"
+              exit 1
+            ;;
+          esac
+          echo "APP_OUT_DIR=${APP_OUT_DIR}" >> $GITHUB_ENV
+          EXE="mythfrontend.app"
+          echo "APP_W=${APP_OUT_DIR}/with_plugins/$EXE" >> $GITHUB_ENV
+          echo "APP_WO=${APP_OUT_DIR}/without_plugins/$EXE" >> $GITHUB_ENV
+          echo "BLD_FLGS=${BLD_FLGS}" >> $GITHUB_ENV
+          echo "PKGARCH=$(/usr/bin/uname -m)" >> $GITHUB_ENV
+          echo "OS_VERS=$(/usr/bin/sw_vers -productVersion)" >> $GITHUB_ENV
+          echo "ARCH=$(/usr/bin/uname -m)" >> $GITHUB_ENV
+          echo "VERSNUM=${VERSNUM}" >> $GITHUB_ENV
+      - name: "Install MacPorts"
+        uses: ./.github/actions/installPorts
+        id: install
+        with:
+          PYVERS: ${{ env.PYVERS }}
+          PYDOTVERS: ${{ env.PYDOTVERS }}
+          DBVERS: ${{ env.DBVERS }}
+          COMPILER: ${{ env.COMPILER }}
+      - name: "Compile MythTV"
+        uses: ./.github/actions/compile
+        id: compile
+        with:
+          APP_OUT_DIR: ${{ env.APP_OUT_DIR }}
+          APP_W: ${{ env.APP_W }}
+          APP_WO: ${{ env.APP_WO }}
+          OS: ${{ matrix.os }}
+          ARCH: ${{ matrix.arch }}
+          BLD_FLGS: ${{ env.BLD_FLGS }}
+          VERSNUM: ${{ env.VERSNUM }}
+      - name: "Test Mythfrontend"
+        id: test_app
+        shell: bash
+        run: |
+          echo "Testing mythfrontend.app"
+          EXE="$APP_W/Contents/MacOS/mythfrontend --version"
+          VERSTR=$($EXE |grep "MythTV Version"|gsed "s/^.*Version : *//")
+          echo "Extracted Version String: $VERSTR"
+          echo "Creating output DMG names"
+          DMG_W="MythFrontend-$ARCH-$OS_VERS-$VERSTR-with-plugins.dmg"
+          DMG_WO="MythFrontend-$ARCH-$OS_VERS-$VERSTR.dmg"
+          echo "DMG_W=$DMG_W" >> $GITHUB_ENV
+          echo "DMG_WO=$DMG_WO" >> $GITHUB_ENV
+      - name: "Codesign Mythfrontend"
+        uses: ./.github/actions/codesign
+        id: codesign
+        with:
+          APP_OUT_DIR: ${{ env.APP_OUT_DIR }}
+          APP_W: ${{ env.APP_W }}
+          APP_WO: ${{ env.APP_WO }}
+          DMG_W: ${{ env.DMG_W }}
+          DMG_WO: ${{ env.DMG_WO }}
+          CERT: ${{ secrets.PROD_MACOS_CERTIFICATE }}
+          CERT_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
+          CERT_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
+          CI_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
+          APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
+          TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
+          NOTA_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
+      - uses: webfactory/ssh-agent@master
+        with:
+          ssh-private-key: ${{ secrets.SF_PRIV_KEY }}
+      - name: "Upload to SourceForge"
+        uses: ./.github/actions/upload
+        id: upload
+        with:
+          DMG_W: ${{ env.DMG_W }}
+          DMG_WO: ${{ env.DMG_WO }}
+          VERSNUM: ${{ env.VERSNUM }}
+          OS_VERS: ${{ env.OS_VERS }}
+          ARCH: ${{ env.ARCH }}
+          SF_LOGIN: ${{ secrets.SF_LOGIN }}

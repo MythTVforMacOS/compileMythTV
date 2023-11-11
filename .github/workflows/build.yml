@@ -1,4 +1,4 @@
-name: "Reusable WF: Build Mythfrontednd (Intel)"
+name: "Reusable WF: Build Mythfrontend (Intel)"
 
 on:
   workflow_call:
@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@master
       # Make sure the@v0.4.1 matches the current version of the
       # action
-      - uses: webfactory/ssh-agent@v0.7.0
+      - uses: webfactory/ssh-agent@master
         with:
           ssh-private-key: ${{ secrets.SF_PRIV_KEY }}
       - name: "Unpack input variables"
@@ -38,6 +38,7 @@ jobs:
           echo "DEBUGBUILD=${{ inputs.DEBUGBUILD }}" >> $GITHUB_ENV
       - name: "Setup environemental variables"
         run: |
+          echo "runner ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers.d/runner
           BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} --version=${MYTHBRANCH} --python-version=${PYVERS} --database-version=${DBVERS} --macports-clang=${COMPILER}"
           if [ $DEBUGBUILD == "true" ]; then
             BLD_FLGS="$BLD_FLGS --extra-conf-flags=--compile-type=debug"

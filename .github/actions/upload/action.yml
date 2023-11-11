@@ -1,0 +1,86 @@
+---
+name: "Upload to SF"
+inputs:
+  DMG_W:
+    required: true
+    type: string
+  DMG_WO:
+    required: true
+    type: string
+  VERSNUM:
+    required: true
+    type: string
+  OS_VERS:
+    required: true
+    type: string
+  ARCH:
+    required: true
+    type: string
+  SF_LOGIN:
+    required: true
+    type: string
+runs:
+  using: "composite"
+  steps:
+    - name: "Setup deployment variables"
+      id: setup_dep_vars
+      shell: bash
+      env:
+        DMG_W: ${{ inputs.DMG_W }}
+        DMG_WO: ${{ inputs.DMG_WO }}
+        VERSNUM: ${{ inputs.VERSNUM }}
+        OS_VERS: ${{ inputs.OS_VERS }}
+        ARCH: ${{ inputs.ARCH }}
+        SF_LOGIN: ${{ inputs.SF_LOGIN }}
+      run: |
+        # setup destination folders
+        SF_PROJ_PATH="/home/frs/project/m/my/mythtvformacosx"
+        SF_PATH="$SF_PROJ_PATH/v$VERSNUM"
+        case $OS_VERS in
+          10.15*)
+            SF_PATH="$SF_PATH/macOS\ 10.15\ Catalina"
+            ;;
+          11*)
+            SF_PATH="$SF_PATH/macOS\ 11\ Big\ Sur"
+            ;;
+          12*)
+            SF_PATH="$SF_PATH/macOS\ 12\ Monterey"
+            ;;
+          13*)
+            # Apparently the Ventura builders do not neet the escape "\"
+            SF_PATH="$SF_PATH/macOS 13 Ventura"
+            ;;
+          *)
+            echo "Unsupported macOS Version"
+            exit 2
+            ;;
+        esac
+        # check if we're ARM based
+        case $ARCH in
+          arm*)
+            SF_PATH="$SF_PATH/ARM64"
+          ;;
+        esac
+        echo "Preparing the Upload links"
+        UL_FILENAME="MythFrontend-${ARCH}-${OS_VERS}-v${VERSNUM}-with-plugins.dmg"
+        DEST_WITH="${SF_LOGIN}@frs.sourceforge.net:${SF_PATH}/$UL_FILENAME"
+        UL_FILENAME="MythFrontend-${ARCH}-${OS_VERS}-v${VERSNUM}.dmg"
+        DEST_WITHOUT="${SF_LOGIN}@frs.sourceforge.net:${SF_PATH}/$UL_FILENAME"
+        echo "DEST_WITH=$DEST_WITH" >> $GITHUB_ENV
+        echo "DEST_WITHOUT=$DEST_WITHOUT" >> $GITHUB_ENV
+    - name: "Upload DMGs to SourceForge"
+      id: upload
+      shell: bash
+      run: |
+        echo "Tranmitting the dmg files"
+        SCP_CMD="scp -o StrictHostKeyChecking=no"
+        sh -c "${SCP_CMD} \"${DMG_W}\" \"${DEST_WITH}\""
+        sh -c "${SCP_CMD} \"${DMG_WO}\" \"${DEST_WITHOUT}\""
+    - name: "Clean up ssh keys"
+      id: cleanup_ssh
+      shell: bash
+      if: ${{ always() }}
+      continue-on-error: true
+      run: |
+        # for ephemeral runners, this stup is unnecessary...
+        rm -Rf ~/.ssh

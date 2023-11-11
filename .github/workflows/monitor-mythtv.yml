@@ -1,9 +1,10 @@
+---
 name: "Monitor and Build MythTV (Intel)"
 
-on:
+on:  # yamllint disable-line rule:truthy
   schedule:
     - cron: '0 0 * * 0'
-  workflow_dispatch: # adding the workflow_dispatch so it can be triggered manually
+  workflow_dispatch:  # workflow_dispatch allows this to be triggered manually
     inputs:
       text_to_print:
         description: 'Manual trigger'
@@ -12,9 +13,9 @@ jobs:
     runs-on: 'macos-latest'
     env:
       MASTER_BRANCH: "master"
-      UPDATE_MASTER: "false"
+      UPDATE_MASTER: false
       FIXES_BRANCH: "fixes/33"
-      UPDATE_FIXES: "false"
+      UPDATE_FIXES: false
     outputs:
       MASTER_BRANCH: ${{ env.MASTER_BRANCH }}
       MASTER_VERS_NUM: ${{ env.MASTER_VERS_NUM }}
@@ -75,23 +76,21 @@ jobs:
               fi
             fi
           echo "UPDATE_FIXES=$UPDATE_FIXES" >> $GITHUB_ENV
-      - name: "debug"
-        run: |
-          echo "MAST $UPDATE_MASTER"
-          echo "FIXES $UPDATE_FIXES"
   build-mythtv-master:
     needs: check-mythtv
     if: needs.check-mythtv.outputs.UPDATE_MASTER == 'true'
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/build_sign_upload.yml
     with:
+      BUILD_x86_64: true
+      BUILD_ARM64: false
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
-      DEBUGBUILD: false
     secrets: inherit
   build-mythtv-fixes:
     needs: check-mythtv
     if: needs.check-mythtv.outputs.UPDATE_FIXES == 'true'
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/build_sign_upload.yml
     with:
+      BUILD_x86_64: true
+      BUILD_ARM64: false
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
-      DEBUGBUILD: false
     secrets: inherit

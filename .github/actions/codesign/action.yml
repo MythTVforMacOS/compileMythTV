@@ -1,0 +1,192 @@
+---
+name: "Code Sign App"
+inputs:
+  APP_OUT_DIR:
+    required: true
+    type: string
+  APP_W:
+    required: true
+    type: string
+  APP_WO:
+    required: true
+    type: string
+  DMG_W:
+    required: true
+    type: string
+  DMG_WO:
+    required: true
+    type: string
+  CERT:
+    require: true
+    type: string
+  CERT_PWD:
+    require: true
+    type: string
+  CERT_NAME:
+    require: true
+    type: string
+  CI_PWD:
+    require: true
+    type: string
+  APPLE_ID:
+    require: true
+    type: string
+  TEAM_ID:
+    require: true
+    type: string
+  NOTA_PWD:
+    require: true
+    type: string
+runs:
+  using: "composite"
+  steps:
+    - name: "Setup Environment Variables"
+      id: setup_env
+      shell: bash
+      env:
+        APP_OUT_DIR: ${{ inputs.APP_OUT_DIR }}
+        APP_W: ${{ inputs.APP_W }}
+        APP_WO: ${{ inputs.APP_WO }}
+        DMG_W: ${{ inputs.APP_W }}
+        DMG_WO: ${{ inputs.APP_WO }}
+        CERT_PWD: ${{ inputs.CERT_PWD }}
+        CERT_NAME: ${{ inputs.CERT_NAME }}
+        CI_PWD: ${{ inputs.CI_PWD }}
+        APPLE_ID: ${{ inputs.APPLE_ID }}
+        TEAM_ID: ${{ inputs.TEAM_ID }}
+        NOTA_PWD: ${{ inputs.NOTA_PWD }}
+        APP_NAME: mythfrontend.app
+      run: |
+        echo "APP_OUT_DIR=$APP_OUT_DIR" >> $GITHUB_ENV
+        echo "APP_W=$APP_W" >> $GITHUB_ENV
+        echo "APP_WO=$APP_WO" >> $GITHUB_ENV
+        echo "CERT_PWD=$CERT_PWD" >> $GITHUB_ENV
+        echo "CERT_NAME=$CERT_NAME" >> $GITHUB_ENV
+        echo "CI_PWD=$CI_PWD" >> $GITHUB_ENV
+        echo "APPLE_ID=$APPLE_ID" >> $GITHUB_ENV
+        echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
+        echo "NOTA_PWD=$NOTA_PWD" >> $GITHUB_ENV
+    - name: "Setup Siging Certs"
+      id: setup_certs
+      shell: bash
+      run: |
+        # Setup siging certificates
+        # Turn our base64-encoded certificate back to a regular .p12 file
+        echo "${{ inputs.CERT }}" | base64 --decode > CERT.p12
+        # We need to create a new keychain, otherwise using the certificate will
+        # prompt with a UI dialog asking for the certificate password, which we
+        # can't use in a headless CI environment
+        if [ -f ~/Library/Keychains/build.keychain-db ]; then
+          security delete-keychain build.keychain
+        fi
+        security create-keychain -p "${CI_PWD}" build.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p "${CI_PWD}" build.keychain
+        security import CERT.p12 -P "${CERT_PWD}" -A -t cert -f pkcs12 -k build.keychain
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${CI_PWD}" build.keychain
+    - name: "Setup Notarization Credentials"
+      id: notarize_creds
+      shell: bash
+      if: ${{ !contains(matrix.os, '10.15') }}
+      run: |
+        # setup notraization keychain
+        echo "Create keychain profile"
+        security unlock-keychain -p "$CI_PWD" build.keychain
+        xcrun notarytool store-credentials "notary" --apple-id "${APPLE_ID}" --team-id "${TEAM_ID}" --password "${NOTA_PWD}"
+    - name: "Sign App Bundles"
+      id: sign_apps
+      shell: bash
+      run: |
+        echo "Signing App Bundles"
+        #setup code siging args
+
+        echo "Looping over applications"
+        for APP in "$APP_W" "$APP_WO"; do
+          APP_FMWK="${APP}/Contents/Frameworks"
+          APP_EXE="${APP}/Contents/MacOS"
+
+          # Per the Apple developer notes, you must codesign from the inside out
+          # Search the Applocation for so files
+          echo "Signing .so files in app"
+          find $APP -name '*.so' -print0 |
+            while IFS= read -r -d '' line; do
+              /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue "$line"
+            done
+          # Search for dylibs
+          echo "Codesigning all dylibs in app"
+          find $APP -name '*.dylib' -print0 |
+            while IFS= read -r -d '' line; do
+              /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue "$line"
+            done
+          # Now sign the all frameworks and QT packages in the Frameworks
+          echo "Codesigning Frameworks"
+          /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue $APP_FMWK/Qt*
+          /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue $APP_FMWK/*.framework
+          # Next any files in the MacOS directory (binaries/scripts)
+          echo "Codesigning Executables"
+          /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue $APP_EXE/python
+          /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue $APP_EXE/mythutil
+          /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue $APP_EXE/mythpreviewgen
+          /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue $APP_EXE/mythfrontend
+          # finally sign the application
+          echo "Codesigning Application"
+          /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue $APP
+          # verify that the codesigning took
+          echo "Verifying code signatures"
+          /usr/bin/codesign --verify -vv --deep $APP
+          # create file for submission
+          echo "Creating zip file for notarization"
+          /usr/bin/ditto -c -k --keepParent $APP $APP.zip
+        done
+    - name: "Notarize App Bundles"
+      id: notarize_apps
+      shell: bash
+      if: ${{ !contains(matrix.os, '10.15') }}
+      run: |
+        echo "Notarize Applications"
+        security unlock-keychain -p "$CI_PWD" build.keychain
+        for APP in "$APP_W" "$APP_WO"; do
+          security unlock-keychain -p "$CI_PWD" build.keychain
+          xcrun notarytool submit "$APP.zip" --keychain-profile "notary" --wait
+          xcrun stapler staple "$APP"
+          rm "$APP.zip"
+        done
+    - name: "Generate the DMGs"
+      id: generate_dmgs
+      shell: bash
+      run: |
+        cd ${APP_OUT_DIR}
+        # Fist generate the dmg with plugins
+        echo "Generating DMG for Application with plugins"
+        HDFLGS="-ov -format UDRO"
+        hdiutil create -volname "$DMG_W" -srcfolder "$APP_W" $HDFLGS "$DMG_W"
+        echo "DMG_W=${APP_OUT_DIR}/$DMG_W" >> $GITHUB_ENV
+        echo "Generating DMG for Application without plugins"
+        hdiutil create -volname "$DMG_WO" -srcfolder "$APP_WO" $HDFLGS "$DMG_WO"
+        echo "DMG_WO=${APP_OUT_DIR}/${DMG_WO}" >> $GITHUB_ENV
+        # cleanup apps since they are no longer needed
+        rm -Rf $APP_W
+        rm -Rf $APP_WO
+    - name: "Sign and Notarize the DMGs"
+      id: sign_dmgs
+      shell: bash
+      if: ${{ !contains(matrix.os, '10.15') }}
+      run: |
+        echo "Notarizing DMGs"
+        for DMG in "${DMG_W}" "${DMG_WO}"; do
+          echo "Codesigning $DMG"
+          security unlock-keychain -p "$CI_PWD" build.keychain
+          codesign --force --sign "$CERT_NAME" "$DMG"
+          echo "Notarizing $DMG"
+          xcrun notarytool submit "$DMG" --keychain-profile "notary" --wait
+          xcrun stapler staple "$DMG"
+        done
+    - name: "Clean up keychain and CERTs"
+      id: cleanup_certs
+      shell: bash
+      if: ${{ always() }}
+      continue-on-error: true
+      run: |
+        # for ephemeral runners, this stup is unnecessary...
+        security delete-keychain build.keychain
+        rm CERT.p12

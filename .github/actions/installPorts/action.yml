@@ -1,0 +1,107 @@
+---
+name: "Install Ports"
+inputs:
+  PYVERS:
+    required: true
+    type: string
+  PYDOTVERS:
+    required: true
+    type: string
+  DBVERS:
+    required: true
+    type: string
+  COMPILER:
+    required: true
+    type: string
+runs:
+  using: "composite"
+  steps:
+    - name: "Install X11 dependencies on MacOS"
+      id: install_x11
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        # this must be done before we remove homebrew
+        brew install --cask xquartz
+    - name: "Bootstrap MacPorts"
+      id: install_macports
+      shell: bash
+      env:
+        GH_URL: "https://raw.githubusercontent.com"
+        MP_URL: "GiovanniBussi/macports-ci/master/macports-ci"
+      run: |
+        if hash port 2>/dev/null; then
+          echo "Macports is already installed"
+        else
+          curl -LJO "${GH_URL}/${MP_URL}"
+          source ./macports-ci install
+          echo "PKGMGR_PATH=/opt/local" >> $GITHUB_ENV
+          echo "PKGMGR_BIN=/opt/local/bin" >> $GITHUB_ENV
+          export PATH=$PATH:$PKGMGR_BIN
+        fi
+    - name: "Remove Homebrew"
+      id: remove_homebrew
+      shell: bash
+      env:
+        GH_URL: "https://raw.githubusercontent.com"
+        HB_URL: "Homebrew/install/HEAD/uninstall.sh"
+      run: |
+        if hash brew 2>/dev/null; then
+          # now remove homebrew to prevent python conflicts
+          /bin/bash -c "$(curl -fsSL ${GH_URL}/${HB_URL})" --force
+          sudo rm -Rf /usr/local/bin/brew
+        fi
+    - name: "Install required support ports"
+      id: install_req_ports
+      shell: bash
+      env:
+        PYVERS: ${{ inputs.PYVERS }}
+        COMPILER: ${{ inputs.COMPILER }}
+      run: |
+        sudo port -N install gsed \
+          ccache \
+          py${PYVERS}-ansible \
+          py${PYVERS}-virtualenv \
+          py${PYVERS}-pkgconfig \
+          py${PYVERS}-setuptools \
+          py${PYVERS}-pip \
+          ${DBVERS}
+        sudo port select --set python python${PYVERS}
+        sudo port select --set python3 python${PYVERS}
+        sudo port select --set pip pip${PYVERS}
+        sudo port select --set pip3 pip${PYVERS}
+        sudo port select --set ansible py${PYVERS}-ansible
+        sudo port select --set virtualenv virtualenv${PYVERS}
+        if [ $COMPILER != "default" ];then
+          CLANG_PORT=${COMPILER//clang-mp/clang}
+          sudo port install $CLANG_PORT
+        fi
+        echo "ANS_PB=${PKGMGR_BIN}/ansible-playbook-${PYDOTVERS}" >> $GITHUB_ENV
+    - name: "Install required ports via ansible"
+      id: ansible_install
+      shell: bash
+      env:
+        PYDOTVERS: ${{ inputs.PYDOTVERS }}
+        DBVERS: ${{ inputs.DBVERS }}
+      run: |
+        echo "Cloninng MythTV anible repo"
+        git clone https://github.com/MythTV/ansible.git
+        cd ansible
+        echo "Installing ports via ansible playbook"
+        export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/opt/local/lib/mysql8/pkgconfig/
+        export MYSQLCLIENT_LDFLAGS=$(pkg-config --libs mysqlclient)
+        export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags mysqlclient)
+        XTRA_VARS="ansible_python_interpreter=${PKGMGR_BIN}/python${PYDOTVERS} \
+          database_version=${DBVERS} \
+          install_qtwebkit=true"
+        ${ANS_PB} mythtv.yml --extra-vars="$XTRA_VARS" --limit=localhost
+    - name: "Cleanup maports install"
+      id: port_cleanup
+      shell: bash
+      run: |
+        echo "Cleaning up macports builds"
+        # force ownership for the users ansible / mythtv temp directories
+        sudo chown $(id -u):$(id -g) ~/.ansible
+        sudo chown $(id -u):$(id -g) ~/.mythtv
+        sudo rm -rf ${PKGMGR_PATH}/var/macports/build/*
+        sudo rm -rf ${PKGMGR_PATH}/var/macports/distfiles/*

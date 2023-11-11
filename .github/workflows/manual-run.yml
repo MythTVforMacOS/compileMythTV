@@ -1,6 +1,7 @@
+---
 name: "Manual build"
 
-on:
+on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
     inputs:
       mythbranch:
@@ -10,30 +11,48 @@ on:
           - "master"
           - "fixes/33"
           - "fixes/32"
-      build_intel:
+      BUILD_x86_64:
         type: boolean
-        description: "Build Intel"
-      build_arm64:
+        description: "Build x86_64"
+      BUILD_ARM64:
         type: boolean
-        description: "Build Arm64"
-      debug:
-        type: boolean
-        description: "Debug Build"
+        description: "Build ARM64"
 
-run-name: "Manual Build: ${{ inputs.mythbranch }} - Debug=${{ inputs.debug }} by @${{ github.actor }}"
+run-name: "Manual Build: ${{ inputs.mythbranch }} by @${{ github.actor }}"
 
 jobs:
-  build-mythtv-intel:
-    if: ${{ github.event.inputs.build_intel == 'true' }}
-    uses: ./.github/workflows/build.yml
+  check-inputs:
+    runs-on: 'macos-latest'
+    env:
+      mythbranch: ${{ inputs.mythbranch }}
+      BUILD_x86_64: ${{ inputs.BUILD_x86_64 }}
+      BUILD_ARM64: ${{ inputs.BUILD_ARM64 }}
+    steps:
+      - name:
+        run: |
+          outputSTR="Building MyhtvTV Branch $mythbranch for"
+          if [ $BUILD_x86_64 ]; then
+            outputSTR="$outputSTR x86_64"
+          fi
+          if [ $BUILD_ARM64 ]; then
+            outputSTR="$outputSTR ARM64"
+          fi
+          echo $outputSTR
+  build-mythtv-x86_64:
+    needs: check-inputs
+    if: ${{ github.event.inputs.BUILD_x86_64 == 'true' }}
+    uses: ./.github/workflows/build_sign_upload.yml
     with:
+      BUILD_x86_64: true
+      BUILD_ARM64: false
       MYTHBRANCH: ${{ inputs.mythbranch }}
-      DEBUGBUILD: ${{ inputs.debug }}
     secrets: inherit
   build-mythtv-arm64:
-    if: ${{ github.event.inputs.build_arm64 == 'true' }}
-    uses: ./.github/workflows/build_ARM.yml
+    needs: check-inputs
+    if: ${{ github.event.inputs.BUILD_ARM64 == 'true' }}
+    uses: ./.github/workflows/build_sign_upload.yml
     with:
+      BUILD_x86_64: false
+      BUILD_ARM64: true
       MYTHBRANCH: ${{ inputs.mythbranch }}
-      DEBUGBUILD: ${{ inputs.debug }}
     secrets: inherit
