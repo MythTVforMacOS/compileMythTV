@@ -489,6 +489,11 @@ fi
 echo "------------ Configuring Mythtv ------------"
 # configure mythfrontend
 cd "$SRC_DIR" || exit 1
+GIT_VERS=$(git log -1 --format="%h")
+GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
+GIT_TAG=$(git describe --tags --exact-match 2>/dev/null)
+GIT_BRANCH_OR_TAG="${GIT_BRANCH:-${GIT_TAG}}"
+
 if [ -d "$APP" ]; then
   echo "    Cleaning up past Mythfrontend application"
   rm -Rf "$APP"
@@ -607,12 +612,17 @@ mkdir -p "$APP_RSRC_DIR/share/mythtv"
 cp -RHn "$INSTALL_DIR/share/mythtv"/* "$APP_RSRC_DIR"/share/mythtv/
 
 echo "------------ Updating application plist  ------------"
-# Update the plist.  Must be done after macdeployqt else macdeployqt gets pointed to the wrong bundle
-gsed -i "8c\  <string>application.icns</string>" "$APP_INFO_FILE"
-gsed -i "10c\ <string>$APP_BNDL_ID</string>\n <key>CFBundleInfoDictionaryVersion</key>\n  <string>6.0</string>" "$APP_INFO_FILE"
-gsed -i "14a\ <key>CFBundleShortVersionString</key>\n <string>$VERS</string>" "$APP_INFO_FILE"
-gsed -i "18c\ <string>mythtv</string>\n <key>NSAppleScriptEnabled</key>\n <string>NO</string>\n <key>CFBundleGetInfoString</key>\n  <string></string>\n <key>CFBundleVersion</key>\n  <string>1.0</string>\n  <key>NSHumanReadableCopyright</key>\n <string>MythTV Team</string>" "$APP_INFO_FILE"
-gsed -i "34a\ <key>ATSApplicationFontsPath</key>\n  <string>share/mythtv/fonts</string>" "$APP_INFO_FILE"
+# Update the plist
+/usr/libexec/PlistBuddy -c "Add ATSApplicationFontsPath string 'share/mythtv/fonts'" "$APP_INFO_FILE"
+/usr/libexec/PlistBuddy -c "Add CFBundleGetInfoString string ''" "$APP_INFO_FILE"
+/usr/libexec/PlistBuddy -c "Set CFBundleIdentifier $APP_BNDL_ID" "$APP_INFO_FILE"
+/usr/libexec/PlistBuddy -c "Add CFBundleInfoDictionaryVersion string 6.0" "$APP_INFO_FILE"
+/usr/libexec/PlistBuddy -c "Set CFBundleIconFile application.icns" "$APP_INFO_FILE"
+/usr/libexec/PlistBuddy -c "Set CFBundleSignature mythtv" "$APP_INFO_FILE"
+/usr/libexec/PlistBuddy -c "Add CFBundleShortVersionString string $VERS" "$APP_INFO_FILE"
+/usr/libexec/PlistBuddy -c "Add CFBundleVersion string $GIT_BRANCH-$GIT_VERS" "$APP_INFO_FILE"
+/usr/libexec/PlistBuddy -c "Add NSAppleScriptEnabled string NO" "$APP_INFO_FILE"
+/usr/libexec/PlistBuddy -c "Add NSHumanReadableCopyright string 'MythTV Team'" "$APP_INFO_FILE"
 
 echo "------------ Copying libmyth* dylibs to Application Bundle ------------"
 mkdir -p "$APP_FMWK_DIR/PlugIns"
@@ -789,7 +799,7 @@ cd \$BASEDIR
 chmod +x mythfrontend.sh
 
 # Update the plist to use the startup script
-gsed -i "6c\        <string>mythfrontend.sh</string>" "$APP_INFO_FILE"
+/usr/libexec/PlistBuddy -c "Set CFBundleExecutable mythfrontend.sh" "$APP_INFO_FILE"
 
 echo "------------ Build Complete ------------"
 echo "     Application is located:"
