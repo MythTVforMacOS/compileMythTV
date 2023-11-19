@@ -699,9 +699,10 @@ fi
 
 echo "------------ Deploying python packages into application  ------------"
 # make an application from  to package up python and the correct support libraries
-mkdir -p "$APP_DIR/PYTHON_APP"
+PYTHON_APP=$APP_DIR/PYTHON_APP
+mkdir -p "$PYTHON_APP"
 export PYTHONPATH=$INSTALL_DIR/lib/python$PYTHON_DOT_VERS/site-packages
-cd "$APP_DIR/PYTHON_APP" || exit 1
+cd "$PYTHON_APP" || exit 1
 if [ -f setup.py ]; then
   rm setup.py
 fi
@@ -715,14 +716,14 @@ $PY2APPLET_BIN -i "$PY2APP_PKGS" -p "$PY2APP_PKGS" --use-pythonpath --no-report-
 $PYTHON_VENV_BIN setup.py -q py2app 2>&1 > /dev/null
 # now we need to copy over the python app's pieces into the mythfrontend.app to get it working
 echo "    Copying in Python Framework libraries"
-mv -n "$APP_DIR/PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/Frameworks"/* "$APP_FMWK_DIR"
+mv -n "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/Frameworks"/* "$APP_FMWK_DIR"
 echo "    Copying in Python Binary"
-mv "$APP_DIR/PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/MacOS/python" "$APP_EXE_DIR"
+mv "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/MacOS/python" "$APP_EXE_DIR"
 if [ -f "$APP_EXE_DIR/python3" ]; then
   ln -s "$APP_EXE_DIR/pyton" "$APP_EXE_DIR/python3"
 fi
 echo "    Copying in Python Resources"
-mv -n "$APP_DIR/PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/Resources"/* "$APP_RSRC_DIR"
+mv -n "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/Resources"/* "$APP_RSRC_DIR"
 # clean up temp application
 cd "$APP_DIR" || exit 1
 rm -Rf "$PYTHON_APP"
