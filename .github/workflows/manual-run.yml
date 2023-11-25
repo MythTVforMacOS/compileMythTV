@@ -45,6 +45,7 @@ jobs:
     with:
       BUILD_x86_64: true
       BUILD_ARM64: false
+      USE_CCACHE: false
       MYTHBRANCH: ${{ inputs.mythbranch }}
     secrets: inherit
   build-mythtv-arm64:
@@ -54,5 +55,6 @@ jobs:
     with:
       BUILD_x86_64: false
       BUILD_ARM64: true
+      USE_CCACHE: false
       MYTHBRANCH: ${{ inputs.mythbranch }}
     secrets: inherit

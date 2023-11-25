@@ -16,6 +16,10 @@ on:  # yamllint disable-line rule:truthy
         required: true
         type: string
         default: master
+      USE_CCACHE:
+        required: true
+        type: boolean
+        default: false
 jobs:
   build:
     strategy:
@@ -52,6 +56,7 @@ jobs:
       COMPILER: "default"
       APP_OUT_DIR: "output_dir"
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
+      USE_CCACHE: ${{ inputs.USE_CCACHE }}
     steps:
       - uses: actions/checkout@master
       - name: "Setup environemental variables"
@@ -102,6 +107,7 @@ jobs:
           ARCH: ${{ matrix.arch }}
           BLD_FLGS: ${{ env.BLD_FLGS }}
           VERSNUM: ${{ env.VERSNUM }}
+          USE_CCACHE: ${{ env.USE_CCACHE }}
       - name: "Test Mythfrontend"
         id: test_app
         shell: bash
