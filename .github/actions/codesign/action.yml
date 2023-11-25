@@ -87,7 +87,6 @@ runs:
     - name: "Setup Notarization Credentials"
       id: notarize_creds
       shell: bash
-      if: ${{ !contains(matrix.os, '10.15') }}
       run: |
         # setup notraization keychain
         echo "Create keychain profile"
@@ -141,7 +140,6 @@ runs:
     - name: "Notarize App Bundles"
       id: notarize_apps
       shell: bash
-      if: ${{ !contains(matrix.os, '10.15') }}
       run: |
         echo "Notarize Applications"
         security unlock-keychain -p "$CI_PWD" build.keychain
@@ -170,7 +168,6 @@ runs:
     - name: "Sign and Notarize the DMGs"
       id: sign_dmgs
       shell: bash
-      if: ${{ !contains(matrix.os, '10.15') }}
       run: |
         echo "Notarizing DMGs"
         for DMG in "${DMG_W}" "${DMG_WO}"; do

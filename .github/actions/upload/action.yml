@@ -37,9 +37,6 @@ runs:
         SF_PROJ_PATH="/home/frs/project/m/my/mythtvformacosx"
         SF_PATH="$SF_PROJ_PATH/v$VERSNUM"
         case $OS_VERS in
-          10.15*)
-            SF_PATH="$SF_PATH/macOS\ 10.15\ Catalina"
-            ;;
           11*)
             SF_PATH="$SF_PATH/macOS\ 11\ Big\ Sur"
             ;;
