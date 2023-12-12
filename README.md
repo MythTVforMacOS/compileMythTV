@@ -1,6 +1,7 @@
-# Compiling Mythfrontend via Ansible and MacPorts
-This is directory contains the a packaging script for MythFrontend for MacOS and its README.txt
-instructions. The use of this script is documented on the mythtv wiki here:
+# Compiling MythTV via Ansible and MacPorts
+This is directory contains a packaging script for MythFrontend for MacOS and a codesigning utlity.
+The use of this script is documented on the mythtv wiki here:
+>>>>>>> 6863273 (OSX: Fix homebrew lib renaming on x86)
 https://www.mythtv.org/wiki/Building_MythFrontend_on_Mac_OS_X
 
 * **compileMythtvAnsible.zsh** - A script that creates a MythFrontend.app and .dmg files. The script downloads and installs any mythtv/mythplugins dependencies as specified in the mythtv ansible repo via MacPorts.  It also clones the appropriate ansible/mythtv/packaging git repos from github, compiles mythtv and optionally mythplugins, bundles the necessary Support libraries and files into the application, and finally generates a .dmg file for distribution.
