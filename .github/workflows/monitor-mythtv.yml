@@ -85,6 +85,7 @@ jobs:
       BUILD_ARM64: false
       USE_CCACHE: true
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
+      PKGMGR: macports
     secrets: inherit
   build-mythtv-fixes:
     needs: check-mythtv
@@ -95,4 +96,5 @@ jobs:
       BUILD_ARM64: false
       USE_CCACHE: true
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
+      PKGMGR: macports
     secrets: inherit

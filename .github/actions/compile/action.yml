@@ -26,6 +26,9 @@ inputs:
     required: false
     type: boolean
     default: false
+  PKGMGR:
+    require: true
+    type: string
 runs:
   using: "composite"
   steps:
@@ -47,7 +50,7 @@ runs:
       if: ${{ inputs.USE_CCACHE == 'true' }}
       uses: actions/cache@master
       env:
-        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}
+        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}-${{ inputs.PKGMGR }}
       with:
         path: ${{ env.CCACHE_DIR }}
         key: mythtv-ccache-${{ env.CCACHE_STORE }}-${{ github.sha }}
@@ -62,7 +65,7 @@ runs:
       run: |
         # First build with plugins
         export CCACHE_DIR=${{ env.CCACHE_DIR }}
-        zsh ./compileMythfrontendAnsible.zsh $BLD_FLGS --build-plugins=true
+        zsh ./compileMythtvAnsible.zsh $BLD_FLGS --build-plugins=true
         echo "compile complete, copying into $APP_OUT_DIR"
         ditto "${APP_OUTPUT}" "${APP_W}"
     - name: "Re-Build MythTV without Plugins"
@@ -75,7 +78,7 @@ runs:
       run: |
         # Now make it without plugins
         BLD_FLGS="$BLD_FLGS --skip-build=true --build-plugins=false"
-        zsh ./compileMythfrontendAnsible.zsh $BLD_FLGS
+        zsh ./compileMythtvAnsible.zsh $BLD_FLGS
         echo "compile complete, copying into $APP_OUT_DIR"
         ditto "${APP_OUTPUT}" "${APP_WO}"
     - name: "Clean Up Workspace"
@@ -88,7 +91,7 @@ runs:
       id: ccache_save
       if: ${{ steps.build_with.outcome == 'success' && inputs.USE_CCACHE == 'true' }}
       env:
-        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}
+        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}-${{ inputs.PKGMGR }}
       with:
         path: ${{ env.CCACHE_DIR }}
         key: mythtv-ccache-${{ env.CCACHE_STORE }}-${{ github.sha }}

@@ -13,6 +13,9 @@ inputs:
   OS_VERS:
     required: true
     type: string
+  PKGMGR:
+    required: true
+    type: string
   ARCH:
     required: true
     type: string
@@ -30,6 +33,7 @@ runs:
         DMG_WO: ${{ inputs.DMG_WO }}
         VERSNUM: ${{ inputs.VERSNUM }}
         OS_VERS: ${{ inputs.OS_VERS }}
+        PKGMGR: ${{ inputs.PKGMGR }}
         ARCH: ${{ inputs.ARCH }}
         SF_LOGIN: ${{ inputs.SF_LOGIN }}
       run: |

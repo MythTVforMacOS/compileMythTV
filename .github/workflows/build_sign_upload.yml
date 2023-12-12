@@ -20,6 +20,10 @@ on:  # yamllint disable-line rule:truthy
         required: true
         type: boolean
         default: false
+      PKGMGR:
+        required: true
+        type: string
+        default: macports
 jobs:
   build:
     strategy:
@@ -31,6 +35,8 @@ jobs:
           - ${{ inputs.BUILD_x86_64 }}
         build_ARM64:
           - ${{ inputs.BUILD_ARM64 }}
+        build_homebrew:
+          - ${{ inputs.PKGMGR == 'homebrew' }}
         exclude:
           - os: 'macos-11'
             arch: 'arm64'
@@ -48,25 +54,47 @@ jobs:
             os: 'macos-13'
           - build_ARM64: false
             os: 'macos-13-xlarge'
+          - build_homebrew: true
+            os: 'macos-11'
     runs-on: ${{ matrix.os }}
     env:
-      PYVERS: "311"
-      PYDOTVERS: "3.11"
-      DBVERS: "mysql8"
-      COMPILER: "default"
+      COMPILER: "clang"
       APP_OUT_DIR: "output_dir"
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       USE_CCACHE: ${{ inputs.USE_CCACHE }}
+      PKGMGR: ${{ inputs.PKGMGR }}
     steps:
       - uses: actions/checkout@master
       - name: "Setup environemental variables"
         run: |
           APP_OUT_DIR=$HOME/$APP_OUT_DIR
+          case $PKGMGR in
+            macports)
+              PYVERS="311"
+              PYDOTVERS="3.11"
+              DBVERS="mysql8"
+              echo "USE_MP=true" >> $GITHUB_ENV
+              echo "USE_HB=false" >> $GITHUB_ENV
+            ;;
+            homebrew)
+              PYVERS="311"
+              PYDOTVERS="3.11"
+              ANSIBLEVERS="8"
+              DBVERS="mysql"
+              echo "ANSIBLEVERS=$ANSIBLEVERS" >> $GITHUB_ENV
+              echo "USE_MP=false" >> $GITHUB_ENV
+              echo "USE_HB=true" >> $GITHUB_ENV
+            ;;
+          esac
+          echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
+          echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
+          echo "DBVERS=${DBVERS}" >> $GITHUB_ENV
           BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} \
             --version=${MYTHBRANCH} \
             --python-version=${PYVERS} \
             --database-version=${DBVERS} \
-            --macports-clang=${COMPILER}"
+            --alt-compiler=${COMPILER}" \
+            --skip-ansible=true
           case $MYTHBRANCH in
             *fixes*)
               VERSNUM=${MYTHBRANCH#*/}
@@ -88,12 +116,23 @@ jobs:
           echo "OS_VERS=$(/usr/bin/sw_vers -productVersion)" >> $GITHUB_ENV
           echo "ARCH=$(/usr/bin/uname -m)" >> $GITHUB_ENV
           echo "VERSNUM=${VERSNUM}" >> $GITHUB_ENV
-      - name: "Install MacPorts"
+      - name: "Install MacPorts Ports"
+        if: ${{ env.USE_MP == 'true' }}
         uses: ./.github/actions/installPorts
-        id: install
+        id: installMP
         with:
           PYVERS: ${{ env.PYVERS }}
           PYDOTVERS: ${{ env.PYDOTVERS }}
+          DBVERS: ${{ env.DBVERS }}
+          COMPILER: ${{ env.COMPILER }}
+      - name: "Install Homebrew Packages"
+        if: ${{ env.USE_HB == 'true' }}
+        uses: ./.github/actions/installBrewPackages
+        id: installHB
+        with:
+          PYVERS: ${{ env.PYVERS }}
+          PYDOTVERS: ${{ env.PYDOTVERS }}
+          ANSIBLEVERS: ${{ env.ANSIBLEVERS }}
           DBVERS: ${{ env.DBVERS }}
           COMPILER: ${{ env.COMPILER }}
       - name: "Compile MythTV"
@@ -149,4 +188,5 @@ jobs:
           VERSNUM: ${{ env.VERSNUM }}
           OS_VERS: ${{ env.OS_VERS }}
           ARCH: ${{ env.ARCH }}
+          PKGMGR: ${{ env.PKGMGR }}
           SF_LOGIN: ${{ secrets.SF_LOGIN }}

@@ -11,20 +11,31 @@ on:  # yamllint disable-line rule:truthy
           - "master"
           - "fixes/33"
           - "fixes/32"
+      PKGMGR:
+        type: choice
+        description: "Choose a package manager"
+        options:
+          - "macports"
+          - "homebrew"
       BUILD_x86_64:
         type: boolean
         description: "Build x86_64"
+        default: true
       BUILD_ARM64:
         type: boolean
         description: "Build ARM64"
+        default: false
 
-run-name: "Manual Build: ${{ inputs.mythbranch }} by @${{ github.actor }}"
+run-name: "Manual Build: ${{ inputs.mythbranch }} by @${{ github.actor }}
+  with ${{ inputs.PKGMGR }} for x86: ${{ inputs.BUILD_x86_64 }} arm64:
+  ${{ inputs.BUILD_ARM64 }}"
 
 jobs:
   check-inputs:
     runs-on: 'macos-latest'
     env:
       mythbranch: ${{ inputs.mythbranch }}
+      PKGMGR: ${{ inputs.PKGMGR }}
       BUILD_x86_64: ${{ inputs.BUILD_x86_64 }}
       BUILD_ARM64: ${{ inputs.BUILD_ARM64 }}
     steps:
@@ -47,6 +58,7 @@ jobs:
       BUILD_ARM64: false
       USE_CCACHE: false
       MYTHBRANCH: ${{ inputs.mythbranch }}
+      PKGMGR: ${{ inputs.PKGMGR }}
     secrets: inherit
   build-mythtv-arm64:
     needs: check-inputs
@@ -57,4 +69,5 @@ jobs:
       BUILD_ARM64: true
       USE_CCACHE: false
       MYTHBRANCH: ${{ inputs.mythbranch }}
+      PKGMGR: ${{ inputs.PKGMGR }}
     secrets: inherit

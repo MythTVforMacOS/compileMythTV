@@ -1,5 +1,5 @@
 ---
-name: "Install Ports"
+name: "Install MacPorts Ports"
 inputs:
   PYVERS:
     required: true
@@ -35,10 +35,11 @@ runs:
         else
           curl -LJO "${GH_URL}/${MP_URL}"
           source ./macports-ci install
-          echo "PKGMGR_PATH=/opt/local" >> $GITHUB_ENV
-          echo "PKGMGR_BIN=/opt/local/bin" >> $GITHUB_ENV
-          export PATH=$PATH:$PKGMGR_BIN
         fi
+        PKGMGR_PATH=$(dirname $(dirname $(which port)))
+        echo "PKGMGR_PATH=$PKGMGR_PATH" >> $GITHUB_ENV
+        echo "PKGMGR_BIN=$PKGMGR_PATH/bin" >> $GITHUB_ENV
+        export PATH=$PATH:$PKGMGR_BIN
     - name: "Remove Homebrew"
       id: remove_homebrew
       shell: bash
@@ -72,7 +73,7 @@ runs:
         sudo port select --set pip3 pip${PYVERS}
         sudo port select --set ansible py${PYVERS}-ansible
         sudo port select --set virtualenv virtualenv${PYVERS}
-        if [ $COMPILER != "default" ];then
+        if [ $COMPILER != "clang" ];then
           CLANG_PORT=${COMPILER//clang-mp/clang}
           sudo port install $CLANG_PORT
         fi
@@ -88,7 +89,7 @@ runs:
         git clone https://github.com/MythTV/ansible.git
         cd ansible
         echo "Installing ports via ansible playbook"
-        export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/opt/local/lib/mysql8/pkgconfig/
+        export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PKGMGR_PATH/lib/mysql8/pkgconfig/
         export MYSQLCLIENT_LDFLAGS=$(pkg-config --libs mysqlclient)
         export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags mysqlclient)
         XTRA_VARS="ansible_python_interpreter=${PKGMGR_BIN}/python${PYDOTVERS} \

@@ -1,0 +1,95 @@
+---
+name: "Install Packages vi Homebrew"
+inputs:
+  PYVERS:
+    required: true
+    type: string
+  PYDOTVERS:
+    required: true
+    type: string
+  ANSIBLEVERS:
+    required: true
+    type: string
+  DBVERS:
+    required: true
+    type: string
+  COMPILER:
+    required: true
+    type: string
+runs:
+  using: "composite"
+  steps:
+    - name: "Remove formula for a fresh homebrew install"
+      id: nuke_brew
+      shell: bash
+      run: |
+        echo "Removing all previously install formula"
+        brew remove --cask --force $(brew list)
+        brew remove --force $(brew list --formula)
+        echo "Updating homebrew"
+        brew update
+    - name: "Install X11 dependencies on MacOS"
+      id: install_x11
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        brew install --cask xquartz
+    - name: "Install required support packages"
+      id: install_req_packages
+      shell: bash
+      env:
+        PYVERS: ${{ inputs.PYVERS }}
+        PYDOTVERS: ${{ inputs.PYDOTVERS }}
+        ANSIBLEVERS: ${{ inputs.ANSIBLEVERS }}
+        DBVERS: ${{ inputs.DBVERS }}
+        COMPILER: ${{ inputs.COMPILER }}
+      run: |
+        PKGMGR_PATH=$(brew --prefix)
+        echo "PKGMGR_PATH=$PKGMGR_PATH" >> $GITHUB_ENV
+        PKGMGR_BIN=$PKGMGR_PATH/bin
+        echo "PKGMGR_BIN=$PKGMGR_BIN" >> $GITHUB_ENV
+        export PATH=$PATH:$PKGMGR_BIN
+        echo "Install requested python"
+        brew install --force --overwrite python@${PYDOTVERS}
+        brew link --force python@${PYDOTVERS}
+        brew link --force python3
+        echo "Installing and correctly linking openssl"
+        brew install openssl@1.1
+        brew unlink openssl
+        brew unlink openssl@1.1
+        brew install openssl@3
+        brew link --force openssl
+        brew link --force openssl@3
+        echo "Installing ansible and $DBVERS"
+        brew install --force --overwrite ansible@$ANSIBLEVERS $DBVERS pkg-config
+        ANS_PB="${PKGMGR_PATH}/opt/ansible@${ANSIBLEVERS}/bin/ansible-playbook"
+        echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
+    - name: "Install required packages via ansible"
+      id: ansible_install
+      shell: bash
+      env:
+        PYDOTVERS: ${{ inputs.PYDOTVERS }}
+        DBVERS: ${{ inputs.DBVERS }}
+      run: |
+        echo "Cloninng MythTV anible repo"
+        git clone https://github.com/MythTV/ansible.git
+        cd ansible
+        echo "Installing packages via ansible playbook"
+        export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PKGMGR_PATH/lib/pkgconfig/mysqlclient.pc
+        export MYSQLCLIENT_LDFLAGS=$(pkg-config --libs mysqlclient)
+        export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags mysqlclient)
+        XTRA_VARS="ansible_python_interpreter=${PKGMGR_BIN}/python${PYDOTVERS} \
+          database_version=${DBVERS}"
+        echo "Running ansible"
+        export C_INCLUDE_PATH=$C_INCLUDE_PATH:$PKGMGR_PATH/include
+        export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$PKGMGR_PATH/include
+        export LIBRARY_PATH=$LIBRARY_PATH:$PKGMGR_PATH/lib
+        ${ANS_PB} mythtv.yml --extra-vars="$XTRA_VARS" --limit=localhost
+    - name: "Cleanup homebrew install"
+      id: homebrew_cleanup
+      shell: bash
+      run: |
+        echo "Cleaning up homebrew builds"
+        # force ownership for the users ansible / mythtv temp directories
+        sudo chown $(id -u):$(id -g) ~/.ansible
+        sudo chown $(id -u):$(id -g) ~/.mythtv
