@@ -93,8 +93,8 @@ jobs:
             --version=${MYTHBRANCH} \
             --python-version=${PYVERS} \
             --database-version=${DBVERS} \
-            --alt-compiler=${COMPILER}" \
-            --skip-ansible=true
+            --alt-compiler=${COMPILER} \
+            --skip-ansible=true"
           case $MYTHBRANCH in
             *fixes*)
               VERSNUM=${MYTHBRANCH#*/}
