@@ -352,8 +352,9 @@ PLUGINS_DIR=$REPO_DIR/mythtv/mythplugins
 export PATH=$PKGMGR_INST_PATH/lib/$DATABASE_VERS/bin:$PATH
 
 # macOS internal appliction paths
-APP_DIR=$SRC_DIR/programs/mythfrontend
-APP=$APP_DIR/mythfrontend.app
+APP_NAME=mythfrontend
+APP_DIR=$SRC_DIR/programs/$APP_NAME
+APP=$APP_DIR/$APP_NAME.app
 APP_RSRC_DIR=$APP/Contents/Resources
 APP_FMWK_DIR=$APP/Contents/Frameworks
 APP_EXE_DIR=$APP/Contents/MacOS
@@ -678,7 +679,7 @@ if [ "$APPLY_PATCHES" ] && [ -n "$MYTHTV_PATCH_DIR" ]; then
 fi
 
 echoC GREEN "------------ Configuring Mythtv ------------"
-# configure mythfrontend
+# configure mythtv
 cd "$SRC_DIR" || exit 1
 GIT_VERS=$(git log -1 --format="%h")
 GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
@@ -686,11 +687,11 @@ GIT_TAG=$(git describe --tags --exact-match 2>/dev/null)
 GIT_BRANCH_OR_TAG="${GIT_BRANCH:-${GIT_TAG}}"
 
 if [ -d "$APP" ]; then
-  echoC BLUE "    Cleaning up past Mythfrontend application"
-  rm -Rf "$APP"
+  echoC BLUE "    Cleaning up past Builds"
+  find mythtv/mythtv -name "*.app"|xargs rm -Rf
 fi
 if $SKIP_BUILD; then
-  echoC RED "    Skipping mythtv configure and make"
+  echoC RED "    Skipping MythTV configure and make"
 else
   CONFIG_CMD="./configure --prefix=$INSTALL_DIR    \
                          --runprefix=$RUNPREFIX    \
@@ -714,7 +715,7 @@ else
                          --python=$PYTHON_VENV_BIN"
   eval "${CONFIG_CMD}"
   echoC GREEN "------------ Compiling Mythtv ------------"
-  #compile mythfrontend
+  #compile MythTV
   make || { echo 'Compiling Mythtv failed' ; exit 1; }
 fi
 
@@ -740,7 +741,7 @@ if $BUILD_PLUGINS; then
   # configure plugins
   cd "$PLUGINS_DIR" || exit 1
   if $SKIP_BUILD; then
-    echoC RED "    Skipping mythplugins configure and make"
+    echoC RED "    Skipping Plugins configure and make"
 
   else
     CONFIG_CMD="./configure --prefix=$INSTALL_DIR     \
@@ -764,7 +765,7 @@ if $BUILD_PLUGINS; then
     echoC GREEN "------------ Compiling Mythplugins ------------"
     #compile plugins
     $QMAKE_CMD mythplugins.pro
-    #compile mythfrontend
+    #compile mythplugins
     make || { echo 'Compiling Plugins failed' ; exit 1; }
   fi
   echoC GREEN "------------ Installing Mythplugins ------------"
@@ -792,20 +793,20 @@ fi
 #################################################################################
 #################################################################################
 
-# on homebrew, point mythfrontend to the correct
+# Fix incorrectly linked dylibs on homebrew
 case $PKGMGR in
   homebrew)
     if [ ! -d $APP_FMWK_DIR ]; then
       mkdir -p "$APP_FMWK_DIR"
     fi
-    correctHomebrewLibs "$OS_ARCH" "$APP_EXE_DIR/mythfrontend"
+    correctHomebrewLibs "$OS_ARCH" "$APP_EXE_DIR/$APP_NAME"
   ;;
 esac
 
-echoC GREEN "------------ Copying in Mythfrontend.app icon  ------------"
+echoC GREEN "------------ Copying in Application Bundle icon  ------------"
 cd "$APP_DIR" || exit 1
 # copy in the icon
-cp -RHnp "$APP_DIR/mythfrontend.icns" "$APP_RSRC_DIR/application.icns"
+cp -RHnp "$APP_DIR/$APP_NAME.icns" "$APP_RSRC_DIR/application.icns"
 
 echoC GREEN "------------ Copying mythtv share directory into executable  ------------"
 # copy in i18n, fonts, themes, plugin resources, etc from the install directory (share)
@@ -844,7 +845,7 @@ if $BUILD_PLUGINS; then
   done
 fi
 
-echoC GREEN "------------ Deploying QT to Mythfrontend Executable ------------"
+echoC GREEN "------------ Deploying QT to Application Bundle ------------"
 # Do this last so that qt gets copied in correctly
 cd "$APP_DIR" || exit 1
 MACDEPLOYQT_FULL_CMD="$MACDEPLOYQT_CMD  $APP \
@@ -857,11 +858,11 @@ MACDEPLOYQT_FULL_CMD="$MACDEPLOYQT_CMD  $APP \
                                         -qmlimport=$QT_PATH/qml/"
 eval "${MACDEPLOYQT_FULL_CMD}"
 
-echoC GREEN "------------ Update Mythfrontend.app to use internal dylibs ------------"
+echoC GREEN "------------ Update Application Bundle to use internal dylibs ------------"
 # clean up dylib links for mythtv based libs in Frameworks
 # macdeployqt leaves @rpath based links for mythtv libs and we need to replace these with
 # @executable_path links
-# We'lll want to do this with the dylibs first, then move onto mythfrontend to reduce recursion
+# We'lll want to do this with the dylibs first, then move onto the executble to reduce recursion
 for dylib in "$APP_FMWK_DIR"/*.dylib; do
     installLibs "$dylib"
 done
@@ -871,13 +872,13 @@ if $BUILD_PLUGINS; then
     installLibs "$plugDylib"
   done
 fi
-# find all mythtv dylibs linked via @rpath in mythfrontend updating the internal link to point to
-# the application
+# find all mythtv dylibs linked via @rpath in the application bundle updating the internal link
+# to point to the application
 cd "$APP_EXE_DIR" || exit 1
-installLibs "$APP_EXE_DIR/mythfrontend"
+installLibs "$APP_EXE_DIR/$APP_NAME"
 
-echoC GREEN "------------ Installing additional mythtv utility executables into Mythfrontend.app  ------------"
-# loop over the compiler apps copying in the desired ones for mythfrontend
+echoC GREEN "------------ Installing additional mythtv utility executables into the Application Bundle  ------------"
+# loop over the utility apps copying in the desired ones into the application bundle
 for helperBinPath in "$INSTALL_DIR/bin"/*; do
   case $helperBinPath in
     *"mythutil"*|*"mythpreviewgen"*)
@@ -921,7 +922,7 @@ echoC BLUE "    Creating a temporary application from $MYTHTV_PYTHON_SCRIPT"
 # particular than others (tmdb3)...
 $PY2APPLET_BIN -i "$PY2APP_PKGS" -p "$PY2APP_PKGS" --use-pythonpath --no-report-missing-conditional-import --make-setup "$INSTALL_DIR/share/mythtv/metadata/Television/$MYTHTV_PYTHON_SCRIPT.py"
 $PYTHON_VENV_BIN setup.py -q py2app 2>&1 > /dev/null
-# now we need to copy over the python app's pieces into the mythfrontend.app to get it working
+# now we need to copy over the python app's pieces into the application bundle to get it working
 echoC BLUE "    Copying in Python Framework libraries"
 mv -n "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/Frameworks"/* "$APP_FMWK_DIR"
 echoC BLUE "    Copying in Python Binary"
@@ -955,7 +956,7 @@ grep -rlI "$PYTHON_VENV_BIN" "$APP_RSRC_DIR" | xargs gsed -i "$sedSTR"
 sedSTR=s#$PYTHON_PKMGR_BIN#python#g
 grep -rlI "$PYTHON_PKMGR_BIN" "$APP_RSRC_DIR" | xargs gsed -i "$sedSTR"
 
-echoC GREEN "------------ Copying in dejavu and liberation fonts into Mythfrontend.app   ------------"
+echoC GREEN "------------ Copying in dejavu and liberation fonts into the Application Bundle   ------------"
 # copy in missing fonts
 case $PKGMGR in
   macports)
@@ -990,10 +991,9 @@ for dylib in "$APP_FMWK_DIR"/*.dylib; do
   fi
 done
 
-echoC GREEN "------------ Generating mythfrontend startup script ------------"
-# since we now have python installed internally, we need to make sure that the mythfrontend
-# executable launched from the curret directory so that the python relative paths point int
-# to the internal python
+echoC GREEN "------------ Generating Application Bundle startup script ------------"
+# since we now have python installed internally, we need to make sure that the
+# executable launched from the curret directory points to the internal python
 # We need to do this step after macdeployqt since the startup script breaks macdeployqt
 cd "$APP_EXE_DIR" || exit 1
 echo "#!/bin/sh
@@ -1010,12 +1010,12 @@ export PYTHONPATH=\$APP_DIR/Contents/Resources/lib/$PYTHON_CMD:\$APP_DIR/Content
 PATH=\$(pwd):\$PATH
 
 cd \$BASEDIR
-./mythfrontend \$@" > mythfrontend.sh
+./$APP_NAME \$@" > $APP_NAME.sh
 
-chmod +x mythfrontend.sh
+chmod +x $APP_NAME.sh
 
 # Update the plist to use the startup script
-/usr/libexec/PlistBuddy -c "Set CFBundleExecutable mythfrontend.sh" "$APP_INFO_FILE"
+/usr/libexec/PlistBuddy -c "Set CFBundleExecutable $APP_NAME.sh" "$APP_INFO_FILE"
 
 echoC GREEN "------------ Build Complete ------------"
 echo "     Application is located:"
