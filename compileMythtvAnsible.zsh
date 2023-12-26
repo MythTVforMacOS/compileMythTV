@@ -217,23 +217,6 @@ case $MYTHTV_VERS in
 esac
 
 ###########################################################################################
-### Build Output Variables ################################################################
-###########################################################################################
-# Setup version specific working path
-REPO_DIR=$REPO_PREFIX/mythtv-$VERS
-
-# Setup app build outputs and lib linking
-if $GENERATE_APP; then
-  ENABLE_MAC_BUNDLE="--enable-mac-bundle"
-  INSTALL_DIR=$REPO_DIR/$VERS-osx-64bit
-  RUNPREFIX=../Resources
-else
-  ENABLE_MAC_BUNDLE=""
-  INSTALL_DIR=$PKGMGR_INST_PATH
-  RUNPREFIX=$INSTALL_DIR
-fi
-
-###########################################################################################
 ### PKGMGR Specific Variables #############################################################
 ###########################################################################################
 PYTHON_DOT_VERS="${PYTHON_VERS:0:1}.${PYTHON_VERS:1:4}"
@@ -272,6 +255,23 @@ case $PKGMGR in
 esac
 if ! $BUILD_PLUGINS; then
   INSTALL_WEBKIT=false
+fi
+
+###########################################################################################
+### Build Output Variables ################################################################
+###########################################################################################
+# Setup version specific working path
+REPO_DIR=$REPO_PREFIX/mythtv-$VERS
+
+# Setup app build outputs and lib linking
+if $GENERATE_APP; then
+  ENABLE_MAC_BUNDLE="--enable-mac-bundle"
+  INSTALL_DIR=$REPO_DIR/$VERS-osx-64bit
+  RUNPREFIX=../Resources
+else
+  ENABLE_MAC_BUNDLE=""
+  INSTALL_DIR=$PKGMGR_INST_PATH
+  RUNPREFIX=$INSTALL_DIR
 fi
 
 ###########################################################################################
