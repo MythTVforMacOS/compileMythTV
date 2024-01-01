@@ -9,19 +9,25 @@ Standard options:
   --help                                 Print this help message
   --build-plugins=BUILD_PLUGINS          Build Mythtv Plugins (false)
   --python-version=PYTHON_VERS           Desired Python 3 Version (${2})
-                                         Example: python-11
+                                           Example: python-11
   --version=MYTHTV_VERS                  Requested mythtv git repo (${1})
-                                         Example: master for the latest master
-                                                  fixes/33 for version 33
+                                           Example: master for the latest master
+                                                    fixes/33 for version 33
   --database-version=DATABASE_VERS       Requested version of mariadb/mysql to build agains (${3})
   --qt-version=qt5                       Select Qt version to build against (${4})
-                                         Example: qt5 for qt5
-                                                  qt6 for qt6
+                                           Example: qt5 for qt5
+                                                    qt6 for qt6
   --repo-prefix=REPO_PREFIX              Directory base to install the working repository (~)
   --generate-app=GENERATE_APP            Generate Applicaiton Bundles for executables (true)
-                                         Currently, setting this to true only builds a working 
+                                         Currently, setting this to true only builds a working
                                          MythFrontend.app.  If building for unix-style executables, 
                                          set this to false.
+  --custom-install-dir=INSTALL_DIR       Directory to copy the compiled executables and support files. ("")
+                                           When generating app bundles (i.e. --generate-app=false),
+                                           this defaults to the build directory.
+                                           When building executables (i.e. --generate-app=false),
+                                           this defaults to the either MacPors or Homebrews
+
 Build Options
   --update-git=UPDATE_GIT                Update git repositories to latest (true)
                                          This is only used when the source has already been cloned via 
@@ -34,16 +40,18 @@ Build Options
   --alt-compiler=ALT_COMPILER            Flag to specify compiler version to build with (clang)
                                          Use the format compiler-PackMgr-VersionNumber to
                                          specify customer compilers
-                                         Example: clang for deafult Xcode/Commandline tools compiler
-                                                  gcc-mp-13 For gcc 13 on MacPorts
-                                                  gcc-hb-13 for gcc 13 on Hobebrew
-                                                  clang-mp-17 for clang/llvm 17 on MacPorts
-                                                  clang-hb-17 for clang/llvm 17 on Homebrew
+                                           Example: clang for deafult Xcode/Commandline tools compiler
+                                                    gcc-mp-13 For gcc 13 on MacPorts
+                                                    gcc-hb-13 for gcc 13 on Hobebrew
+                                                    clang-mp-17 for clang/llvm 17 on MacPorts
+                                                    clang-hb-17 for clang/llvm 17 on Homebrew
   --extra-conf-flags=EXTRA_CONF_FLAGS    Addtional configure flags for mythtv ("")
+
 Patch Options
   --apply-patches=APPLY_PATCHES          Apply patches specified in additional arguments (false)
   --mythtv-patch-dir=MYTHTV_PATCH_DIR    Directory containing patch files to be applied to Mythtv
   --plugins-patch-dir=PLUGINS_PATCH_DR   Directory containing patch files to be applied to Mythplugins
+
 Support Ports Options
   --update-pkgmgr=UPDATE_PKGMGR          Update macports (false)
 
@@ -55,6 +63,7 @@ EOF
 echoC(){
   MESSAGE=${1}
   COLOR=${2}
+  COLOR=${COLOR:u}
   if [ ! -d $COLOR ]; then
     END_CODE='\033[m'
     case $COLOR in
@@ -112,6 +121,7 @@ MYTHTV_VERS="master"
 MYTHTV_PYTHON_SCRIPT="ttvdb4"
 QT_VERS=qt5
 GENERATE_APP=true
+INSTALL_DIR=""
 UPDATE_GIT=true
 SKIP_BUILD=false
 ALT_COMPILER=clang
@@ -144,6 +154,9 @@ else
     ;;
   esac
 fi
+
+# force expansion of magic substrings
+set -o magicequalsubst
 
 # parse user inputs into variables
 for i in "$@"; do
@@ -188,6 +201,9 @@ for i in "$@"; do
       --generate-app=*)
         GENERATE_APP="${i#*=}"
       ;;
+      --custom-install-dir=*)
+        INSTALL_DIR="${i#*=}"
+      ;;
       --update-git*)
         UPDATE_GIT="${i#*=}"
       ;;
@@ -207,6 +223,14 @@ for i in "$@"; do
       ;;
   esac
 done
+
+# Remove any magic substrings
+if [ ! -z $REPO_PREFIX ]; then
+  eval "REPO_PREFIX=$REPO_PREFIX"
+fi
+if [ ! -z $INSTALL_DIR ]; then
+  eval "INSTALL_DIR=$INSTALL_DIR"
+fi
 
 echoC '****************************************************************************' CYAN
 echoC "***** Setting $PKGMGR for package installation ****************************" CYAN
@@ -316,6 +340,7 @@ esac
 ###########################################################################################
 # Setup version specific working path
 REPO_DIR=$REPO_PREFIX/mythtv-$VERS
+echo $REPO_DIR
 # setup some paths to make the following commands easier to understand
 SRC_DIR=$REPO_DIR/mythtv/mythtv
 PLUGINS_DIR=$REPO_DIR/mythtv/mythplugins
@@ -323,13 +348,19 @@ PLUGINS_DIR=$REPO_DIR/mythtv/mythplugins
 # Setup app build outputs and lib linking
 if $GENERATE_APP; then
   ENABLE_MAC_BUNDLE="--enable-mac-bundle"
-  INSTALL_DIR=$REPO_DIR/$VERS-osx-64bit
+  if [ -z $INSTALL_DIR ]; then
+    INSTALL_DIR="$REPO_DIR/$VERS-osx-64bit"
+  fi
   RUNPREFIX=../Resources
 else
   ENABLE_MAC_BUNDLE=""
-  INSTALL_DIR=$PKGMGR_INST_PATH
+  if [ -z $INSTALL_DIR ]; then
+    INSTALL_DIR=$PKGMGR_INST_PATH
+  fi
   RUNPREFIX=$INSTALL_DIR
 fi
+
+echoC "    Installing Build Outputs to $INSTALL_DIR" BLUE
 
 ###########################################################################################
 ### Setup Python Specific variables #######################################################
@@ -598,15 +629,16 @@ installLibs(){
 # rebaseLibs finds all @rpath dylibs for the input binary/dylib
 # changing the rpath to a direct path on the system
 rebaseLibs(){
-    binFile=$1
-    rpathDepList=$(/usr/bin/otool -L "$binFile"|grep rpath)
-    rpathDepList=$(echo "$rpathDepList"| gsed 's/(.*//')
-    while read -r dep; do
-        lib=${dep##*/}
-        if [ -n "$lib" ]; then
-            install_name_tool -change "$dep" "$RUNPREFIX/lib/$lib"" $binFile"
-        fi
-    done <<< "$rpathDepList"
+  binFile=$1
+  rpathDepList=$(/usr/bin/otool -L "$binFile"|grep rpath)
+  rpathDepList=$(echo "$rpathDepList"| gsed 's/(.*//')
+  while read -r dep; do
+    lib=${dep##*/}
+    if [ -n "$lib" ]; then
+      NAME_TOOL_CMD="install_name_tool -change $dep $RUNPREFIX/lib/$lib $binFile"
+      eval "${NAME_TOOL_CMD}"
+    fi
+  done <<< "$rpathDepList"
 }
 
 # On homebrew, some dylibs get incorrectly internally linked, this utiltiy helps
@@ -845,6 +877,7 @@ fi
 if $SKIP_BUILD; then
   echoC "    Skipping MythTV configure and make" ORANGE
 else
+  echoC "    Running configure" BLUE
   CONFIG_CMD="./configure --prefix=$INSTALL_DIR    \
                          --runprefix=$RUNPREFIX    \
                          $ENABLE_MAC_BUNDLE        \
@@ -868,6 +901,7 @@ else
   eval "${CONFIG_CMD}"
   echoC "------------ Compiling Mythtv ------------" GREEN
   #compile MythTV
+  echoC "    Running make" BLUE
   make || { echo 'Compiling Mythtv failed' ; exit 1; }
 fi
 
@@ -896,6 +930,7 @@ if $BUILD_PLUGINS; then
     echoC "    Skipping Plugins configure and make" ORANGE
 
   else
+    echoC "    Running configure" BLUE
     CONFIG_CMD="./configure --prefix=$INSTALL_DIR     \
                             --runprefix=$RUNPREFIX    \
                             --qmake=$QMAKE_CMD        \
@@ -916,6 +951,7 @@ if $BUILD_PLUGINS; then
     eval "${CONFIG_CMD}"
     echoC "------------ Compiling Mythplugins ------------" GREEN
     #compile plugins
+    echoC "    Running qmake/make" BLUE
     $QMAKE_CMD mythplugins.pro
     #compile mythplugins
     make || { echo 'Compiling Plugins failed' ; exit 1; }
@@ -931,9 +967,12 @@ echoC "------------ Performing Post Compile Cleanup ------------" GREEN
 if [ -z $ENABLE_MAC_BUNDLE ]; then
   echoC "    Mac Bundle disabled - Skipping app bundling commands" ORANGE
   echoC "    Rebasing @rpath to $RUNPREFIX" GREEN
-  for mythExec in "$INSTALL_DIR/bin"/myth*; do
-        echoC "     rebasing $mythExec" BLUE
-        rebaseLibs "$mythExec"
+  for mythExec in "$INSTALL_DIR/bin/"myth*; do
+        if [ -x "$mythExec" ] && file "$mythExec" | grep -q "Mach-O"; then
+          echoC "     rebasing $mythExec" BLUE
+          rebaseLibs "$mythExec"
+          install_name_tool -add_rpath "$QT_LIB_PATH" "$mythExec"
+        fi
   done
   echoC "Done" GREEN
   exit 0
