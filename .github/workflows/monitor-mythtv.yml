@@ -82,7 +82,7 @@ jobs:
     uses: ./.github/workflows/build_sign_upload.yml
     with:
       BUILD_x86_64: true
-      BUILD_ARM64: false
+      BUILD_ARM64: true
       USE_CCACHE: true
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
       PKGMGR: macports
@@ -93,7 +93,7 @@ jobs:
     uses: ./.github/workflows/build_sign_upload.yml
     with:
       BUILD_x86_64: true
-      BUILD_ARM64: false
+      BUILD_ARM64: true
       USE_CCACHE: true
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
       PKGMGR: macports

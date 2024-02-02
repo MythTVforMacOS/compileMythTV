@@ -9,7 +9,7 @@ Standard options:
   --help                                 Print this help message
   --build-plugins=BUILD_PLUGINS          Build Mythtv Plugins (false)
   --python-version=PYTHON_VERS           Desired Python 3 Version (${2})
-                                           Example: python-11
+                                           Example: ${2}
   --version=MYTHTV_VERS                  Requested mythtv git repo (${1})
                                            Example: master for the latest master
                                                     fixes/33 for version 33
@@ -281,7 +281,9 @@ case $PKGMGR in
     FONT_PATH="$PKGMGR_INST_PATH/share/fonts"
     # Select the correct QT version of tools / libraries
     HDHR_INC_PATH="$PKGMGR_INC/libhdhomerun"
-    HDHR_LIB_PATH="$PKGMGR_LIB/libhdhomerun.dylib"
+    #set as null since its on the default macports location 
+    HDHR_LIB_PATH=""
+    #HDHR_LIB_PATH="$PKGMGR_LIB"
     INSTALL_WEBKIT=true
   ;;
   homebrew)

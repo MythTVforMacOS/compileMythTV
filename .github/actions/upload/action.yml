@@ -48,19 +48,17 @@ runs:
             SF_PATH="$SF_PATH/macOS\ 12\ Monterey"
             ;;
           13*)
-            # Apparently the Ventura builders do not neet the escape "\"
+            # Apparently the Ventura builders do not need the escape "\"
             SF_PATH="$SF_PATH/macOS 13 Ventura"
+            ;;
+          14*)
+            # Apparently the Sonoma builders do not need the escape "\"
+            SF_PATH="$SF_PATH/macOS 14 Sonoma"
             ;;
           *)
             echo "Unsupported macOS Version"
             exit 2
             ;;
-        esac
-        # check if we're ARM based
-        case $ARCH in
-          arm*)
-            SF_PATH="$SF_PATH/ARM64"
-          ;;
         esac
         echo "Preparing the Upload links"
         UL_FILENAME="MythFrontend-${ARCH}-${OS_VERS}-v${VERSNUM}-with-plugins.dmg"
