@@ -1,6 +1,12 @@
 ---
 name: "Install Packages vi Homebrew"
 inputs:
+  ARCH:
+    required: true
+    type: string
+  CROSS_COMPILE:
+    required: true
+    type: boolean
   PYVERS:
     required: true
     type: string
@@ -26,14 +32,25 @@ runs:
         echo "Removing all previously install formula"
         brew remove --cask --force $(brew list)
         brew remove --force $(brew list --formula)
+        
+        # check if we're cross-compiling, setting up the brew command appropriately
+        if $CROSS_COMPILE; then
+          PKGMGR_PATH=$(arch -${ARCH} brew --prefix)
+          PKGMGR_CMD="arch -${ARCH} $PKGMGR_PATH/bin/brew"
+        else
+          PKGMGR_PATH=$(brew --prefix)
+          PKGMGR_CMD="$PKGMGR_PATH/bin/brew"
+        fi
+        echo "PKGMGR_PATH=$PKGMGR_PATH" >> $GITHUB_ENV
+        echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
         echo "Updating homebrew"
-        brew update
+        ${PKGMGR_CMD} update
     - name: "Install X11 dependencies on MacOS"
       id: install_x11
       if: runner.os == 'macOS'
       shell: bash
       run: |
-        brew install --cask xquartz
+        ${PKGMGR_CMD} install --cask xquartz
     - name: "Install required support packages"
       id: install_req_packages
       shell: bash
@@ -44,25 +61,26 @@ runs:
         DBVERS: ${{ inputs.DBVERS }}
         COMPILER: ${{ inputs.COMPILER }}
       run: |
-        PKGMGR_PATH=$(brew --prefix)
-        echo "PKGMGR_PATH=$PKGMGR_PATH" >> $GITHUB_ENV
         PKGMGR_BIN=$PKGMGR_PATH/bin
         echo "PKGMGR_BIN=$PKGMGR_BIN" >> $GITHUB_ENV
         export PATH=$PATH:$PKGMGR_BIN
         echo "Install requested python"
-        brew install --force --overwrite python@${PYDOTVERS}
-        brew link --force python@${PYDOTVERS}
-        brew link --force python3
+        ${PKGMGR_CMD} install --force --overwrite python@${PYDOTVERS}
+        ${PKGMGR_CMD} link --force python@${PYDOTVERS}
+        ${PKGMGR_CMD} link --force python3
         echo "Installing and correctly linking openssl"
-        brew install openssl@1.1
-        brew unlink openssl
-        brew unlink openssl@1.1
-        brew install openssl@3
-        brew link --force openssl
-        brew link --force openssl@3
+        ${PKGMGR_CMD} install openssl@1.1
+        ${PKGMGR_CMD} unlink openssl
+        ${PKGMGR_CMD} unlink openssl@1.1
+        ${PKGMGR_CMD} install openssl@3
+        ${PKGMGR_CMD} link --force openssl
+        ${PKGMGR_CMD} link --force openssl@3
         echo "Installing ansible and $DBVERS"
-        brew install --force --overwrite ansible@$ANSIBLEVERS $DBVERS pkg-config
+        ${PKGMGR_CMD} install --force --overwrite ansible@$ANSIBLEVERS $DBVERS pkg-config
         ANS_PB="${PKGMGR_PATH}/opt/ansible@${ANSIBLEVERS}/bin/ansible-playbook"
+        if $CROSS_COMPILE; then
+          ANS_PB="arch -${ARCH} $ANS_PB"
+        fi
         echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
     - name: "Install required packages via ansible"
       id: ansible_install

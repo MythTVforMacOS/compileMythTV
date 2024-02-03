@@ -1,6 +1,12 @@
 ---
 name: "Install MacPorts Ports"
 inputs:
+  ARCH:
+    required: true
+    type: string
+  CROSS_COMPILE:
+    required: true
+    type: boolean
   PYVERS:
     required: true
     type: string
@@ -21,8 +27,13 @@ runs:
       if: runner.os == 'macOS'
       shell: bash
       run: |
+        # install xquartz for the targeted environment
         # this must be done before we remove homebrew
-        brew install --cask xquartz
+        if $CROSS_COMPILE; then
+          arch -${ARCH} brew install --cask xquartz
+        else
+          brew install --cask xquartz
+        fi
     - name: "Bootstrap MacPorts"
       id: install_macports
       shell: bash
@@ -34,12 +45,25 @@ runs:
           echo "Macports is already installed"
         else
           curl -LJO "${GH_URL}/${MP_URL}"
-          source ./macports-ci install
+          chmod +x macports-ci
+          if $CROSS_COMPILE; then
+            #install macports for cross-compile arch
+            arch -${ARCH} ./macports-ci install
+            # running the install with arch doesn't set the current environment, source
+            # this needs to be done manually
+            # this only will work if macports is installed in the default location
+            if [ ! -f ~/.bashrc ]; then
+              cp /etc/bashrc ~/.bashrc
+            fi
+            echo 'export PATH=/opt/local/bin:/opt/local/sbin:$PATH' >> ~/.bashrc
+            echo 'export MANPATH=/opt/local/share/man:$MANPATH' >> ~/.bashrc
+            echo 'export DISPLAY=:0.0' >> ~/.bashrc
+            source ~/.bashrc
+          else
+            #install macports for system arch
+            source ./macports-ci install
+          fi
         fi
-        PKGMGR_PATH=$(dirname $(dirname $(which port)))
-        echo "PKGMGR_PATH=$PKGMGR_PATH" >> $GITHUB_ENV
-        echo "PKGMGR_BIN=$PKGMGR_PATH/bin" >> $GITHUB_ENV
-        export PATH=$PATH:$PKGMGR_BIN
     - name: "Remove Homebrew"
       id: remove_homebrew
       shell: bash
@@ -52,6 +76,22 @@ runs:
           /bin/bash -c "$(curl -fsSL ${GH_URL}/${HB_URL})" --force
           sudo rm -Rf /usr/local/bin/brew
         fi
+    - name: "Setup Macports Environment"
+      id: mp_env
+      shell: bash
+      run: |
+        PKGMGR_CMD=$(which port)
+        PKGMGR_PATH=$(dirname $(dirname $PKGMGR_CMD))
+        # If we're cross-compiling, we need to change this to the selected arch
+        if $CROSS_COMPILE; then
+          PKGMGR_CMD="sudo arch -${ARCH} $PKGMGR_CMD"
+        else
+          PKGMGR_CMD="sudo $PKGMGR_CMD"
+        fi
+        echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
+        echo "PKGMGR_PATH=$PKGMGR_PATH" >> $GITHUB_ENV
+        echo "PKGMGR_BIN=$PKGMGR_PATH/bin" >> $GITHUB_ENV
+        export PATH=$PATH:$PKGMGR_BIN
     - name: "Install required support ports"
       id: install_req_ports
       shell: bash
@@ -59,7 +99,7 @@ runs:
         PYVERS: ${{ inputs.PYVERS }}
         COMPILER: ${{ inputs.COMPILER }}
       run: |
-        sudo port -N install gsed \
+        ${PKGMGR_CMD} -N install gsed \
           ccache \
           py${PYVERS}-ansible \
           py${PYVERS}-virtualenv \
@@ -67,17 +107,21 @@ runs:
           py${PYVERS}-setuptools \
           py${PYVERS}-pip \
           ${DBVERS}
-        sudo port select --set python python${PYVERS}
-        sudo port select --set python3 python${PYVERS}
-        sudo port select --set pip pip${PYVERS}
-        sudo port select --set pip3 pip${PYVERS}
-        sudo port select --set ansible py${PYVERS}-ansible
-        sudo port select --set virtualenv virtualenv${PYVERS}
+        ${PKGMGR_CMD} select --set python python${PYVERS}
+        ${PKGMGR_CMD} select --set python3 python${PYVERS}
+        ${PKGMGR_CMD} select --set pip pip${PYVERS}
+        ${PKGMGR_CMD} select --set pip3 pip${PYVERS}
+        ${PKGMGR_CMD} select --set ansible py${PYVERS}-ansible
+        ${PKGMGR_CMD} select --set virtualenv virtualenv${PYVERS}
         if [ $COMPILER != "clang" ];then
           CLANG_PORT=${COMPILER//clang-mp/clang}
-          sudo port install $CLANG_PORT
+          ${PKGMGR_CMD} install $CLANG_PORT
         fi
-        echo "ANS_PB=${PKGMGR_BIN}/ansible-playbook-${PYDOTVERS}" >> $GITHUB_ENV
+        ANS_PB=${PKGMGR_BIN}/ansible-playbook-${PYDOTVERS}
+        if $CROSS_COMPILE; then
+          ANS_PB="arch -${ARCH} $ANS_PB"
+        fi
+        echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
     - name: "Install required ports via ansible"
       id: ansible_install
       shell: bash

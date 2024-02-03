@@ -4,19 +4,13 @@ name: "Manual build"
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
     inputs:
-      mythbranch:
+      MYTHBRANCH:
         type: choice
         description: "Choose a MythTV Version"
         options:
           - "master"
           - "fixes/33"
           - "fixes/32"
-      PKGMGR:
-        type: choice
-        description: "Choose a package manager"
-        options:
-          - "macports"
-          - "homebrew"
       BUILD_x86_64:
         type: boolean
         description: "Build x86_64"
@@ -24,18 +18,30 @@ on:  # yamllint disable-line rule:truthy
       BUILD_ARM64:
         type: boolean
         description: "Build ARM64"
-        default: false
+        default: true
+      PKGMGR:
+        type: choice
+        description: "Choose a package manager"
+        options:
+          - "macports"
+          - "homebrew"
+      RUNNER_SELECT:
+        type: choice
+        description: "Select Runner Type"
+        options:
+          - "free"
+          - "paid"
+          - "all"
 
 run-name: "Manual Build: ${{ inputs.mythbranch }} by @${{ github.actor }}
   with ${{ inputs.PKGMGR }} for x86: ${{ inputs.BUILD_x86_64 }} arm64:
-  ${{ inputs.BUILD_ARM64 }}"
+  ${{ inputs.BUILD_ARM64 }} on ${{ inputs.RUNNER_SELECT }} runners"
 
 jobs:
   check-inputs:
     runs-on: 'macos-latest'
     env:
-      mythbranch: ${{ inputs.mythbranch }}
-      PKGMGR: ${{ inputs.PKGMGR }}
+      mythbranch: ${{ inputs.MYTHBRANCH }}
       BUILD_x86_64: ${{ inputs.BUILD_x86_64 }}
       BUILD_ARM64: ${{ inputs.BUILD_ARM64 }}
     steps:
@@ -57,8 +63,9 @@ jobs:
       BUILD_x86_64: true
       BUILD_ARM64: false
       USE_CCACHE: false
-      MYTHBRANCH: ${{ inputs.mythbranch }}
+      MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       PKGMGR: ${{ inputs.PKGMGR }}
+      RUNNER_SELECT: ${{ inputs.RUNNER_SELECT }}
     secrets: inherit
   build-mythtv-arm64:
     needs: check-inputs
@@ -68,6 +75,7 @@ jobs:
       BUILD_x86_64: false
       BUILD_ARM64: true
       USE_CCACHE: false
-      MYTHBRANCH: ${{ inputs.mythbranch }}
+      MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       PKGMGR: ${{ inputs.PKGMGR }}
+      RUNNER_SELECT: ${{ inputs.RUNNER_SELECT }}
     secrets: inherit

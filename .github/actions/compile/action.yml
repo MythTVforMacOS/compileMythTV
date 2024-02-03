@@ -16,6 +16,9 @@ inputs:
   ARCH:
     require: true
     type: string
+  CROSS_COMPILE:
+    required: true
+    type: boolean
   VERSNUM:
     require: true
     type: string
@@ -38,6 +41,7 @@ runs:
       env:
         APP_OUT_DIR: ${{ inputs.APP_OUT_DIR }}
         VERSNUM: ${{ inputs.VERSNUM }}
+        CROSS_COMPILE: ${{ inputs.CROSS_COMPILE }}
       run: |
         mkdir -p $APP_OUT_DIR/with_plugins
         mkdir -p $APP_OUT_DIR/without_plugins
@@ -45,6 +49,14 @@ runs:
         echo "APP_OUTPUT=$APP_OUTPUT" >> $GITHUB_ENV
         echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
         echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
+
+        # check if we're cross-compiling setting proper build commands
+        if $CROSS_COMPILE; then
+          ZSH_CMD="arch -${ARCH} zsh"
+        else
+          ZSH_CMD="/bin/zsh"
+        fi
+        echo "ZSH_CMD=$ZSH_CMD" >> $GITHUB_ENV
     - name: Check ccache
       id: setup_ccache
       if: ${{ inputs.USE_CCACHE == 'true' }}
@@ -65,7 +77,7 @@ runs:
       run: |
         # First build with plugins
         export CCACHE_DIR=${{ env.CCACHE_DIR }}
-        zsh ./compileMythtvAnsible.zsh $BLD_FLGS --build-plugins=true
+        ${ZSH_CMD} ./compileMythtvAnsible.zsh $BLD_FLGS --build-plugins=true
         echo "compile complete, copying into $APP_OUT_DIR"
         ditto "${APP_OUTPUT}" "${APP_W}"
     - name: "Re-Build MythTV without Plugins"
@@ -78,7 +90,7 @@ runs:
       run: |
         # Now make it without plugins
         BLD_FLGS="$BLD_FLGS --skip-build=true --build-plugins=false"
-        zsh ./compileMythtvAnsible.zsh $BLD_FLGS
+        ${ZSH_CMD} ./compileMythtvAnsible.zsh $BLD_FLGS
         echo "compile complete, copying into $APP_OUT_DIR"
         ditto "${APP_OUTPUT}" "${APP_WO}"
     - name: "Clean Up Workspace"

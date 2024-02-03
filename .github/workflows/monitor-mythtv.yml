@@ -32,7 +32,7 @@ jobs:
         id: cache
         env:
           cache-name: mythtv
-        uses: actions/cache@v3
+        uses: actions/cache@master
         with:
           path: ${{ env.GIT_CACHE_DIR }}
           key: mythtv-git-${{ github.sha }}
@@ -84,6 +84,7 @@ jobs:
       BUILD_x86_64: true
       BUILD_ARM64: true
       USE_CCACHE: true
+      RUNNER_SELECT: free
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
       PKGMGR: macports
     secrets: inherit
@@ -95,6 +96,7 @@ jobs:
       BUILD_x86_64: true
       BUILD_ARM64: true
       USE_CCACHE: true
+      RUNNER_SELECT: free
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
       PKGMGR: macports
     secrets: inherit

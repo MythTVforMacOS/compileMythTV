@@ -61,9 +61,17 @@ runs:
             ;;
         esac
         echo "Preparing the Upload links"
-        UL_FILENAME="MythFrontend-${ARCH}-${OS_VERS}-v${VERSNUM}-with-plugins.dmg"
+        case $PKGMGR in
+            macports)
+              APPLABEL=${ARCH}-${OS_VERS}-v${VERSNUM}
+            ;;
+            homebrew)
+              APPLABEL=HB-${ARCH}-${OS_VERS}-v${VERSNUM}
+            ;;
+        esac
+        UL_FILENAME="$APPLABEL-with-plugins.dmg"
         DEST_WITH="${SF_LOGIN}@frs.sourceforge.net:${SF_PATH}/$UL_FILENAME"
-        UL_FILENAME="MythFrontend-${ARCH}-${OS_VERS}-v${VERSNUM}.dmg"
+        UL_FILENAME="$APPLABEL.dmg"
         DEST_WITHOUT="${SF_LOGIN}@frs.sourceforge.net:${SF_PATH}/$UL_FILENAME"
         echo "DEST_WITH=$DEST_WITH" >> $GITHUB_ENV
         echo "DEST_WITHOUT=$DEST_WITHOUT" >> $GITHUB_ENV
