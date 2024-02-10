@@ -1,5 +1,5 @@
 ---
-name: "Monitor and Build MythTV (Intel)"
+name: "Monitor and Build MythTV"
 
 on:  # yamllint disable-line rule:truthy
   schedule:
