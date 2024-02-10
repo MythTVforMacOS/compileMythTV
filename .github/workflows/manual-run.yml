@@ -9,6 +9,7 @@ on:  # yamllint disable-line rule:truthy
         description: "Choose a MythTV Version"
         options:
           - "master"
+          - "fixes/34"
           - "fixes/33"
           - "fixes/32"
       BUILD_x86_64:

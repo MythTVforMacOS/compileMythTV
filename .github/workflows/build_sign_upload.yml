@@ -80,6 +80,7 @@ jobs:
     env:
       COMPILER: "clang"
       APP_OUT_DIR: "output_dir"
+      MASTER_VERS: 35
       ARCH: ${{ matrix.arch }}
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       USE_CCACHE: ${{ inputs.USE_CCACHE }}
@@ -129,7 +130,7 @@ jobs:
               VERSNUM=${MYTHBRANCH#*/}
             ;;
             *master*)
-              VERSNUM=34
+              VERSNUM=${MASTER_VERS}
             ;;
             *)
               echo "Bad MYTHVERS"

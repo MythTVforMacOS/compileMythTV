@@ -14,7 +14,7 @@ jobs:
     env:
       MASTER_BRANCH: "master"
       UPDATE_MASTER: false
-      FIXES_BRANCH: "fixes/33"
+      FIXES_BRANCH: "fixes/34"
       UPDATE_FIXES: false
     outputs:
       MASTER_BRANCH: ${{ env.MASTER_BRANCH }}
