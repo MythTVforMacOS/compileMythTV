@@ -40,14 +40,17 @@ jobs:
       - name: "Check for mythtv git repository updates"
         id: gitcheck
         run: |
-          if [ ! -d "$GIT_CACHE_DIR/master" ]; then
+          MASTER_CACHE_DIR=$GIT_CACHE_DIR/${MASTER_BRANCH}
+          FIXES_CACHE_DIR=$GIT_CACHE_DIR/${FIXES_BRANCH}
+          # check on master
+          if [ ! -d "$MASTER_CACHE_DIR" ]; then
             echo "Master: First time run or cache was deleted"
-            mkdir -p "$GIT_CACHE_DIR/master"
-            cd $GIT_CACHE_DIR/master
+            mkdir -p "$MASTER_CACHE_DIR"
+            cd $MASTER_CACHE_DIR
             git clone -b "$MASTER_BRANCH" https://github.com/MythTV/mythtv.git
             UPDATE_MASTER="true"
           else
-            cd "$GIT_CACHE_DIR/master/mythtv"
+            cd "$MASTER_CACHE_DIR/mythtv"
             MASTER_STATUS=$(git pull)
             if [[ $MASTER_STATUS == *"Already up to date."* ]]; then
               echo "master was not updated"
@@ -58,23 +61,25 @@ jobs:
             fi
           fi
           echo "UPDATE_MASTER=$UPDATE_MASTER" >> $GITHUB_ENV
-            if [ ! -d "$GIT_CACHE_DIR/fixes" ]; then
-              echo "Fixes: First time run or cache was deleted"
-              mkdir -p "$GIT_CACHE_DIR/fixes"
-              cd $GIT_CACHE_DIR/fixes
-              git clone -b "$FIXES_BRANCH" https://github.com/MythTV/mythtv.git
-              UPDATE_FIXES="true"
+          # check on fixes
+          if [ ! -d "FIXES_CACHE_DIR" ]; then
+            echo "Fixes: First time run, a new version was released, or cache was deleted"
+            sudo rm -Rf ${GIT_CACHE_DIR/fixes*}
+            mkdir -p "$FIXES_CACHE_DIR"
+            cd $FIXES_CACHE_DIR
+            git clone -b "$FIXES_BRANCH" https://github.com/MythTV/mythtv.git
+            UPDATE_FIXES="true"
+          else
+            cd "$FIXES_CACHE_DIR/mythtv"
+            FIXES_STATUS=$(git pull)
+            if [[ $FIXES_STATUS == *"Already up to date."* ]]; then
+              echo "fixes was not updated"
+              UPDATE_FIXES=false
             else
-              cd "$GIT_CACHE_DIR/fixes/mythtv"
-              FIXES_STATUS=$(git pull)
-              if [[ $FIXES_STATUS == *"Already up to date."* ]]; then
-                echo "fixes was not updated"
-                UPDATE_FIXES=false
-              else
-                echo "fixes was updated"
-                UPDATE_FIXES="true"
-              fi
+              echo "fixes was updated"
+              UPDATE_FIXES="true"
             fi
+          fi
           echo "UPDATE_FIXES=$UPDATE_FIXES" >> $GITHUB_ENV
   build-mythtv-master:
     needs: check-mythtv
