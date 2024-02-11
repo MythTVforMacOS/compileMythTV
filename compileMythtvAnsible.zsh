@@ -283,7 +283,6 @@ case $PKGMGR in
     HDHR_INC_PATH="$PKGMGR_INC/libhdhomerun"
     #set as null since its on the default macports location 
     HDHR_LIB_PATH=""
-    #HDHR_LIB_PATH="$PKGMGR_LIB"
     INSTALL_WEBKIT=true
   ;;
   homebrew)
@@ -1220,4 +1219,3 @@ echoC "If you intend to distribute the application, then next steps are to codes
 and notarize the appliction using the codesignAndPackage.zsh script with the
 following command:"
 echoC "    ./codesignAndPackage.zsh $APP" GREEN
-
