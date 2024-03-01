@@ -127,7 +127,7 @@ jobs:
           PYVERS: ${{ env.PYVERS }}
           PYDOTVERS: ${{ env.PYDOTVERS }}
           DBVERS: ${{ env.DBVERS }}
-          QTVER: ${{env.QTVERS}}
+          QTVERS: ${{env.QTVERS}}
           COMPILER: ${{ env.COMPILER }}
       - name: "Install Homebrew Packages"
         if: ${{ env.USE_HB == 'true' }}
@@ -140,7 +140,7 @@ jobs:
           PYDOTVERS: ${{ env.PYDOTVERS }}
           ANSIBLEVERS: ${{ env.ANSIBLEVERS }}
           DBVERS: ${{ env.DBVERS }}
-          QTVER: ${{env.QTVERS}}
+          QTVERS: ${{env.QTVERS}}
           COMPILER: ${{ env.COMPILER }}
       - name: Checkout Mythtv/mythtv repository
         uses: actions/checkout@v4
