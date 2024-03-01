@@ -906,7 +906,7 @@ else
   echoC "------------ Compiling Mythtv ------------" GREEN
   #compile MythTV
   echoC "    Running make" BLUE
-  make || { echo 'Compiling Mythtv failed' ; exit 1; }
+  make -j4 || { echo 'Compiling Mythtv failed' ; exit 1; }
 fi
 
 echoC "------------ Installing Mythtv ------------" GREEN
@@ -958,7 +958,7 @@ if $BUILD_PLUGINS; then
     echoC "    Running qmake/make" BLUE
     $QMAKE_CMD mythplugins.pro
     #compile mythplugins
-    make || { echo 'Compiling Plugins failed' ; exit 1; }
+    make -j4 || { echo 'Compiling Plugins failed' ; exit 1; }
   fi
   echoC "------------ Installing Mythplugins ------------" GREEN
   make install
