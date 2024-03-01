@@ -86,10 +86,7 @@ jobs:
     if: needs.check-mythtv.outputs.UPDATE_MASTER == 'true'
     uses: ./.github/workflows/build_sign_upload.yml
     with:
-      BUILD_x86_64: true
-      BUILD_ARM64: true
       USE_CCACHE: true
-      RUNNER_SELECT: free
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
       PKGMGR: macports
     secrets: inherit
@@ -98,10 +95,7 @@ jobs:
     if: needs.check-mythtv.outputs.UPDATE_FIXES == 'true'
     uses: ./.github/workflows/build_sign_upload.yml
     with:
-      BUILD_x86_64: true
-      BUILD_ARM64: true
       USE_CCACHE: true
-      RUNNER_SELECT: free
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
       PKGMGR: macports
     secrets: inherit

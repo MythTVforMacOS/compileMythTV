@@ -19,6 +19,9 @@ inputs:
   DBVERS:
     required: true
     type: string
+  QTVERS:
+    required: true
+    type: string
   COMPILER:
     required: true
     type: string
@@ -32,7 +35,6 @@ runs:
         echo "Removing all previously install formula"
         brew remove --cask --force $(brew list)
         brew remove --force $(brew list --formula)
-        
         # check if we're cross-compiling, setting up the brew command appropriately
         if $CROSS_COMPILE; then
           PKGMGR_PATH=$(arch -${ARCH} brew --prefix)
@@ -89,8 +91,6 @@ runs:
         PYDOTVERS: ${{ inputs.PYDOTVERS }}
         DBVERS: ${{ inputs.DBVERS }}
       run: |
-        echo "Cloninng MythTV anible repo"
-        git clone https://github.com/MythTV/ansible.git
         cd ansible
         echo "Installing packages via ansible playbook"
         export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PKGMGR_PATH/lib/pkgconfig/mysqlclient.pc
