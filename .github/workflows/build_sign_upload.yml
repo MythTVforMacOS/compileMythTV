@@ -4,14 +4,6 @@ name: "Reusable WF: Build Sign and Upload Mythfrontend"
 on:  # yamllint disable-line rule:truthy
   workflow_call:
     inputs:
-      BUILD_x86_64:
-        required: true
-        type: boolean
-        default: false
-      BUILD_ARM64:
-        required: true
-        type: boolean
-        default: false
       MYTHBRANCH:
         required: true
         type: string
@@ -24,64 +16,41 @@ on:  # yamllint disable-line rule:truthy
         required: true
         type: string
         default: macports
-      RUNNER_SELECT:
-        required: true
-        type: string
-        default: free
 jobs:
   build:
+    name: Building MythTV on ${{ matrix.os.desc }} using ${{ matrix.compiler.desc }}
     strategy:
       fail-fast: false
       matrix:
-        os: ['macos-11', 'macos-12', 'macos-13', 'macos-13-xl', 'macos-14']
-        arch: ['x86_64', 'arm64']
-        build_x86_64:
-          - ${{ inputs.BUILD_x86_64 }}
-        build_ARM64:
-          - ${{ inputs.BUILD_ARM64 }}
+        os:
+          - desc: 'macOS 11 (Big Sur) x86_64'
+            runner: 'macOS-11'
+            arch: 'x86_64'
+            cross_compile: false
+          - desc: 'macOS 12 (Monterey) x86_64'
+            runner: 'macOS-12'
+            arch: 'x86_64'
+            cross_compile: false
+          - desc: 'macOS 13 (Ventura) x86_64'
+            runner: 'macOS-13'
+            arch: 'x86_64'
+            cross_compile: false
+          - desc: 'macOS 14 (Sonoma) x86_64'
+            runner: 'macOS-14'
+            arch: 'x86_64'
+            cross_compile: true
+          - desc: 'macOS 14 (Sonoma) arm64'
+            runner: 'macOS-14'
+            arch: 'arm64'
+            cross_compile: false
         build_homebrew:
           - ${{ inputs.PKGMGR == 'homebrew' }}
-        run_free:
-          - ${{ inputs.RUNNER_SELECT == 'free' || inputs.RUNNER_SELECT == 'all' }}
-        run_paid:
-          - ${{ inputs.RUNNER_SELECT == 'paid' || inputs.RUNNER_SELECT == 'all' }}
-        exclude:
-          - os: 'macos-11'
-            arch: 'arm64'
-          - os: 'macos-12'
-            arch: 'arm64'
-          - os: 'macos-13'
-            arch: 'arm64'
-          - build_x86_64: false
-            arch: 'x86_64'
-          - build_ARM64: false
-            arch: 'arm64'
-          - build_x86_64: false
-            os: 'macos-11'
-          - build_x86_64: false
-            os: 'macos-12'
-          - build_x86_64: false
-            os: 'macos-13'
-          - build_arm64: false
-            os: 'macos-13-xl'
-          - build_homebrew: true
-            os: 'macos-11'
-          - run_free: false
-            os: 'macos-11'
-          - run_free: false
-            os: 'macos-12'
-          - run_free: false
-            os: 'macos-13'
-          - run_free: false
-            os: 'macos-14'
-          - run_paid: false
-            os: 'macos-13-xl'
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os.runner }}
     env:
       COMPILER: "clang"
       APP_OUT_DIR: "output_dir"
       MASTER_VERS: 35
-      ARCH: ${{ matrix.arch }}
+      ARCH: ${{ matrix.os.arch }}
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       USE_CCACHE: ${{ inputs.USE_CCACHE }}
       PKGMGR: ${{ inputs.PKGMGR }}
@@ -95,6 +64,7 @@ jobs:
               PYVERS="311"
               PYDOTVERS="3.11"
               DBVERS="mysql8"
+              QTVERS="qt5"
               echo "USE_MP=true" >> $GITHUB_ENV
               echo "USE_HB=false" >> $GITHUB_ENV
             ;;
@@ -103,6 +73,7 @@ jobs:
               PYDOTVERS="3.11"
               ANSIBLEVERS="8"
               DBVERS="mysql"
+              QTVERS="qt5"
               echo "ANSIBLEVERS=$ANSIBLEVERS" >> $GITHUB_ENV
               echo "USE_MP=false" >> $GITHUB_ENV
               echo "USE_HB=true" >> $GITHUB_ENV
@@ -111,20 +82,16 @@ jobs:
           echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
           echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
           echo "DBVERS=${DBVERS}" >> $GITHUB_ENV
+          echo "QTVERS=${QTVERS}" >> $GITHUB_ENV
           BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} \
             --version=${MYTHBRANCH} \
             --python-version=${PYVERS} \
             --database-version=${DBVERS} \
+            --qt-version=${QTVERS} \
             --alt-compiler=${COMPILER} \
             --skip-ansible=true"
           #check if this is a cross compile
           SYSARCH=$(/usr/bin/uname -m)
-          if [ "$SYSARCH" = "$ARCH" ]; then
-            CROSS_COMPILE=false
-          else
-            CROSS_COMPILE=true
-          fi
-          echo "CROSS_COMPILE=$CROSS_COMPILE" >> $GITHUB_ENV
           case $MYTHBRANCH in
             *fixes*)
               VERSNUM=${MYTHBRANCH#*/}
@@ -144,30 +111,42 @@ jobs:
           echo "BLD_FLGS=${BLD_FLGS}" >> $GITHUB_ENV
           echo "SYSARCH=$SYSARCH" >> $GITHUB_ENV
           echo "OS_VERS=$(/usr/bin/sw_vers -productVersion)" >> $GITHUB_ENV
-          echo "VERSNUM=${VERSNUM}" >> $GITHUB_ENV
+          echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
+      - name: "Checkout MythTV/ansible repository"
+        uses: actions/checkout@v4
+        with:
+          repository: MythTV/ansible
+          path: ansible
       - name: "Install MacPorts Ports"
         if: ${{ env.USE_MP == 'true' }}
         uses: ./.github/actions/installPorts
         id: installMP
         with:
-          ARCH: ${{ env.ARCH }}
-          CROSS_COMPILE: ${{ env.CROSS_COMPILE }}
+          ARCH: ${{ matrix.os.arch }}
+          CROSS_COMPILE: ${{ matrix.os.cross_compile }}
           PYVERS: ${{ env.PYVERS }}
           PYDOTVERS: ${{ env.PYDOTVERS }}
           DBVERS: ${{ env.DBVERS }}
+          QTVERS: ${{env.QTVERS}}
           COMPILER: ${{ env.COMPILER }}
       - name: "Install Homebrew Packages"
         if: ${{ env.USE_HB == 'true' }}
         uses: ./.github/actions/installBrewPackages
         id: installHB
         with:
-          ARCH: ${{ env.ARCH }}
-          CROSS_COMPILE: ${{ env.CROSS_COMPILE }}
+          ARCH: ${{ matrix.os.arch }}
+          CROSS_COMPILE: ${{ matrix.os.cross_compile }}
           PYVERS: ${{ env.PYVERS }}
           PYDOTVERS: ${{ env.PYDOTVERS }}
           ANSIBLEVERS: ${{ env.ANSIBLEVERS }}
           DBVERS: ${{ env.DBVERS }}
+          QTVERS: ${{env.QTVERS}}
           COMPILER: ${{ env.COMPILER }}
+      - name: Checkout Mythtv/mythtv repository
+        uses: actions/checkout@v4
+        with:
+          repository: MythTV/mythtv
+          path: "mythtv-${{ env.VERSNUM }}/mythtv"
       - name: "Compile MythTV"
         uses: ./.github/actions/compile
         id: compile
@@ -175,9 +154,9 @@ jobs:
           APP_OUT_DIR: ${{ env.APP_OUT_DIR }}
           APP_W: ${{ env.APP_W }}
           APP_WO: ${{ env.APP_WO }}
-          OS: ${{ matrix.os }}
-          ARCH: ${{ env.ARCH }}
-          CROSS_COMPILE: ${{ env.CROSS_COMPILE }}
+          OS: ${{ matrix.os.runner }}
+          ARCH: ${{ matrix.os.arch }}
+          CROSS_COMPILE: ${{ matrix.os.cross_compile }}
           BLD_FLGS: ${{ env.BLD_FLGS }}
           VERSNUM: ${{ env.VERSNUM }}
           USE_CCACHE: ${{ env.USE_CCACHE }}
@@ -185,7 +164,7 @@ jobs:
         id: test_app
         shell: bash
         env:
-          ARCH: ${{ env.ARCH }}
+          ARCH: ${{ matrix.os.arch }}
         run: |
           echo "Testing mythfrontend.app"
           EXE="$APP_W/Contents/MacOS/mythfrontend --version"
@@ -226,6 +205,6 @@ jobs:
           DMG_WO: ${{ env.DMG_WO }}
           VERSNUM: ${{ env.VERSNUM }}
           OS_VERS: ${{ env.OS_VERS }}
-          ARCH: ${{ env.ARCH }}
+          ARCH: ${{ matrix.os.arch }}
           PKGMGR: ${{ env.PKGMGR }}
           SF_LOGIN: ${{ secrets.SF_LOGIN }}

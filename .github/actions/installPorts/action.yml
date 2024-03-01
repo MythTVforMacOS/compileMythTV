@@ -16,6 +16,9 @@ inputs:
   DBVERS:
     required: true
     type: string
+  QTVERS:
+    required: true
+    type: string
   COMPILER:
     required: true
     type: string
@@ -44,25 +47,13 @@ runs:
         if hash port 2>/dev/null; then
           echo "Macports is already installed"
         else
+          PKGMGR_PATH=/opt/local
+          echo "PKGMGR_PATH=$PKGMGR_PATH" >> $GITHUB_ENV
           curl -LJO "${GH_URL}/${MP_URL}"
           chmod +x macports-ci
-          if $CROSS_COMPILE; then
-            #install macports for cross-compile arch
-            arch -${ARCH} ./macports-ci install
-            # running the install with arch doesn't set the current environment, source
-            # this needs to be done manually
-            # this only will work if macports is installed in the default location
-            if [ ! -f ~/.bashrc ]; then
-              cp /etc/bashrc ~/.bashrc
-            fi
-            echo 'export PATH=/opt/local/bin:/opt/local/sbin:$PATH' >> ~/.bashrc
-            echo 'export MANPATH=/opt/local/share/man:$MANPATH' >> ~/.bashrc
-            echo 'export DISPLAY=:0.0' >> ~/.bashrc
-            source ~/.bashrc
-          else
-            #install macports for system arch
-            source ./macports-ci install
-          fi
+          arch -${{ matrix.os.arch }} bash -c "source ./macports-ci install"
+          export PATH=${PKGMGR_PREFIX}/bin:${PKGMGR_PREFIX}/libexec/${{ matrix.os.qt_version }}/bin:${PKGMGR_PREFIX}/sbin:$PATH
+          echo "PKGMGR_CMD=sudo $PKGMGR_PREFIX/bin/port" >> $GITHUB_ENV
         fi
     - name: "Remove Homebrew"
       id: remove_homebrew
@@ -81,7 +72,6 @@ runs:
       shell: bash
       run: |
         PKGMGR_CMD=$(which port)
-        PKGMGR_PATH=$(dirname $(dirname $PKGMGR_CMD))
         # If we're cross-compiling, we need to change this to the selected arch
         if $CROSS_COMPILE; then
           PKGMGR_CMD="sudo arch -${ARCH} $PKGMGR_CMD"
@@ -89,7 +79,6 @@ runs:
           PKGMGR_CMD="sudo $PKGMGR_CMD"
         fi
         echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
-        echo "PKGMGR_PATH=$PKGMGR_PATH" >> $GITHUB_ENV
         echo "PKGMGR_BIN=$PKGMGR_PATH/bin" >> $GITHUB_ENV
         export PATH=$PATH:$PKGMGR_BIN
     - name: "Install required support ports"
@@ -129,8 +118,6 @@ runs:
         PYDOTVERS: ${{ inputs.PYDOTVERS }}
         DBVERS: ${{ inputs.DBVERS }}
       run: |
-        echo "Cloninng MythTV anible repo"
-        git clone https://github.com/MythTV/ansible.git
         cd ansible
         echo "Installing ports via ansible playbook"
         export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PKGMGR_PATH/lib/mysql8/pkgconfig/
