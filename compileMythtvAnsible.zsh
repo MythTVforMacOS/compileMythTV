@@ -819,7 +819,7 @@ else
     eval "${ANSIBLE_FULL_CMD}"
   fi
   cd "$REPO_DIR" || exit 1
-  
+
   # if we're on homebrew and using qt5, we need to do more work to get the
   # QTMYSQL plugin working...
   case $PKGMGR in
