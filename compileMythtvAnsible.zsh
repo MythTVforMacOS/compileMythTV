@@ -12,7 +12,7 @@ Standard options:
                                            Example: ${2}
   --version=MYTHTV_VERS                  Requested mythtv git repo (${1})
                                            Example: master for the latest master
-                                                    fixes/33 for version 33
+                                                    fixes/34 for version 34
   --database-version=DATABASE_VERS       Requested version of mariadb/mysql to build agains (${3})
   --qt-version=qt5                       Select Qt version to build against (${4})
                                            Example: qt5 for qt5
@@ -115,11 +115,9 @@ OS_ARCH=$(/usr/bin/arch)
 ###########################################################################################
 # setup default variables
 BUILD_PLUGINS=false
-PYTHON_VERS="311"
 UPDATE_PKGMGR=false
 MYTHTV_VERS="master"
 MYTHTV_PYTHON_SCRIPT="ttvdb4"
-QT_VERS=qt5
 GENERATE_APP=true
 INSTALL_DIR=""
 UPDATE_GIT=true
@@ -133,6 +131,21 @@ MYTHTV_PATCH_DIR=""
 PLUGINS_PATCH_DIR=""
 REPO_PREFIX=$HOME
 
+# macports / homebrew have different naming conventions
+# for mysql, python, and qt
+case $PKGMGR in
+  macports)
+    DATABASE_VERS=mysql82
+    PYTHON_VERS="311"
+    QT_VERS=qt5
+  ;;
+  homebrew)
+    DATABASE_VERS=mysql@8.0
+    PYTHON_VERS="312"
+    QT_VERS=qt@5
+  ;;
+esac
+
 # macports doesn't support mysql 8 for older versions of macOS, for those installs default to mariadb (unless the user overries)
 # also, homebrew drops the version numbers...
 if [ "$OS_MAJOR" -le 11 ] && [ "$OS_MINOR" -le 15 ]; then
@@ -142,15 +155,6 @@ if [ "$OS_MAJOR" -le 11 ] && [ "$OS_MINOR" -le 15 ]; then
     ;;
     homebrew)
       DATABASE_VERS=mariadb
-    ;;
-  esac
-else
-  case $PKGMGR in
-    macports)
-      DATABASE_VERS=mysql82
-    ;;
-    homebrew)
-      DATABASE_VERS=mysql@8.0
     ;;
   esac
 fi
@@ -318,6 +322,11 @@ BLURAY_INC_PATH="$PKGMGR_INC/libbluray"
 ###########################################################################################
 ### Setup QT Specific Parameters ##########################################################
 ###########################################################################################
+case $PKGMGR in
+  homebrew)
+    QT_VERS="qt@${QT_VERS: -1}"
+  ;;
+esac
 QT_PATH="$PKGMGR_ALT_PATH/$QT_VERS"
 QT_INC_PATH="$QT_PATH/include"
 QT_LIB_PATH="$QT_PATH/lib"
@@ -705,7 +714,7 @@ buildQT5MYSQL(){
   QT_SOURCES="$(pwd)/qt5_src/qt@5-$QTVERS"
   QT_INSTALL_PREFIX="$($QMAKE_CMD -query QT_INSTALL_PREFIX)"
   QT_SQLDRIVERS_SRC="$QT_SOURCES/qtbase/src/plugins/sqldrivers"
-  MYSQL_PREFIX=$(brew --prefix mysql)
+  MYSQL_PREFIX=$(brew --prefix $DATABASE_VERS)
   MYSQL_INCDIR="$MYSQL_PREFIX/include/mysql"
   MYSQL_LIBDIR="$MYSQL_PREFIX/lib"
 
@@ -764,6 +773,8 @@ if [ ! $SKIP_ANSIBLE ]; then
         echoC "    Homebrew: Insatlling Ansible" ORANGE
         brew install python@$PYTHON_DOT_VERS
         brew install ansible
+        alias python=python3
+        alias pip=pip3
     esac
   else
     echoC "    Ansible is correctly installed" BLUE
@@ -796,7 +807,7 @@ else
     cd "$REPO_DIR/ansible" || exit 1
     ANSIBLE_FLAGS="--limit=localhost"
     case $QT_VERS in
-        qt5)
+        *5*)
            ANSIBLE_EXTRA_FLAGS="--extra-vars \"ansible_python_interpreter=$PYTHON_PKMGR_BIN database_version=$DATABASE_VERS install_qtwebkit=$INSTALL_WEBKIT\""
         ;;
         *)
@@ -807,16 +818,17 @@ else
     # Need to use eval as zsh does not split multiple-word variables (https://zsh.sourceforge.io/FAQ/zshfaq03.html)
     eval "${ANSIBLE_FULL_CMD}"
   fi
-
+  cd "$REPO_DIR" || exit 1
+  
   # if we're on homebrew and using qt5, we need to do more work to get the
   # QTMYSQL plugin working...
   case $PKGMGR in
     homebrew)
       case $QT_VERS in
-        qt5)
+        *5*)
           if [ ! -f $QT_PATH/plugins/sqldrivers/libqsqlmysql.dylib ]; then
             echoC "    Homebrew: Installing QTMYSQL plugin for $QT_VERS" BLUE
-            brew unpack qt5 --destdir qt5_src
+            brew unpack $QT_VERS --destdir qt5_src
             buildQT5MYSQL
           else
             echoC "    Homebrew: QTMYSQL plugin is installed for $QT_VERS" BLUE
