@@ -69,19 +69,22 @@ echoC(){
     case $COLOR in
     ### echo color codes
     RED)
-      CODE='\033[31m'
+      CODE='\033[0;31m'
     ;;
     ORANGE)
-      CODE='\033[33m'
+      CODE='\033[0;33m'
+    ;;
+    YELLOW)
+      CODE='\033[1;33m'
     ;;
     GREEN)
-      CODE='\033[32m'
+      CODE='\033[0;32m'
     ;;
     BLUE)
-      CODE='\033[34m'
+      CODE='\033[0;34m'
     ;;
     CYAN)
-      CODE='\033[36m'
+      CODE='\033[0;36m'
     ;;
     esac
     echo -e $CODE"$MESSAGE"$END_CODE
@@ -117,7 +120,7 @@ OS_ARCH=$(/usr/bin/arch)
 BUILD_PLUGINS=false
 UPDATE_PKGMGR=false
 MYTHTV_VERS="master"
-MYTHTV_PYTHON_SCRIPT="Television/ttvdb4"
+MYTHTV_PYTHON_SCRIPT="ttvdb4"
 GENERATE_APP=true
 INSTALL_DIR=""
 UPDATE_GIT=true
@@ -574,7 +577,7 @@ installLibs(){
   pathDepList=$(echo "$pathDepList"| gsed 's/(.*//')
   while read -r dep; do
     if [ "$loopCTR" = 0 ]; then
-      echoC "    installLibs: Parsing $binFile for linked libraries" BLUE
+      echoC "    installLibs: Parsing $binFile for linked libraries" YELLOW
     fi
     loopCTR=$loopCTR+1
     lib=${dep##*/}
@@ -1127,18 +1130,18 @@ echoC "    Creating a temporary application from $MYTHTV_PYTHON_SCRIPT" BLUE
 # from one of the python scripts which will copy in all the required libraries for running
 # and will make a standalone python executable not tied to the system ttvdb4 seems to be more
 # particular than others (tmdb3)...
-$PY2APPLET_BIN -i "$PY2APP_PKGS" -p "$PY2APP_PKGS" --use-pythonpath --no-report-missing-conditional-import --make-setup "$INSTALL_DIR/share/mythtv/metadata/$MYTHTV_PYTHON_SCRIPT.py"
+$PY2APPLET_BIN -i "$PY2APP_PKGS" -p "$PY2APP_PKGS" --use-pythonpath --no-report-missing-conditional-import --make-setup "$INSTALL_DIR/share/mythtv/metadata/Television/$MYTHTV_PYTHON_SCRIPT.py"
 $PYTHON_VENV_BIN setup.py -q py2app 2>&1 > /dev/null
 # now we need to copy over the python app's pieces into the application bundle to get it working
 echoC "    Copying in Python Framework libraries" BLUE
-mv -n "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/Frameworks"/* "$APP_FMWK_DIR"
+cp -RHn "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/Frameworks"/* "$APP_FMWK_DIR"
 echoC "    Copying in Python Binary" BLUE
-mv "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/MacOS/python*" "$APP_EXE_DIR"
+cp -RHn "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/MacOS"/py* "$APP_EXE_DIR/"
 if [ -f "$APP_EXE_DIR/python3" ]; then
-  ln -s "$APP_EXE_DIR/pyton" "$APP_EXE_DIR/python3"
+  ln -s "$APP_EXE_DIR/python" "$APP_EXE_DIR/python3"
 fi
 echoC "    Copying in Python Resources" BLUE
-mv -n "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/Resources"/* "$APP_RSRC_DIR"
+cp -RHn "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/Resources"/* "$APP_RSRC_DIR"
 # clean up temp application
 cd "$APP_DIR" || exit 1
 rm -Rf "$PYTHON_APP"
