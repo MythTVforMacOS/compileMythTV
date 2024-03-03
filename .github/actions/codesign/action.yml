@@ -112,6 +112,12 @@ runs:
             while IFS= read -r -d '' line; do
               /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue "$line"
             done
+          # Search for zip files
+          echo "Codesigning all zip in app"
+          find $APP -name '*.zip' -print0 |
+            while IFS= read -r -d '' line; do
+              /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue "$line"
+            done
           # Search for dylibs
           echo "Codesigning all dylibs in app"
           find $APP -name '*.dylib' -print0 |
