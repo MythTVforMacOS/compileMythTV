@@ -384,6 +384,7 @@ PYTHON_VENV_PATH="$HOME/.mythtv/python-virtualenv"
 PY2APP_PKGS="MySQLdb,pycurl,requests_cache,urllib3,future,lxml,oauthlib,requests,simplejson,\
   audiofile,bs4,argparse,common,configparser,datetime,discid,et,features,HTMLParser,httplib2,\
   musicbrainzngs,traceback2,dateutil,importlib_metadata"
+PY2APP_EXLCUDE="soundfile"
 # Add flags to allow pip3 / python to find mysql8
 case $PKGMGR in
   macports)
@@ -1130,7 +1131,7 @@ echoC "    Creating a temporary application from $MYTHTV_PYTHON_SCRIPT" BLUE
 # from one of the python scripts which will copy in all the required libraries for running
 # and will make a standalone python executable not tied to the system ttvdb4 seems to be more
 # particular than others (tmdb3)...
-$PY2APPLET_BIN -i "$PY2APP_PKGS" -p "$PY2APP_PKGS" --use-pythonpath --no-report-missing-conditional-import --make-setup "$INSTALL_DIR/share/mythtv/metadata/Television/$MYTHTV_PYTHON_SCRIPT.py"
+$PY2APPLET_BIN -i "$PY2APP_PKGS" -p "$PY2APP_PKGS" -e "$PY2APP_EXLCUDE" --use-pythonpath --no-report-missing-conditional-import --make-setup "$INSTALL_DIR/share/mythtv/metadata/Television/$MYTHTV_PYTHON_SCRIPT.py"
 $PYTHON_VENV_BIN setup.py -q py2app 2>&1 > /dev/null
 # now we need to copy over the python app's pieces into the application bundle to get it working
 echoC "    Copying in Python Framework libraries" BLUE

@@ -101,7 +101,6 @@ runs:
 
         echo "Looping over applications"
         for APP in "$APP_W" "$APP_WO"; do
-          /usr/bin/xattr -rc $APP
           APP_FMWK="${APP}/Contents/Frameworks"
           APP_EXE="${APP}/Contents/MacOS"
 
@@ -109,12 +108,6 @@ runs:
           # Search the Applocation for so files
           echo "Signing .so files in app"
           find $APP -name '*.so' -print0 |
-            while IFS= read -r -d '' line; do
-              /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue "$line"
-            done
-          # Search for zip files
-          echo "Codesigning all zip in app"
-          find $APP -name '*.zip' -print0 |
             while IFS= read -r -d '' line; do
               /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue "$line"
             done
