@@ -1133,7 +1133,7 @@ $PYTHON_VENV_BIN setup.py -q py2app 2>&1 > /dev/null
 echoC "    Copying in Python Framework libraries" BLUE
 mv -n "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/Frameworks"/* "$APP_FMWK_DIR"
 echoC "    Copying in Python Binary" BLUE
-mv "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/MacOS/python" "$APP_EXE_DIR"
+mv "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/MacOS/python*" "$APP_EXE_DIR"
 if [ -f "$APP_EXE_DIR/python3" ]; then
   ln -s "$APP_EXE_DIR/pyton" "$APP_EXE_DIR/python3"
 fi
