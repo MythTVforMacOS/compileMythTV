@@ -101,6 +101,7 @@ runs:
 
         echo "Looping over applications"
         for APP in "$APP_W" "$APP_WO"; do
+          /usr/bin/xattr -rc $APP
           APP_FMWK="${APP}/Contents/Frameworks"
           APP_EXE="${APP}/Contents/MacOS"
 
