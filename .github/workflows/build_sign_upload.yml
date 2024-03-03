@@ -89,7 +89,8 @@ jobs:
             --database-version=${DBVERS} \
             --qt-version=${QTVERS} \
             --alt-compiler=${COMPILER} \
-            --skip-ansible=true"
+            --skip-ansible=true \
+            --update-git=false"
           #check if this is a cross compile
           SYSARCH=$(/usr/bin/uname -m)
           case $MYTHBRANCH in
@@ -146,6 +147,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: MythTV/mythtv
+          ref: ${{ env.MYTHBRANCH }}
           path: "mythtv-${{ env.VERSNUM }}/mythtv"
       - name: "Compile MythTV"
         uses: ./.github/actions/compile
