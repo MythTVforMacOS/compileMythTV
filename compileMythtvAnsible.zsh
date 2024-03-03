@@ -1137,9 +1137,6 @@ echoC "    Copying in Python Framework libraries" BLUE
 cp -RHn "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/Frameworks"/* "$APP_FMWK_DIR"
 echoC "    Copying in Python Binary" BLUE
 cp -RHn "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/MacOS"/py* "$APP_EXE_DIR/"
-if [ -f "$APP_EXE_DIR/python3" ]; then
-  ln -s "$APP_EXE_DIR/python" "$APP_EXE_DIR/python3"
-fi
 echoC "    Copying in Python Resources" BLUE
 cp -RHn "$PYTHON_APP/dist/$MYTHTV_PYTHON_SCRIPT.app/Contents/Resources"/* "$APP_RSRC_DIR"
 # clean up temp application
