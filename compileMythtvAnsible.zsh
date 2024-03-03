@@ -135,7 +135,7 @@ REPO_PREFIX=$HOME
 # for mysql, python, and qt
 case $PKGMGR in
   macports)
-    DATABASE_VERS=mysql82
+    DATABASE_VERS=mysql8
     PYTHON_VERS="311"
     QT_VERS=qt5
   ;;
