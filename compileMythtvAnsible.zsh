@@ -117,7 +117,7 @@ OS_ARCH=$(/usr/bin/arch)
 BUILD_PLUGINS=false
 UPDATE_PKGMGR=false
 MYTHTV_VERS="master"
-MYTHTV_PYTHON_SCRIPT="Movie/tmdb3.py"
+MYTHTV_PYTHON_SCRIPT="Television/ttvdb4"
 GENERATE_APP=true
 INSTALL_DIR=""
 UPDATE_GIT=true
@@ -380,7 +380,7 @@ PYTHON_PKMGR_BIN="$PKGMGR_BIN/$PYTHON_CMD"
 PYTHON_VENV_PATH="$HOME/.mythtv/python-virtualenv"
 PY2APP_PKGS="MySQLdb,pycurl,requests_cache,urllib3,future,lxml,oauthlib,requests,simplejson,\
   audiofile,bs4,argparse,common,configparser,datetime,discid,et,features,HTMLParser,httplib2,\
-  musicbrainzngs,port,put,traceback2,markdown,dateutil,importlib_metadata"
+  musicbrainzngs,traceback2,dateutil,importlib_metadata"
 # Add flags to allow pip3 / python to find mysql8
 case $PKGMGR in
   macports)
