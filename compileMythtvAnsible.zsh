@@ -117,7 +117,7 @@ OS_ARCH=$(/usr/bin/arch)
 BUILD_PLUGINS=false
 UPDATE_PKGMGR=false
 MYTHTV_VERS="master"
-MYTHTV_PYTHON_SCRIPT="ttvdb4"
+MYTHTV_PYTHON_SCRIPT="Movie/tmdb3.py"
 GENERATE_APP=true
 INSTALL_DIR=""
 UPDATE_GIT=true
@@ -1127,7 +1127,7 @@ echoC "    Creating a temporary application from $MYTHTV_PYTHON_SCRIPT" BLUE
 # from one of the python scripts which will copy in all the required libraries for running
 # and will make a standalone python executable not tied to the system ttvdb4 seems to be more
 # particular than others (tmdb3)...
-$PY2APPLET_BIN -i "$PY2APP_PKGS" -p "$PY2APP_PKGS" --use-pythonpath --no-report-missing-conditional-import --make-setup "$INSTALL_DIR/share/mythtv/metadata/Television/$MYTHTV_PYTHON_SCRIPT.py"
+$PY2APPLET_BIN -i "$PY2APP_PKGS" -p "$PY2APP_PKGS" --use-pythonpath --no-report-missing-conditional-import --make-setup "$INSTALL_DIR/share/mythtv/metadata/$MYTHTV_PYTHON_SCRIPT.py"
 $PYTHON_VENV_BIN setup.py -q py2app 2>&1 > /dev/null
 # now we need to copy over the python app's pieces into the application bundle to get it working
 echoC "    Copying in Python Framework libraries" BLUE
