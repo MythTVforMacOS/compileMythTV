@@ -111,7 +111,7 @@ jobs:
           echo "APP_WO=${APP_OUT_DIR}/without_plugins/$EXE" >> $GITHUB_ENV
           echo "BLD_FLGS=${BLD_FLGS}" >> $GITHUB_ENV
           echo "SYSARCH=$SYSARCH" >> $GITHUB_ENV
-          echo "OS_VERS=$(/usr/bin/sw_vers -productVersion)" >> $GITHUB_ENV
+          echo "OS_VERS=$(sw_vers -productVersion | awk -F '.' '{print $1}')" >> $GITHUB_ENV
           echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
       - name: "Checkout MythTV/ansible repository"
         uses: actions/checkout@v4
@@ -176,8 +176,8 @@ jobs:
           VERSTR=$($EXE |grep "MythTV Version"|gsed "s/^.*Version : *//")
           echo "Extracted Version String: $VERSTR"
           echo "Creating output DMG names"
-          DMG_W="MythFrontend-${ARCH}-$OS_VERS-$VERSTR-with-plugins.dmg"
-          DMG_WO="MythFrontend-${ARCH}-$OS_VERS-$VERSTR.dmg"
+          DMG_W="MythFrontend-${ARCH}-$OS_VERS-macOS$VERSTR-with-plugins.dmg"
+          DMG_WO="MythFrontend-${ARCH}-$OS_VERS-macOS$VERSTR.dmg"
           echo "DMG_W=$DMG_W" >> $GITHUB_ENV
           echo "DMG_WO=$DMG_WO" >> $GITHUB_ENV
       - name: "Codesign Mythfrontend"

@@ -63,10 +63,10 @@ runs:
         echo "Preparing the Upload links"
         case $PKGMGR in
             macports)
-              APPLABEL="MythFrontend-${ARCH}-${OS_VERS}-v${VERSNUM}"
+              APPLABEL="MythFrontend-${ARCH}-macOS${OS_VERS}-v${VERSNUM}"
             ;;
             homebrew)
-              APPLABEL="MythFrontend-HB-${ARCH}-${OS_VERS}-v${VERSNUM}"
+              APPLABEL="MythFrontend-HB-${ARCH}-macOS${OS_VERS}-v${VERSNUM}"
             ;;
         esac
         UL_FILENAME="$APPLABEL-with-plugins.dmg"
