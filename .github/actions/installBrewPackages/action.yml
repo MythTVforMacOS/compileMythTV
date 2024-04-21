@@ -47,12 +47,6 @@ runs:
         echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
         echo "Updating homebrew"
         ${PKGMGR_CMD} update
-    - name: "Install X11 dependencies on MacOS"
-      id: install_x11
-      if: runner.os == 'macOS'
-      shell: bash
-      run: |
-        ${PKGMGR_CMD} install --cask xquartz
     - name: "Install required support packages"
       id: install_req_packages
       shell: bash
