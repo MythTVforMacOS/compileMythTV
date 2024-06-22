@@ -412,6 +412,8 @@ fi
 
 if [ ${SDK_VERS%%.*} -ge 14 ]; then 
     COMP_LDFLAGS="-Wl,-ld_classic" 
+else
+    COMP_LDFLAGS="-Wl,-headerpad_max_install_names" 
 fi
 
 # Set COMP_LDFLAGS and COMP_INC to null since we only need to add paths for custom compilers
