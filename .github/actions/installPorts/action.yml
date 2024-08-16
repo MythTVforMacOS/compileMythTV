@@ -40,7 +40,7 @@ runs:
           echo "PKGMGR_PATH=$PKGMGR_PATH" >> $GITHUB_ENV
           curl -LJO "${GH_URL}/${MP_URL}"
           chmod +x macports-ci
-          arch -${{ matrix.os.arch }} bash -c "source ./macports-ci install"
+          arch -${{ matrix.os.arch }} bash -c "source ./macports-ci install  --sync=github"
           export PATH=${PKGMGR_PREFIX}/bin:${PKGMGR_PREFIX}/libexec/${{ matrix.os.qt_version }}/bin:${PKGMGR_PREFIX}/sbin:$PATH
           echo "PKGMGR_CMD=sudo $PKGMGR_PREFIX/bin/port" >> $GITHUB_ENV
         fi
