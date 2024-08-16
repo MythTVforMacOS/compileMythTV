@@ -30,7 +30,8 @@ runs:
       shell: bash
       env:
         GH_URL: "https://raw.githubusercontent.com"
-        MP_URL: "GiovanniBussi/macports-ci/master/macports-ci"
+        #MP_URL: "GiovanniBussi/macports-ci/master/macports-ci"
+        MP_URL: "jhoyt4/macports-ci/master/macports-ci"
       run: |
         if hash port 2>/dev/null; then
           echo "Macports is already installed"
