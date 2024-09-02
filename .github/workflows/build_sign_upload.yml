@@ -39,14 +39,14 @@ jobs:
             runner: 'macOS-14'
             arch: 'arm64'
             cross_compile: false
-          - desc: 'macOS 15 (Sequoia) x86_64'
-            runner: 'macOS-15'
-            arch: 'x86_64'
-            cross_compile: true
-          - desc: 'macOS 15 (Sequoia) arm64'
-            runner: 'macOS-15'
-            arch: 'arm64'
-            cross_compile: false
+          #- desc: 'macOS 15 (Sequoia) x86_64'
+          #  runner: 'macOS-15'
+          #  arch: 'x86_64'
+          #  cross_compile: true
+          #- desc: 'macOS 15 (Sequoia) arm64'
+          #  runner: 'macOS-15'
+          #  arch: 'arm64'
+          #  cross_compile: false
         build_homebrew:
           - ${{ inputs.PKGMGR == 'homebrew' }}
     runs-on: ${{ matrix.os.runner }}
