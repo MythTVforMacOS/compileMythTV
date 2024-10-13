@@ -139,7 +139,7 @@ REPO_PREFIX=$HOME
 case $PKGMGR in
   macports)
     DATABASE_VERS=mysql8
-    PYTHON_VERS="311"
+    PYTHON_VERS="312"
     QT_VERS=qt5
   ;;
   homebrew)

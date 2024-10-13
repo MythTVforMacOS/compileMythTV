@@ -31,10 +31,6 @@ jobs:
             runner: 'macOS-13'
             arch: 'x86_64'
             cross_compile: false
-          - desc: 'macOS 14 (Sonoma) x86_64'
-            runner: 'macOS-14'
-            arch: 'x86_64'
-            cross_compile: true
           - desc: 'macOS 14 (Sonoma) arm64'
             runner: 'macOS-14'
             arch: 'arm64'
@@ -73,9 +69,9 @@ jobs:
               echo "USE_HB=false" >> $GITHUB_ENV
             ;;
             homebrew)
-              PYVERS="311"
-              PYDOTVERS="3.11"
-              ANSIBLEVERS="8"
+              PYVERS="312"
+              PYDOTVERS="3.12"
+              ANSIBLEVERS="10"
               DBVERS="mysql"
               QTVERS="qt5"
               echo "ANSIBLEVERS=$ANSIBLEVERS" >> $GITHUB_ENV
