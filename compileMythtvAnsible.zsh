@@ -1171,10 +1171,10 @@ echoC "------------ Copying in dejavu and liberation fonts into the Application 
 case $PKGMGR in
   macports)
     cp -RHn "$FONT_PATH/dejavu-fonts"/*.ttf "$APP_RSRC_DIR/share/mythtv/fonts/"
-    if [ -d $FONT_PATH/liberation-fonts ]; then
-      cp -RHn "$FONT_PATH/liberation-fonts"/*.ttf "$APP_RSRC_DIR/share/mythtv/fonts/"
+    if [ -f $FONT_PATH/TTF/LiberationMono-Regular.ttf ]; then
+      cp -RHn "$FONT_PATH/TTF/Liberation"*.ttf "$APP_RSRC_DIR/share/mythtv/fonts/"
     else
-      cp -RHn "$FONT_PATH/TTF/Liberation*.ttf" "$APP_RSRC_DIR/share/mythtv/fonts/"
+      cp -RHn "$FONT_PATH/liberation-fonts"/*.ttf "$APP_RSRC_DIR/share/mythtv/fonts/"
     fi
   ;;
   homebrew)
