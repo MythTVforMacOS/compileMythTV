@@ -23,10 +23,6 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - desc: 'macOS 12 (Monterey) x86_64'
-            runner: 'macOS-12'
-            arch: 'x86_64'
-            cross_compile: false
           - desc: 'macOS 13 (Ventura) x86_64'
             runner: 'macOS-13'
             arch: 'x86_64'
