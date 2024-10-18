@@ -55,6 +55,9 @@ runs:
             # Apparently the Sonoma builders do not need the escape "\"
             SF_PATH="$SF_PATH/macOS 14 Sonoma"
             ;;
+          15*)
+            SF_PATH="$SF_PATH/macOS 15 Sequoia"
+            ;;
           *)
             echo "Unsupported macOS Version"
             exit 2
