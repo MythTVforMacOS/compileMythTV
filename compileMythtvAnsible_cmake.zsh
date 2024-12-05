@@ -10,7 +10,7 @@ Standard Options:
   --version=MYTHTV_VERS                   Requested mythtv git repo (${1})
                                             Example: master for the latest master
                                                      fixes/34 for version 34
-  --build-plugins=BUILD_PLUGINS           Build Mythtv Plugins (false)
+  --build-plugins=BUILD_PLUGINS           Build MythTV Plugins (false)
 Environmental Options:
   --database-version=DATABASE_VERS        Requested version of mariadb/mysql to build agains (${3})
 
@@ -472,7 +472,7 @@ checkQT_MYSQL(){
 
 # function to clone or update the mythtv git repo
 getSource(){
-  echoC "------------ Cloning / Updating Mythtv Git Repository ------------" GREEN
+  echoC "------------ Cloning / Updating MythTV Git Repository ------------" GREEN
   # setup mythtv source from git
   cd "$WORKING_DIR" || exit 1
   # if the repo exists, update it (assuming the flag is set)
@@ -502,7 +502,7 @@ configureAndBuild(){
   # build process to use it.
   source "$PYTHON_VENV_PATH/bin/activate"
 
-  echoC "------------ Configuring Mythtv ------------" GREEN
+  echoC "------------ Configuring MythTV ------------" GREEN
   # configure mythtv
   cd "$SRC_DIR" || exit 1
   GIT_VERS=$(git log -1 --format="%h")
@@ -530,11 +530,11 @@ configureAndBuild(){
                       -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR   \
                       $EXTRA_CMAKE_FLAGS"
     eval "${CONFIG_CMD}"
-    echoC "------------ Building Mythtv ------------" GREEN
+    echoC "------------ Building MythTV ------------" GREEN
     #compile MythTV
     echoC "    Building via cmake" BLUE
     BUILD_CMD="cmake --build build-$QT_CMAKE_VERS"
-    eval "${BUILD_CMD}" || { echo 'Building Mythtv failed' ; exit 1; }
+    eval "${BUILD_CMD}" || { echo 'Building MythTV failed' ; exit 1; }
   fi
 }
 
@@ -554,7 +554,10 @@ postBuild(){
   else
     if [[ $DISTIBUTE_APP == "ON" ]]; then
       echoC "------------ Generating DragNDrop dmg's with CPack ------------" GREEN
-      find $WORKING_DIR/mythtv -name "CPackConfig.cmake"|xargs cpack --config
+      /usr/bin/security unlock-keychain
+      CPACK_CFG=$(find $WORKING_DIR/mythtv -name "CPackConfig.cmake")
+      CPACK_CMD="cpack --config $CPACK_CFG"
+      eval "${CPACK_CMD}" || { echo 'Bundling MythTV failed' ; exit 1; }
     fi
   fi
 }
