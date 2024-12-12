@@ -14,7 +14,7 @@ Standard Options:
 Environmental Options:
   --database-version=DATABASE_VERS        Requested version of mariadb/mysql to build agains (${3})
 
-  --qt-version=qt5                        Select Qt version to build against (${4})
+  --qt-version=QT_PKMGR_VERS              Select Qt version to build against (${4})
                                             Example: qt5 for qt5
                                                      qt6 for qt6
   --python-version=PYTHON_VERS            Desired Python 3 Version (${2})
@@ -525,7 +525,8 @@ configureAndBuild(){
         EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS -DMYTH_BUILD_PLUGINS=ON"
     fi
     echoC "    Configuring via cmake" BLUE
-    CONFIG_CMD="cmake -B $CMAKE_BUILD_DIR                   \
+    CONFIG_CMD="cmake --preset $QT_CMAKE_VERS               \
+                      -B $CMAKE_BUILD_DIR                   \
                       -G Ninja                              \
                       -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR   \
                       $EXTRA_CMAKE_FLAGS"
