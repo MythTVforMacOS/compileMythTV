@@ -171,15 +171,12 @@ case $PKGMGR in
       DATABASE_VERS=mariadb-10.5
     fi
     QT_PKMGR_VERS=qt5
-    PYTHON_VERS="311"
+    PYTHON_VERS="313"
   ;;
   homebrew)
-    DATABASE_VERS=mysql@8.0
-    if ! [ [ "$OS_MAJOR" -gt 11 ] le [ "$OS_MINOR" -le 15 ] ]; then
-      DATABASE_VERS=mariadb
-    fi    
+    DATABASE_VERS=mysql
     QT_PKMGR_VERS=qt@5
-    PYTHON_VERS="312"
+    PYTHON_VERS="313"
   ;;
 esac
 

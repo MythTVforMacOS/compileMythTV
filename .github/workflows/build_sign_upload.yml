@@ -54,18 +54,18 @@ jobs:
           case $PKGMGR in
             macports)
               PYVERS="311"
-              PYDOTVERS="3.11"
+              PYDOTVERS="3.13"
               DBVERS="mysql8"
               QTVERS="qt5"
               echo "USE_MP=true" >> $GITHUB_ENV
               echo "USE_HB=false" >> $GITHUB_ENV
             ;;
             homebrew)
-              PYVERS="311"
-              PYDOTVERS="3.11"
+              PYVERS="313"
+              PYDOTVERS="3.13"
               ANSIBLEVERS="10"
               DBVERS="mysql"
-              QTVERS="qt5"
+              QTVERS="qt@5"
               echo "ANSIBLEVERS=$ANSIBLEVERS" >> $GITHUB_ENV
               echo "USE_MP=false" >> $GITHUB_ENV
               echo "USE_HB=true" >> $GITHUB_ENV
@@ -202,4 +202,3 @@ jobs:
           ARCH: ${{ matrix.os.arch }}
           PKGMGR: ${{ env.PKGMGR }}
           SF_LOGIN: ${{ secrets.SF_LOGIN }}
-
