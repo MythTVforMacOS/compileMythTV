@@ -714,7 +714,7 @@ correctHomebrewLibs(){
   cd $startDIR
 }
 
-# QT5 on homebrew no longe porvides a mechanism to install the QTMYSQL driver
+# QT5 on homebrew no longer porvides a mechanism to install the QTMYSQL driver
 buildQT5MYSQL(){
   QTVERS=$($QMAKE_CMD -query QT_VERSION)
   QT_SOURCES="$(pwd)/qt5_src/qt@5-$QTVERS"

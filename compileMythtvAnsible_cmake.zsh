@@ -313,12 +313,12 @@ esac
 export PATH=$PKGMGR_LIB/$DATABASE_VERS/bin:$PATH
 
 ### Setup QT Specific Parameters ###################################################################
-QT_CMAKE_VERS=$QT_PKMGR_VERS
 case $PKGMGR in
   homebrew)
     QT_PKMGR_VERS="qt@${QT_PKMGR_VERS: -1}"
   ;;
 esac
+QT_CMAKE_VERS="${QT_PKMGR_VERS//@}"
 
 ### Build Variables ################################################################################
 WORKING_DIR=$WORKING_DIR_BASE/mythtv-$VERS
@@ -444,7 +444,7 @@ checkQT_MYSQL(){
       QT_PATH="$PKGMGR_INST_PATH/opt/$QT_PKMGR_VERS"
       QMAKE_CMD=$QT_PATH/bin/qmake
       QTVERS=$($QMAKE_CMD -query QT_VERSION)
-      QT_SOURCES="$(pwd)/qt5_src/qt@5-$QTVERS"
+      QT_SOURCES="$(pwd)/qt5_src/$QT_PKMGR_VERS-$QTVERS"
       QT_INSTALL_PREFIX="$($QMAKE_CMD -query QT_INSTALL_PREFIX)"
       QT_SQLDRIVERS_SRC="$QT_SOURCES/qtbase/src/plugins/sqldrivers"
       MYSQL_PREFIX=$(brew --prefix $DATABASE_VERS)
@@ -509,7 +509,7 @@ configureAndBuild(){
   GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
   GIT_TAG=$(git describe --tags --exact-match 2>/dev/null)
   GIT_BRANCH_OR_TAG="${GIT_BRANCH:-${GIT_TAG}}"
-  
+
   if [ -d "$APP" ]; then
     echoC "    Cleaning up past Builds" BLUE
     find $SRC_DIR -name "*.app"|xargs rm -Rf
@@ -564,7 +564,7 @@ postBuild(){
 }
 
 ### Run through Necessary Functions ################################################################
-runAnsible         || exit 1 
+runAnsible         || exit 1
 checkQT_MYSQL      || exit 1
 getSource          || exit 1
 configureAndBuild  || exit 1
