@@ -443,7 +443,7 @@ checkQT_MYSQL(){
     homebrew)
       QT_PATH="$PKGMGR_INST_PATH/opt/$QT_PKMGR_VERS"
       QMAKE_CMD=$QT_PATH/bin/qmake
-      QTVERS=$($QMAKE_CMD -query QT_PKMGR_VERSION)
+      QTVERS=$($QMAKE_CMD -query QT_VERSION)
       QT_SOURCES="$(pwd)/qt5_src/qt@5-$QTVERS"
       QT_INSTALL_PREFIX="$($QMAKE_CMD -query QT_INSTALL_PREFIX)"
       QT_SQLDRIVERS_SRC="$QT_SOURCES/qtbase/src/plugins/sqldrivers"
