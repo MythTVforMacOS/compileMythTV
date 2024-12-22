@@ -174,7 +174,9 @@ case $PKGMGR in
     PYTHON_VERS="313"
   ;;
   homebrew)
-    DATABASE_VERS=mysql
+    export ANSIBLE_BECOME=false
+    export ANSIBLE_BECOME_ASK_PASS=False
+    DATABASE_VERS=mariadb
     QT_PKMGR_VERS=qt@5
     PYTHON_VERS="313"
   ;;
@@ -490,9 +492,15 @@ getSource(){
 
 # funtion to call cmake to configure and build mythtv
 configureAndBuild(){
-  # Help pkg-config find the mysqlclient dylib
-  export MYSQLCLIENT_LDFLAGS=$(pkg-config --libs mysqlclient)
-  export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags mysqlclient)
+  case $DATABASE_VERS in
+    mariadb*)
+      export MYSQLCLIENT_LDFLAGS=$(pkg-config --libs libmariadb)
+      export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags libmariadb)
+    ;;
+    mysql*)
+      export MYSQLCLIENT_LDFLAGS=$(pkg-config --libs mysqlclient)
+      export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags mysqlclient)
+  esac
 
   echoC "------------ Source the Python Virtual Environment ------------" GREEN
   # since we're using a custom python virtual environment, we need to source it to get the
