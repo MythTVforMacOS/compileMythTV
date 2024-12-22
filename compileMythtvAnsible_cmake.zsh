@@ -25,7 +25,7 @@ Environmental Options:
                                             This defaults to the MacPort's or Homebrew's prefix
 Configure and Build Options
   --update-git=UPDATE_GIT                 Update git repositories to latest (true)
-                                            This is only used when the source has already been 
+                                            This is only used when the source has already been
                                             cloned via git and you do not want to pull any updates
                                             from the master repo
   --skip-ansible=SKIP_ANSIBLE             Skip ansible install (false)
@@ -37,11 +37,11 @@ Configure and Build Options
 Bundling, Signing, and Notarization Options
   --frontend-bundle=BUILD_FRONTEND_BUNDLE Generate an Applicaiton Bundle for Mythfrontend (false)
                                             Setting this to true builds a working MythFrontend.app.
-                                            If building for unix-style executables, 
+                                            If building for unix-style executables,
                                             set this to OFF.
   --backend-bundle=BUILD_BACKEND_BUNDLE   Generate an Applicaiton Bundle for Mythbackend (false)
                                             Setting this to true builds a working Mythbackend.app.
-                                            If building for unix-style executables, 
+                                            If building for unix-style executables,
                                             set this to OFF.
   --generate-distribution=DISTIBUTE_APP   Generate the Distribution Package (false)
                                             Setting to true will enable App Signing and Notarization
@@ -126,6 +126,8 @@ if [ -x "$(command -v port)" ]; then
   PKGMGR='macports'
 elif [ -x "$(command -v brew)" ]; then
   PKGMGR='homebrew'
+  export ANSIBLE_BECOME=false
+  export ANSIBLE_BECOME_ASK_PASS=false
 else
   echoC 'Error Neither macports or homebrew are present. Exiting...' RED
   exit 1
@@ -174,8 +176,6 @@ case $PKGMGR in
     PYTHON_VERS="313"
   ;;
   homebrew)
-    export ANSIBLE_BECOME=false
-    export ANSIBLE_BECOME_ASK_PASS=False
     DATABASE_VERS=mariadb
     QT_PKMGR_VERS=qt@5
     PYTHON_VERS="313"
@@ -200,7 +200,7 @@ for i in "$@"; do
       ;;
       --backend-bundle=*)
         BUILD_BACKEND_BUNDLE=$(setONOFF "${i#*=}")
-      ;;    
+      ;;
       --database-version=*)
         DATABASE_VERS="${i#*=}"
       ;;
@@ -367,7 +367,7 @@ if [ ! -n  $SDK_ROOT ]; then
   exit 1
 fi
 
-if [ ${SDK_VERS%%.*} -ge 14 ]; then 
+if [ ${SDK_VERS%%.*} -ge 14 ]; then
     COMP_LDFLAGS="-Wl"
 else
     COMP_LDFLAGS="-Wl,-headerpad_max_install_names"
@@ -407,7 +407,7 @@ runAnsible(){
     esac
   fi
   echoC "------------ Running Ansible ------------" GREEN
-  # get mythtv's ansible playbooks, and install required ports if the repo exists, update 
+  # get mythtv's ansible playbooks, and install required ports if the repo exists, update
   # (assume the flag is set)
   if [ -d "$WORKING_DIR/ansible" ]; then
     cd "$WORKING_DIR/ansible" || exit 1
@@ -432,6 +432,7 @@ runAnsible(){
   ANSIBLE_FULL_CMD="$ANSIBLE_PB_EXE --limit=localhost $ANSIBLE_EXTRA_FLAGS mythtv.yml"
   # Need to use eval as zsh does not split multiple-word variables (https://zsh.sourceforge.io/FAQ/zshfaq03.html)
   eval "${ANSIBLE_FULL_CMD}"
+  cd $WORKING_DIR
 }
 
 # QT5 on homebrew no does not provide QTMYSQL driver so we might have to do this manually...
@@ -479,7 +480,7 @@ getSource(){
     cd "$WORKING_DIR/mythtv" || exit 1
     if $UPDATE_GIT && ! $SKIP_BUILD ; then
       echoC "    Updating mythtv/mythplugins git repo" BLUE
-      git pull 
+      git pull
     else
       echoC "    Skipping mythtv/mythplugins git repo update" ORANGE
     fi
