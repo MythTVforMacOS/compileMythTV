@@ -39,10 +39,6 @@ Bundling, Signing, and Notarization Options
                                             Setting this to true builds a working MythFrontend.app.
                                             If building for unix-style executables,
                                             set this to OFF.
-  --backend-bundle=BUILD_BACKEND_BUNDLE   Generate an Applicaiton Bundle for Mythbackend (false)
-                                            Setting this to true builds a working Mythbackend.app.
-                                            If building for unix-style executables,
-                                            set this to OFF.
   --generate-distribution=DISTIBUTE_APP   Generate the Distribution Package (false)
                                             Setting to true will enable App Signing and Notarization
   --signing-id=CODESIGN_ID                ID for signing the app bundles. ("")
@@ -149,7 +145,6 @@ MYTHTV_VERS="master"
 BUILD_PLUGINS=false
 BUNDLE_APPLICTION=false
 BUILD_FRONTEND_BUNDLE=OFF
-BUILD_BACKEND_BUNDLE=OFF
 BUNDLE_APPLICTION=false
 WORKING_DIR_BASE=$HOME
 INSTALL_DIR=""
@@ -197,9 +192,6 @@ for i in "$@"; do
       ;;
       --frontend-bundle=*)
         BUILD_FRONTEND_BUNDLE=$(setONOFF "${i#*=}")
-      ;;
-      --backend-bundle=*)
-        BUILD_BACKEND_BUNDLE=$(setONOFF "${i#*=}")
       ;;
       --database-version=*)
         DATABASE_VERS="${i#*=}"
@@ -253,12 +245,12 @@ if [ ! -z $INSTALL_DIR ]; then
   eval "INSTALL_DIR=$INSTALL_DIR"
 fi
 # check is we're bundling any applications
-if [[ $BUILD_FRONTEND_BUNDLE == "ON" || $BUILD_BACKEND_BUNDLE == "ON" ]]; then
+if [[ $BUILD_FRONTEND_BUNDLE == "ON" ]]; then
   BUNDLE_APPLICTION=true
 fi
 
 # if we're signing an application / distribution, at least one bundle must be enables
-if [[ $DISTIBUTE_APP == "ON" && $BUILD_BACKEND_BUNDLE == "OFF" && $BUILD_FRONTEND_BUNDLE == "OFF" ]]; then
+if [[ $DISTIBUTE_APP == "ON" && $BUILD_FRONTEND_BUNDLE == "OFF" ]]; then
   echoC 'Error: Signing, Notarizing, and Bundling requires at least one App Bundle to be made' RED
   exit 1
 fi
@@ -336,7 +328,6 @@ if $BUNDLE_APPLICTION; then
   EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS \
                      -DCMAKE_BUILD_TYPE=Release \
                      -DDARWIN_FRONTEND_BUNDLE=$BUILD_FRONTEND_BUNDLE \
-                     -DDARWIN_BACKEND_BUNDLE=$BUILD_BACKEND_BUNDLE \
                      -DDARWIN_GENERATE_DISTRIBUTION=$DISTIBUTE_APP \
                      -DDARWIN_SIGNING_ID=\"$CODESIGN_ID\" \
                      -DDARWIN_NOTARIZATION_KEYCHAIN=\"$NOTAR_KEYCHAIN\""
@@ -352,7 +343,7 @@ echoC "    Installing Build Outputs to $INSTALL_DIR" BLUE
 
 ### Setup Python Specific variables ################################################################
 PYTHON_PKMGR_BIN="$PKGMGR_BIN/$PYTHON_CMD"
-PYTHON_VENV_PATH="$HOME/.mythtv/python-virtualenv"
+PYTHON_VENV_PATH="$HOME/.mythtv/python-venv"
 
 ### Setup Compiler and Related Search Paths ########################################################
 # First verify that the SDK is setup and command line tools license has been accepted
