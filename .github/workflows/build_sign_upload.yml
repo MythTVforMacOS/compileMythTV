@@ -54,7 +54,7 @@ jobs:
           case $PKGMGR in
             macports)
               PYVERS="311"
-              PYDOTVERS="3.13"
+              PYDOTVERS="3.11"
               DBVERS="mysql8"
               QTVERS="qt5"
               echo "USE_MP=true" >> $GITHUB_ENV
