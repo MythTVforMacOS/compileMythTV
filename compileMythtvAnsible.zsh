@@ -555,7 +555,7 @@ export LIBRARY_PATH=$LIBRARY_PATH
 ###########################################################################################
 ### Setup Application Bundle Variables ####################################################
 ###########################################################################################
-# These variables are used to bundle the mythfronend.app application bundle.
+# These variables are used to bundle the mythfrontend.app application bundle.
 # They point to internal application paths and are currently hard-coded to mythfrontend.
 APP_NAME=mythfrontend
 APP_DIR=$SRC_DIR/programs/$APP_NAME
