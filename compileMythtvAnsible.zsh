@@ -149,7 +149,7 @@ case $PKGMGR in
   ;;
 esac
 
-# macports doesn't support mysql 8 for older versions of macOS, for those installs default to mariadb (unless the user overries)
+# macports doesn't support mysql 8 for older versions of macOS, for those installs default to mariadb (unless the user overrides)
 # also, homebrew drops the version numbers...
 if [ "$OS_MAJOR" -le 11 ] && [ "$OS_MINOR" -le 15 ]; then
   case $PKGMGR in
@@ -162,7 +162,7 @@ if [ "$OS_MAJOR" -le 11 ] && [ "$OS_MINOR" -le 15 ]; then
   esac
 fi
 
-# force expansion of magic substrings
+# force expansion of magic sub-strings
 set -o magicequalsubst
 
 # parse user inputs into variables
@@ -567,7 +567,7 @@ APP_PLUGINS_DIR=$APP_FMWK_DIR/PlugIns
 APP_INFO_FILE=$APP/Contents/Info.plist
 
 ###########################################################################################
-### Utiltity Functions ####################################################################
+### Utility Functions #####################################################################
 ###########################################################################################
 # installLibs finds all linked dylibs for the input binary/dylib
 # copying any missing ones in the application's FrameWork directory

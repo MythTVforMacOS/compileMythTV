@@ -398,6 +398,8 @@ runAnsible(){
     esac
   fi
   echoC "------------ Running Ansible ------------" GREEN
+  # remove any previously generated python virtual environments to allow a clean reinstall
+  rm -Rf $PYTHON_VENV_PATH
   # get mythtv's ansible playbooks, and install required ports if the repo exists, update
   # (assume the flag is set)
   if [ -d "$WORKING_DIR/ansible" ]; then
