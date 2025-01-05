@@ -168,7 +168,7 @@ case $PKGMGR in
       DATABASE_VERS=mariadb-10.5
     fi
     QT_PKMGR_VERS=qt5
-    PYTHON_VERS="313"
+    PYTHON_VERS="312"
   ;;
   homebrew)
     DATABASE_VERS=mariadb
@@ -249,7 +249,7 @@ if [[ $BUILD_FRONTEND_BUNDLE == "ON" ]]; then
   BUNDLE_APPLICTION=true
 fi
 
-# if we're signing an application / distribution, at least one bundle must be enables
+# if we're signing an application frontend bundling must be enabled
 if [[ $DISTIBUTE_APP == "ON" && $BUILD_FRONTEND_BUNDLE == "OFF" ]]; then
   echoC 'Error: Signing, Notarizing, and Bundling requires at least one App Bundle to be made' RED
   exit 1
@@ -398,8 +398,6 @@ runAnsible(){
     esac
   fi
   echoC "------------ Running Ansible ------------" GREEN
-  # remove any previously generated python virtual environments to allow a clean reinstall
-  rm -Rf $PYTHON_VENV_PATH
   # get mythtv's ansible playbooks, and install required ports if the repo exists, update
   # (assume the flag is set)
   if [ -d "$WORKING_DIR/ansible" ]; then
@@ -519,9 +517,9 @@ configureAndBuild(){
     cd "$CMAKE_CONFIGURE_DIR" || exit 1
     EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS -DENABLE_VULKAN=OFF"
     if $BUILD_PLUGINS; then
-        EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS -DMYTH_BUILD_PLUGINS=OFF"
-    else
         EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS -DMYTH_BUILD_PLUGINS=ON"
+    else
+        EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS -DMYTH_BUILD_PLUGINS=OFF"
     fi
     echoC "    Configuring via cmake" BLUE
     CONFIG_CMD="cmake --preset $QT_CMAKE_VERS               \

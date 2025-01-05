@@ -84,6 +84,7 @@ runs:
         security unlock-keychain -p "${CI_PWD}" build.keychain
         security import CERT.p12 -P "${CERT_PWD}" -A -t cert -f pkcs12 -k build.keychain
         security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${CI_PWD}" build.keychain
+        security set-keychain-settings -t 10800
     - name: "Setup Notarization Credentials"
       id: notarize_creds
       shell: bash
@@ -142,7 +143,6 @@ runs:
       shell: bash
       run: |
         echo "Notarize Applications"
-        security unlock-keychain -p "$CI_PWD" build.keychain
         for APP in "$APP_W" "$APP_WO"; do
           security unlock-keychain -p "$CI_PWD" build.keychain
           xcrun notarytool submit "$APP.zip" --keychain-profile "notary" --wait
