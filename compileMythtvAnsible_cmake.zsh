@@ -167,12 +167,12 @@ case $PKGMGR in
     if [ "$OS_MAJOR" -le 11 ] && [ "$OS_MINOR" -le 15 ]; then
       DATABASE_VERS=mariadb-10.5
     fi
-    QT_PKMGR_VERS=qt5
+    QT_PKMGR_VERS=qt6
     PYTHON_VERS="312"
   ;;
   homebrew)
     DATABASE_VERS=mariadb
-    QT_PKMGR_VERS=qt@5
+    QT_PKMGR_VERS=qt@6
     PYTHON_VERS="313"
   ;;
 esac
@@ -356,12 +356,6 @@ if [ ! -n  $SDK_ROOT ]; then
   echoC "Per Apple licensing, sudo privileges are required."
   echoC "     sudo xcodebuild -license accept" GREEN
   exit 1
-fi
-
-if [ ${SDK_VERS%%.*} -ge 14 ]; then
-    COMP_LDFLAGS="-Wl"
-else
-    COMP_LDFLAGS="-Wl,-headerpad_max_install_names"
 fi
 
 # Add flags to allow pkgconfig to find mysql8

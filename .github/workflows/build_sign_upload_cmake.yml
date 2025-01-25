@@ -12,10 +12,6 @@ on:  # yamllint disable-line rule:truthy
         required: true
         type: boolean
         default: false
-      PKGMGR:
-        required: true
-        type: string
-        default: macports
 jobs:
   build:
     name: Building MythTV on ${{ matrix.os.desc }} using ${{ matrix.compiler.desc }}
@@ -35,8 +31,6 @@ jobs:
             runner: 'macOS-15'
             arch: 'arm64'
             cross_compile: false
-        build_homebrew:
-          - ${{ inputs.PKGMGR == 'homebrew' }}
     runs-on: ${{ matrix.os.runner }}
     env:
       APP_OUT_DIR: "output_dir"
@@ -44,46 +38,22 @@ jobs:
       ARCH: ${{ matrix.os.arch }}
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       USE_CCACHE: ${{ inputs.USE_CCACHE }}
-      PKGMGR: ${{ inputs.PKGMGR }}
     steps:
       - uses: actions/checkout@master
       - name: "Setup environemental variables"
         run: |
           APP_OUT_DIR=$HOME/$APP_OUT_DIR
-          case $PKGMGR in
-            macports)
-              PYVERS="311"
-              PYDOTVERS="3.11"
-              DBVERS="mysql8"
-              QTVERS="qt5"
-              echo "USE_MP=true" >> $GITHUB_ENV
-              echo "USE_HB=false" >> $GITHUB_ENV
-              BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} \
-                --version=${MYTHBRANCH} \
-                --python-version=${PYVERS} \
-                --database-version=${DBVERS} \
-                --qt-version=${QTVERS} \
-                --alt-compiler=${COMPILER} \
-                --skip-ansible=true \
-                --update-git=false"
-            ;;
-            homebrew)
-              DBVERS="mariadb"
-              QTVERS="qt@6"
-              echo "USE_MP=false" >> $GITHUB_ENV
-              echo "USE_HB=true" >> $GITHUB_ENV
-              BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} \
-                --version=${MYTHBRANCH} \
-                --database-version=${DBVERS} \
-                --qt-version=${QTVERS} \
-                --alt-compiler=${COMPILER} \
-                --skip-ansible=true \
-                --update-git=false"
-            ;;
-          esac
+          DBVERS="mariadb"
+          QTVERS="qt@6"
           echo "DBVERS=${DBVERS}" >> $GITHUB_ENV
           echo "QTVERS=${QTVERS}" >> $GITHUB_ENV
-
+          BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} \
+            --version=${MYTHBRANCH} \
+            --qt-version=${QTVERS} \
+            --frontend-bundle=ON \
+            --generate-distribution=true \
+            --skip-ansible=true \
+            --update-git=false"
           #check if this is a cross compile
           SYSARCH=$(/usr/bin/uname -m)
           case $MYTHBRANCH in
@@ -99,9 +69,6 @@ jobs:
             ;;
           esac
           echo "APP_OUT_DIR=${APP_OUT_DIR}" >> $GITHUB_ENV
-          EXE="mythfrontend.app"
-          echo "APP_W=${APP_OUT_DIR}/with_plugins/$EXE" >> $GITHUB_ENV
-          echo "APP_WO=${APP_OUT_DIR}/without_plugins/$EXE" >> $GITHUB_ENV
           echo "BLD_FLGS=${BLD_FLGS}" >> $GITHUB_ENV
           echo "SYSARCH=$SYSARCH" >> $GITHUB_ENV
           echo "OS_VERS=$(sw_vers -productVersion | awk -F '.' '{print $1}')" >> $GITHUB_ENV
@@ -111,19 +78,7 @@ jobs:
         with:
           repository: MythTV/ansible
           path: ansible
-      - name: "Install MacPorts Ports"
-        if: ${{ env.USE_MP == 'true' }}
-        uses: ./.github/actions/installPorts
-        id: installMP
-        with:
-          ARCH: ${{ matrix.os.arch }}
-          CROSS_COMPILE: ${{ matrix.os.cross_compile }}
-          PYVERS: ${{ env.PYVERS }}
-          PYDOTVERS: ${{ env.PYDOTVERS }}
-          DBVERS: ${{ env.DBVERS }}
-          QTVERS: ${{env.QTVERS}}
       - name: "Install Homebrew Packages"
-        if: ${{ env.USE_HB == 'true' }}
         uses: ./.github/actions/installBrewPackages
         id: installHB
         with:
@@ -138,18 +93,23 @@ jobs:
           ref: ${{ env.MYTHBRANCH }}
           path: "mythtv-${{ env.VERSNUM }}/mythtv"
       - name: "Compile MythTV"
-        uses: ./.github/actions/compile
+        uses: ./.github/actions/compile_cmake
         id: compile
         with:
           APP_OUT_DIR: ${{ env.APP_OUT_DIR }}
-          APP_W: ${{ env.APP_W }}
-          APP_WO: ${{ env.APP_WO }}
           OS: ${{ matrix.os.runner }}
           ARCH: ${{ matrix.os.arch }}
           CROSS_COMPILE: ${{ matrix.os.cross_compile }}
           BLD_FLGS: ${{ env.BLD_FLGS }}
           VERSNUM: ${{ env.VERSNUM }}
           USE_CCACHE: ${{ env.USE_CCACHE }}
+          CERT: ${{ secrets.PROD_MACOS_CERTIFICATE }}
+          CERT_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
+          CERT_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
+          CI_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
+          APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
+          TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
+          NOTA_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
       - name: "Test Mythfrontend"
         id: test_app
         shell: bash
@@ -157,7 +117,7 @@ jobs:
           ARCH: ${{ matrix.os.arch }}
         run: |
           echo "Testing mythfrontend.app"
-          EXE="$APP_W/Contents/MacOS/mythfrontend --version"
+          EXE="cpack_output/_CPack_Packages/Darwin/Bundle/mythfrontend/mythfrontend.app/Contents/MacOS/mythfrontend --version"
           if ${CROSS_COMPILE}; then
             EXE="arch -${ARCH} $EXE"
           fi
@@ -168,22 +128,9 @@ jobs:
           DMG_WO="MythFrontend-${ARCH}-$OS_VERS-macOS$VERSTR.dmg"
           echo "DMG_W=$DMG_W" >> $GITHUB_ENV
           echo "DMG_WO=$DMG_WO" >> $GITHUB_ENV
-      - name: "Codesign Mythfrontend"
-        uses: ./.github/actions/codesign
-        id: codesign
-        with:
-          APP_OUT_DIR: ${{ env.APP_OUT_DIR }}
-          APP_W: ${{ env.APP_W }}
-          APP_WO: ${{ env.APP_WO }}
-          DMG_W: ${{ env.DMG_W }}
-          DMG_WO: ${{ env.DMG_WO }}
-          CERT: ${{ secrets.PROD_MACOS_CERTIFICATE }}
-          CERT_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
-          CERT_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
-          CI_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
-          APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
-          TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
-          NOTA_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
+          # rename the already generated DMG files
+          mv ${APP_OUT_DIR}/Mythfronend_with.dmg $DMG_W
+          mv ${APP_OUT_DIR}/Mythfronend_wo.dmg $DMG_WO
       - uses: webfactory/ssh-agent@master
         with:
           ssh-private-key: ${{ secrets.SF_PRIV_KEY }}
@@ -196,5 +143,5 @@ jobs:
           VERSNUM: ${{ env.VERSNUM }}
           OS_VERS: ${{ env.OS_VERS }}
           ARCH: ${{ matrix.os.arch }}
-          PKGMGR: ${{ env.PKGMGR }}
+          PKGMGR: homebrew
           SF_LOGIN: ${{ secrets.SF_LOGIN }}

@@ -7,22 +7,10 @@ inputs:
   CROSS_COMPILE:
     required: true
     type: boolean
-  PYVERS:
-    required: true
-    type: string
-  PYDOTVERS:
-    required: true
-    type: string
-  ANSIBLEVERS:
-    required: true
-    type: string
   DBVERS:
     required: true
     type: string
   QTVERS:
-    required: true
-    type: string
-  COMPILER:
     required: true
     type: string
 runs:
@@ -61,19 +49,10 @@ runs:
         echo "PKGMGR_BIN=$PKGMGR_BIN" >> $GITHUB_ENV
         export PATH=$PATH:$PKGMGR_BIN
         echo "Install requested python"
-        ${PKGMGR_CMD} install --force --overwrite python@${PYDOTVERS}
-        ${PKGMGR_CMD} link --force python@${PYDOTVERS}
-        ${PKGMGR_CMD} link --force python3
-        echo "Installing and correctly linking openssl"
-        ${PKGMGR_CMD} install openssl@1.1
-        ${PKGMGR_CMD} unlink openssl
-        ${PKGMGR_CMD} unlink openssl@1.1
-        ${PKGMGR_CMD} install openssl@3
-        ${PKGMGR_CMD} link --force openssl
-        ${PKGMGR_CMD} link --force openssl@3
+        ${PKGMGR_CMD} install --force --overwrite python3 python-setuptools python-packaging
         echo "Installing ansible and $DBVERS"
-        ${PKGMGR_CMD} install --force --overwrite ansible@$ANSIBLEVERS $DBVERS pkg-config
-        ANS_PB="${PKGMGR_PATH}/opt/ansible@${ANSIBLEVERS}/bin/ansible-playbook"
+        ${PKGMGR_CMD} install --force --overwrite ansible $DBVERS pkg-config
+        ANS_PB="ANSIBLE_BECOME=false ANSIBLE_BECOME_ASK_PASS=False ${PKGMGR_PATH}/opt/ansible/bin/ansible-playbook"
         if $CROSS_COMPILE; then
           ANS_PB="arch -${ARCH} $ANS_PB"
         fi
@@ -87,11 +66,13 @@ runs:
       run: |
         cd ansible
         echo "Installing packages via ansible playbook"
-        export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PKGMGR_PATH/lib/pkgconfig/mysqlclient.pc
-        export MYSQLCLIENT_LDFLAGS=$(pkg-config --libs mysqlclient)
-        export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags mysqlclient)
-        XTRA_VARS="ansible_python_interpreter=${PKGMGR_BIN}/python${PYDOTVERS} \
-          database_version=${DBVERS}"
+        export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PKGMGR_PATH/opt/mysql-client/lib/pkgconfig/
+        echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+        export MYSQLCLIENT_LDFLAGS="$(${PKGMGR_PREFIX}/bin/pkg-config --libs mysqlclient)"
+        echo "MYSQLCLIENT_LDFLAGS=$MYSQLCLIENT_LDFLAGS" >> $GITHUB_ENV
+        export MYSQLCLIENT_CFLAGS="$(${PKGMGR_PREFIX}/bin/pkg-config --cflags mysqlclient)"
+        echo "MYSQLCLIENT_CFLAGS=$MYSQLCLIENT_CFLAGS" >> $GITHUB_ENV
+        XTRA_VARS="database_version=${DBVERS}"
         echo "Running ansible"
         export C_INCLUDE_PATH=$C_INCLUDE_PATH:$PKGMGR_PATH/include
         export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$PKGMGR_PATH/include

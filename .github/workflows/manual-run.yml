@@ -10,8 +10,6 @@ on:  # yamllint disable-line rule:truthy
         options:
           - "master"
           - "fixes/34"
-          - "fixes/33"
-          - "fixes/32"
       PKGMGR:
         type: choice
         description: "Choose a package manager"
@@ -34,9 +32,18 @@ jobs:
           echo $outputSTR
   build-mythtv:
     needs: check-inputs
+    if: inputs.PKGMGR == 'macports'
     uses: ./.github/workflows/build_sign_upload.yml
     with:
       USE_CCACHE: false
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       PKGMGR: ${{ inputs.PKGMGR }}
+    secrets: inherit
+  build-mythtv-cmake:
+    needs: check-inputs
+    if: inputs.PKGMGR == 'homebrew'
+    uses: ./.github/workflows/build_sign_upload_cmake.yml
+    with:
+      USE_CCACHE: false
+      MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
     secrets: inherit

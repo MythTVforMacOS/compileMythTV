@@ -19,9 +19,6 @@ inputs:
   QTVERS:
     required: true
     type: string
-  COMPILER:
-    required: true
-    type: string
 runs:
   using: "composite"
   steps:
@@ -74,7 +71,6 @@ runs:
       shell: bash
       env:
         PYVERS: ${{ inputs.PYVERS }}
-        COMPILER: ${{ inputs.COMPILER }}
       run: |
         ${PKGMGR_CMD} -N install gsed \
           ccache \
@@ -90,10 +86,6 @@ runs:
         ${PKGMGR_CMD} select --set pip3 pip${PYVERS}
         ${PKGMGR_CMD} select --set ansible py${PYVERS}-ansible
         ${PKGMGR_CMD} select --set virtualenv virtualenv${PYVERS}
-        if [ $COMPILER != "clang" ];then
-          CLANG_PORT=${COMPILER//clang-mp/clang}
-          ${PKGMGR_CMD} install $CLANG_PORT
-        fi
         ANS_PB=${PKGMGR_BIN}/ansible-playbook-${PYDOTVERS}
         if $CROSS_COMPILE; then
           ANS_PB="arch -${ARCH} $ANS_PB"

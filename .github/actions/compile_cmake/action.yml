@@ -1,0 +1,163 @@
+---
+name: "Compile MythTV"
+inputs:
+  APP_OUT_DIR:
+    required: true
+    type: string
+  OS:
+    require: true
+    type: string
+  ARCH:
+    require: true
+    type: string
+  CROSS_COMPILE:
+    required: true
+    type: boolean
+  VERSNUM:
+    require: true
+    type: string
+  BLD_FLGS:
+    required: true
+    type: string
+  USE_CCACHE:
+    required: false
+    type: boolean
+    default: false
+  CERT:
+    require: true
+    type: string
+  CERT_PWD:
+    require: true
+    type: string
+  CERT_NAME:
+    require: true
+    type: string
+  CI_PWD:
+    require: true
+    type: string
+  APPLE_ID:
+    require: true
+    type: string
+  TEAM_ID:
+    require: true
+    type: string
+  NOTA_PWD:
+    require: true
+    type: string
+runs:
+  using: "composite"
+  steps:
+    - name: "Setup Build Environment Variable"
+      id: setup_env
+      shell: bash
+      env:
+        APP_OUT_DIR: ${{ inputs.APP_OUT_DIR }}
+        VERSNUM: ${{ inputs.VERSNUM }}
+        CROSS_COMPILE: ${{ inputs.CROSS_COMPILE }}
+        CERT_PWD: ${{ inputs.CERT_PWD }}
+        CERT_NAME: ${{ inputs.CERT_NAME }}
+        CI_PWD: ${{ inputs.CI_PWD }}
+        APPLE_ID: ${{ inputs.APPLE_ID }}
+        TEAM_ID: ${{ inputs.TEAM_ID }}
+        NOTA_PWD: ${{ inputs.NOTA_PWD }}
+        APP_NAME: mythfrontend.app
+      run: |
+        mkdir -p $APP_OUT_DIR
+        echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
+        echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
+        echo "CERT_PWD=$CERT_PWD" >> $GITHUB_ENV
+        echo "CERT_NAME=$CERT_NAME" >> $GITHUB_ENV
+        echo "CI_PWD=$CI_PWD" >> $GITHUB_ENV
+        echo "APPLE_ID=$APPLE_ID" >> $GITHUB_ENV
+        echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
+        echo "NOTA_PWD=$NOTA_PWD" >> $GITHUB_ENV
+        # check if we're cross-compiling setting proper build commands
+        if $CROSS_COMPILE; then
+          ZSH_CMD="arch -${ARCH} zsh"
+        else
+          ZSH_CMD="/bin/zsh"
+        fi
+        echo "ZSH_CMD=$ZSH_CMD" >> $GITHUB_ENV
+
+    - name: "Setup Siging Certs"
+      id: setup_certs
+      shell: bash
+      run: |
+        # Setup siging certificates
+        # Turn our base64-encoded certificate back to a regular .p12 file
+        echo "${{ inputs.CERT }}" | base64 --decode > CERT.p12
+        # We need to create a new keychain, otherwise using the certificate will
+        # prompt with a UI dialog asking for the certificate password, which we
+        # can't use in a headless CI environment
+        if [ -f ~/Library/Keychains/build.keychain-db ]; then
+          security delete-keychain build.keychain
+        fi
+        security create-keychain -p "${CI_PWD}" build.keychain
+        security default-keychain -s build.keychain
+        security set-keychain-settings -t 14400
+        security unlock-keychain -p "${CI_PWD}" build.keychain
+        security import CERT.p12 -P "${CERT_PWD}" -A -t cert -f pkcs12 -k build.keychain
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${CI_PWD}" build.keychain
+        security set-keychain-settings -t 10800
+    - name: "Setup Notarization Credentials"
+      id: notarize_creds
+      shell: bash
+      run: |
+        # setup notraization keychain
+        echo "Create keychain profile"
+        security unlock-keychain -p "$CI_PWD" build.keychain
+        xcrun notarytool store-credentials "notary" --apple-id "${APPLE_ID}" --team-id "${TEAM_ID}" --password "${NOTA_PWD}"
+        # add the notary keychain to the buildflags
+    - name: Check ccache
+      id: setup_ccache
+      if: ${{ inputs.USE_CCACHE == 'true' }}
+      uses: actions/cache@master
+      env:
+        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: mythtv-ccache-${{ env.CCACHE_STORE }}-${{ github.sha }}
+        restore-keys: ${{ env.CCACHE_STORE}}-
+    - name: "Build MythTV with Plugins"
+      id: build_with
+      shell: bash
+      env:
+        APP_OUT_DIR: ${{ inputs.APP_OUT_DIR }}
+        BLD_FLGS: ${{ inputs.BLD_FLGS }}
+      run: |
+        # First build with plugins
+        export CCACHE_DIR=${{ env.CCACHE_DIR }}
+        ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh \
+          $BLD_FLGS \
+          --signing-id=${CERT_NAME} \
+          --notarization-keychain="notary" \
+          --build-plugins=true
+        echo "compile complete, copying into $APP_OUT_DIR"
+        mv "cpack_output/Mythfrontend.dmg" "${APP_OUT_DIR}/Mythfrontend_with.dmg"
+    - name: "Re-Build MythTV without Plugins"
+      id: build_wo
+      shell: bash
+      env:
+        APP_OUT_DIR: ${{ inputs.APP_OUT_DIR }}
+        APP_W: ${{ inputs.APP_WO }}
+        BLD_FLGS: ${{ inputs.BLD_FLGS }}
+      run: |
+        # clean up work from w_plugins build
+        rm -Rf cpack_output
+        # Now make it without plugins
+        ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh  \
+          $BLD_FLGS \
+          --signing-id=${CERT_NAME} \
+          --notarization-keychain="notary" \
+          --skip-build=true \
+          --build-plugins=false
+        echo "compile complete, copying into $APP_OUT_DIR"
+        mv "cpack_output/Mythfrontend.dmg" "${APP_OUT_DIR}/Mythfrontend_wo.dmg"
+    - uses: actions/cache/save@master
+      id: ccache_save
+      if: ${{ steps.build_with.outcome == 'success' && inputs.USE_CCACHE == 'true' }}
+      env:
+        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: mythtv-ccache-${{ env.CCACHE_STORE }}-${{ github.sha }}
