@@ -853,6 +853,7 @@ echoC "------------ Source the Python Virtual Environment ------------" GREEN
 # since we're using a custom python virtual environment, we need to source it to get the
 # build process to use it.
 source "$PYTHON_VENV_PATH/bin/activate"
+pip3 install py2app future
 PYTHON_VENV_BIN=$PYTHON_VENV_PATH/bin/$PYTHON_CMD
 PY2APPLET_BIN=$PYTHON_VENV_PATH/bin/py2applet
 
