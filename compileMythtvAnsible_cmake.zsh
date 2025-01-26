@@ -35,12 +35,12 @@ Configure and Build Options
                                             This is used when you just want to repackage (false)
   --extra-cmake-flags=EXTRA_CMAKE_FLAGS   Addtional configure flags for mythtv ("")
 Bundling, Signing, and Notarization Options
-  --frontend-bundle=BUILD_FRONTEND_BUNDLE Generate an Applicaiton Bundle for Mythfrontend (false)
-                                            Setting this to true builds a working MythFrontend.app.
+  --frontend-bundle=BUILD_FRONTEND_BUNDLE Generate an Applicaiton Bundle for Mythfrontend (OFF)
+                                            Setting this to ON builds a working MythFrontend.app.
                                             If building for unix-style executables,
                                             set this to OFF.
-  --generate-distribution=DISTIBUTE_APP   Generate the Distribution Package (false)
-                                            Setting to true will enable App Signing and Notarization
+  --generate-distribution=DISTIBUTE_APP   Generate the Distribution Package (OFF)
+                                            Setting to ON will enable App Signing and Notarization
   --signing-id=CODESIGN_ID                ID for signing the app bundles. ("")
                                             Default uses the environmental variable CODESIGN_ID.
                                             IF CODESIGN_ID is not set, the distribution package will
@@ -226,7 +226,7 @@ for i in "$@"; do
       --signing-id=*)
         CODESIGN_ID="${i#*=}"
       ;;
-      --notarization-keychain==*)
+      --notarization-keychain=*)
         NOTAR_KEYCHAIN="${i#*=}"
       ;;
       *)
