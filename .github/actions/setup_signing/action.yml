@@ -1,0 +1,70 @@
+---
+name: "Compile MythTV"
+inputs:
+  CODESIGN_ID:
+    require: true
+    type: string
+  CERT:
+    require: true
+    type: string
+  CERT_PWD:
+    require: true
+    type: string
+  CI_PWD:
+    require: true
+    type: string
+  APPLE_ID:
+    require: true
+    type: string
+  TEAM_ID:
+    require: true
+    type: string
+  NOTA_PWD:
+    require: true
+    type: string
+  NOTA_KEYCHAIN:
+    require: true
+    type: string
+runs:
+  using: "composite"
+  steps:
+    - name: "Setup Siging Certs"
+      id: setup_certs
+      shell: bash
+      env:
+        CODESIGN_ID: ${{ env.CODESIGN_ID }}
+        CERT: ${{ inputs.CERT }}
+        CERT_PWD: ${{ inputs.CERT_PWD }}
+        CI_PWD: ${{ inputs.CI_PWD }}
+      run: |
+        # Store off the codesigning ID into a the default keychain-db
+        security add-generic-password -A -U -a ${USER} -s CODESIGN_ID -w ${{ env.CODESIGN_ID }}
+        # Setup siging certificates
+        # Turn our base64-encoded certificate back to a regular .p12 file
+        echo "${{ env.CERT }}" | base64 --decode > CERT.p12
+        # We need to create a new keychain, otherwise using the certificate will
+        # prompt with a UI dialog asking for the certificate password, which we
+        # can't use in a headless CI environment
+        if [ -f ~/Library/Keychains/build.keychain-db ]; then
+          security delete-keychain build.keychain
+        fi
+        security create-keychain -p "${{ env.CI_PWD }}" build.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p "${{ env.CI_PWD }}" build.keychain
+        security import CERT.p12 -P "${{ env.CERT_PWD }}" -A -t cert -f pkcs12 -k build.keychain
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ env.CI_PWD }}" build.keychain
+        security set-keychain-settings -t 14400
+    - name: "Setup Notarization Credentials"
+      id: notarize_creds
+      shell: bash
+      env:
+        CI_PWD: ${{ inputs.CI_PWD }}
+        APPLE_ID: ${{ inputs.APPLE_ID }}
+        TEAM_ID: ${{ inputs.TEAM_ID }}
+        NOTA_PWD: ${{ inputs.NOTA_PWD }}
+        NOTA_KEYCHAIN: ${{ inputs.NOTA_KEYCHAIN }}
+      run: |
+        # setup notraization keychain
+        echo "Create keychain profile"
+        security unlock-keychain -p "${{ env.CI_PWD }}" build.keychain
+        xcrun notarytool store-credentials ${{ env.NOTA_KEYCHAIN }} --apple-id "${{ env.APPLE_ID }}" --team-id "${{ env.TEAM_ID }}" --password "${{ env.NOTA_PWD }}"
