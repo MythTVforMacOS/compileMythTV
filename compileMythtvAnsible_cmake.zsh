@@ -230,7 +230,7 @@ for i in "$@"; do
         NOTAR_KEYCHAIN="${i#*=}"
       ;;
       *)
-        echo -e 'Unknown or incomplete option '"\033[31m"$i"\033[m"
+        echo -e 'compileMythtv: Unknown or incomplete option '"\033[31m"$i"\033[m"
               # unknown option
         exit 1
       ;;
