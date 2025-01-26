@@ -37,7 +37,7 @@ jobs:
       MASTER_VERS: 35
       DBVERS: "mariadb"
       QTVERS: "qt@6"
-      NOTA_KEYCHAIN: "notary"
+      NOTAR_KEYCHAIN: "notary"
       ARCH: ${{ matrix.os.arch }}
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       USE_CCACHE: ${{ inputs.USE_CCACHE }}
@@ -53,7 +53,7 @@ jobs:
             --qt-version=${QTVERS} \
             --frontend-bundle=ON \
             --generate-distribution=true \
-            --notarization-keychain=${NOTA_KEYCHAIN} \
+            --notarization-keychain=${NOTAR_KEYCHAIN} \
             --skip-ansible=true \
             --update-git=false \
             --extra-cmake-flags=-DMYTHTV_SOURCE_BRANCH=master"
@@ -105,8 +105,8 @@ jobs:
           CI_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
           APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
           TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
-          NOTA_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
-          NOTA_KEYCHAIN: ${{ env.NOTA_KEYCHAIN }}
+          NOTAR_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
+          NOTAR_KEYCHAIN: ${{ env.NOTAR_KEYCHAIN }}
       - name: "Compile, Sign, and Notarize MythTV"
         uses: ./.github/actions/compile_cmake
         id: compile

@@ -19,10 +19,10 @@ inputs:
   TEAM_ID:
     require: true
     type: string
-  NOTA_PWD:
+  NOTAR_PWD:
     require: true
     type: string
-  NOTA_KEYCHAIN:
+  NOTAR_KEYCHAIN:
     require: true
     type: string
 runs:
@@ -61,10 +61,10 @@ runs:
         CI_PWD: ${{ inputs.CI_PWD }}
         APPLE_ID: ${{ inputs.APPLE_ID }}
         TEAM_ID: ${{ inputs.TEAM_ID }}
-        NOTA_PWD: ${{ inputs.NOTA_PWD }}
-        NOTA_KEYCHAIN: ${{ inputs.NOTA_KEYCHAIN }}
+        NOTAR_PWD: ${{ inputs.NOTAR_PWD }}
+        NOTAR_KEYCHAIN: ${{ inputs.NOTAR_KEYCHAIN }}
       run: |
         # setup notraization keychain
         echo "Create keychain profile"
         security unlock-keychain -p "${{ env.CI_PWD }}" build.keychain
-        xcrun notarytool store-credentials ${{ env.NOTA_KEYCHAIN }} --apple-id "${{ env.APPLE_ID }}" --team-id "${{ env.TEAM_ID }}" --password "${{ env.NOTA_PWD }}"
+        xcrun notarytool store-credentials ${{ env.NOTAR_KEYCHAIN }} --apple-id "${{ env.APPLE_ID }}" --team-id "${{ env.TEAM_ID }}" --password "${{ env.NOTAR_PWD }}"

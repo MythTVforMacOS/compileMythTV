@@ -18,7 +18,7 @@ on:  # yamllint disable-line rule:truthy
         default: macports
 jobs:
   build:
-    name: Building MythTV on ${{ matrix.os.desc }} using ${{ matrix.compiler.desc }}
+    name: Building MythTV on ${{ matrix.os.desc }}
     strategy:
       fail-fast: false
       matrix:
@@ -35,8 +35,6 @@ jobs:
             runner: 'macOS-15'
             arch: 'arm64'
             cross_compile: false
-        build_homebrew:
-          - ${{ inputs.PKGMGR == 'homebrew' }}
     runs-on: ${{ matrix.os.runner }}
     env:
       APP_OUT_DIR: "output_dir"
@@ -44,45 +42,24 @@ jobs:
       ARCH: ${{ matrix.os.arch }}
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       USE_CCACHE: ${{ inputs.USE_CCACHE }}
-      PKGMGR: ${{ inputs.PKGMGR }}
     steps:
       - uses: actions/checkout@master
       - name: "Setup environemental variables"
         run: |
           APP_OUT_DIR=$HOME/$APP_OUT_DIR
-          case $PKGMGR in
-            macports)
-              PYVERS="311"
-              PYDOTVERS="3.11"
-              echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
-              echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
-              DBVERS="mysql8"
-              QTVERS="qt5"
-              BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} \
-                --version=${MYTHBRANCH} \
-                --python-version=${PYVERS} \
-                --database-version=${DBVERS} \
-                --qt-version=${QTVERS} \
-                --alt-compiler=${COMPILER} \
-                --skip-ansible=true \
-                --update-git=false"
-              echo "USE_MP=true" >> $GITHUB_ENV
-              echo "USE_HB=false" >> $GITHUB_ENV
-            ;;
-            homebrew)
-              DBVERS="mariadb"
-              QTVERS="qt@6"
-              BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} \
-                --version=${MYTHBRANCH} \
-                --database-version=${DBVERS} \
-                --qt-version=${QTVERS} \
-                --alt-compiler=${COMPILER} \
-                --skip-ansible=true \
-                --update-git=false"
-              echo "USE_MP=false" >> $GITHUB_ENV
-              echo "USE_HB=true" >> $GITHUB_ENV
-            ;;
-          esac
+          PYVERS="311"
+          PYDOTVERS="3.11"
+          echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
+          echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
+          DBVERS="mysql8"
+          QTVERS="qt5"
+          BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} \
+            --version=${MYTHBRANCH} \
+            --python-version=${PYVERS} \
+            --database-version=${DBVERS} \
+            --qt-version=${QTVERS} \
+            --skip-ansible=true \
+            --update-git=false"
           echo "DBVERS=${DBVERS}" >> $GITHUB_ENV
           echo "QTVERS=${QTVERS}" >> $GITHUB_ENV
 
@@ -114,7 +91,6 @@ jobs:
           repository: MythTV/ansible
           path: ansible
       - name: "Install MacPorts Ports"
-        if: ${{ env.USE_MP == 'true' }}
         uses: ./.github/actions/installPorts
         id: installMP
         with:
@@ -122,15 +98,6 @@ jobs:
           CROSS_COMPILE: ${{ matrix.os.cross_compile }}
           PYVERS: ${{ env.PYVERS }}
           PYDOTVERS: ${{ env.PYDOTVERS }}
-          DBVERS: ${{ env.DBVERS }}
-          QTVERS: ${{env.QTVERS}}
-      - name: "Install Homebrew Packages"
-        if: ${{ env.USE_HB == 'true' }}
-        uses: ./.github/actions/installBrewPackages
-        id: installHB
-        with:
-          ARCH: ${{ matrix.os.arch }}
-          CROSS_COMPILE: ${{ matrix.os.cross_compile }}
           DBVERS: ${{ env.DBVERS }}
           QTVERS: ${{env.QTVERS}}
       - name: Checkout Mythtv/mythtv repository
@@ -152,6 +119,7 @@ jobs:
           BLD_FLGS: ${{ env.BLD_FLGS }}
           VERSNUM: ${{ env.VERSNUM }}
           USE_CCACHE: ${{ env.USE_CCACHE }}
+          PKGMGR: macports
       - name: "Test Mythfrontend"
         id: test_app
         shell: bash
@@ -198,5 +166,5 @@ jobs:
           VERSNUM: ${{ env.VERSNUM }}
           OS_VERS: ${{ env.OS_VERS }}
           ARCH: ${{ matrix.os.arch }}
-          PKGMGR: ${{ env.PKGMGR }}
+          PKGMGR: macports
           SF_LOGIN: ${{ secrets.SF_LOGIN }}
