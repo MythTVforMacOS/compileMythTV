@@ -53,9 +53,6 @@ runs:
         CROSS_COMPILE: ${{ inputs.CROSS_COMPILE }}
         CERT_PWD: ${{ inputs.CERT_PWD }}
         CI_PWD: ${{ inputs.CI_PWD }}
-        APPLE_ID: ${{ inputs.APPLE_ID }}
-        TEAM_ID: ${{ inputs.TEAM_ID }}
-        NOTA_PWD: ${{ inputs.NOTA_PWD }}
         APP_NAME: mythfrontend.app
       run: |
         mkdir -p $APP_OUT_DIR

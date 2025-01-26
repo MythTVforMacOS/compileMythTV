@@ -50,6 +50,13 @@ Bundling, Signing, and Notarization Options
                                             IF NOTAR_KEYCHAIN is not set, the distribution package
                                             will not be notarized
                                             hese can be stored by running the following command:
+                                          Note: Notarization can take quite a bit of time
+                                                occasionally beyond the default keychain lock time.
+                                                To extend (unfortunately permanently) the keychain
+                                                lock time run the following command where the last
+                                                value is your preferred timeout in seconds 
+                                                two hours - 7200 sec has worked so far:
+                                          security set-keychain-settings -t 7200
 
 xcrun notarytool store-credentials KEYCHAIN_NAME --apple-id APPLE_ID --team-id=TEAM_ID --password APP_PWD"
 
@@ -138,6 +145,10 @@ OS_VERS_PARTS=(${(@s:.:)OS_VERS})
 OS_MINOR=${OS_VERS_PARTS[2]}
 OS_MAJOR=${OS_VERS_PARTS[1]}
 OS_ARCH=$(/usr/bin/arch)
+
+### Github Specific Variables ##########################################################################
+isGITHUB=false
+if [ -n GITHUB_ENV ]; then isGITHUB=true; fi
 
 ### Input Parsing ##################################################################################
 # setup default variables
@@ -546,7 +557,11 @@ postBuild(){
   else
     if [[ $DISTIBUTE_APP == "ON" ]]; then
       echoC "------------ Generating DragNDrop dmg's with CPack ------------" GREEN
-      /usr/bin/security unlock-keychain
+      # no need to request security unlock on github
+      if [ ! $isGITHUB ]; then
+        # see help message for note on keychain lock time
+        /usr/bin/security unlock-keychain
+      fi
       CPACK_CFG=$(find $WORKING_DIR/mythtv -name "CPackConfig.cmake")
       CPACK_CMD="cpack --config $CPACK_CFG"
       eval "${CPACK_CMD}" || { echo 'Bundling MythTV failed' ; exit 1; }
