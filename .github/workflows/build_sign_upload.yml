@@ -54,10 +54,10 @@ jobs:
             macports)
               PYVERS="311"
               PYDOTVERS="3.11"
+              echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
+              echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
               DBVERS="mysql8"
               QTVERS="qt5"
-              echo "USE_MP=true" >> $GITHUB_ENV
-              echo "USE_HB=false" >> $GITHUB_ENV
               BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} \
                 --version=${MYTHBRANCH} \
                 --python-version=${PYVERS} \
@@ -66,12 +66,12 @@ jobs:
                 --alt-compiler=${COMPILER} \
                 --skip-ansible=true \
                 --update-git=false"
+              echo "USE_MP=true" >> $GITHUB_ENV
+              echo "USE_HB=false" >> $GITHUB_ENV
             ;;
             homebrew)
               DBVERS="mariadb"
               QTVERS="qt@6"
-              echo "USE_MP=false" >> $GITHUB_ENV
-              echo "USE_HB=true" >> $GITHUB_ENV
               BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} \
                 --version=${MYTHBRANCH} \
                 --database-version=${DBVERS} \
@@ -79,6 +79,8 @@ jobs:
                 --alt-compiler=${COMPILER} \
                 --skip-ansible=true \
                 --update-git=false"
+              echo "USE_MP=false" >> $GITHUB_ENV
+              echo "USE_HB=true" >> $GITHUB_ENV
             ;;
           esac
           echo "DBVERS=${DBVERS}" >> $GITHUB_ENV

@@ -29,9 +29,6 @@ inputs:
   CERT_PWD:
     require: true
     type: string
-  CERT_NAME:
-    require: true
-    type: string
   CI_PWD:
     require: true
     type: string
@@ -55,7 +52,6 @@ runs:
         VERSNUM: ${{ inputs.VERSNUM }}
         CROSS_COMPILE: ${{ inputs.CROSS_COMPILE }}
         CERT_PWD: ${{ inputs.CERT_PWD }}
-        CERT_NAME: ${{ inputs.CERT_NAME }}
         CI_PWD: ${{ inputs.CI_PWD }}
         APPLE_ID: ${{ inputs.APPLE_ID }}
         TEAM_ID: ${{ inputs.TEAM_ID }}
@@ -66,7 +62,6 @@ runs:
         echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
         echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
         echo "CERT_PWD=$CERT_PWD" >> $GITHUB_ENV
-        echo "CERT_NAME=$CERT_NAME" >> $GITHUB_ENV
         echo "CI_PWD=$CI_PWD" >> $GITHUB_ENV
         echo "APPLE_ID=$APPLE_ID" >> $GITHUB_ENV
         echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
@@ -127,13 +122,9 @@ runs:
       run: |
         # First build with plugins
         export CCACHE_DIR=${{ env.CCACHE_DIR }}
-        ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh \
-          $BLD_FLGS \
-          --signing-id=${CERT_NAME} \
-          --notarization-keychain="notary" \
-          --build-plugins=true
+        ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh $BLD_FLGS --build-plugins=true
         echo "compile complete, copying into $APP_OUT_DIR"
-        mv "cpack_output/Mythfrontend.dmg" "${APP_OUT_DIR}/Mythfrontend_with.dmg"
+        mv "cpack_output/mythfrontend.dmg" "${APP_OUT_DIR}/mythfrontend_with.dmg"
     - name: "Re-Build MythTV without Plugins"
       id: build_wo
       shell: bash
@@ -145,14 +136,9 @@ runs:
         # clean up work from w_plugins build
         rm -Rf cpack_output
         # Now make it without plugins
-        ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh  \
-          $BLD_FLGS \
-          --signing-id=${CERT_NAME} \
-          --notarization-keychain="notary" \
-          --skip-build=true \
-          --build-plugins=false
+        ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh $BLD_FLGS --skip-build=true --build-plugins=false
         echo "compile complete, copying into $APP_OUT_DIR"
-        mv "cpack_output/Mythfrontend.dmg" "${APP_OUT_DIR}/Mythfrontend_wo.dmg"
+        mv "cpack_output/mythfrontend.dmg" "${APP_OUT_DIR}/mythfrontend_wo.dmg"
     - uses: actions/cache/save@master
       id: ccache_save
       if: ${{ steps.build_with.outcome == 'success' && inputs.USE_CCACHE == 'true' }}

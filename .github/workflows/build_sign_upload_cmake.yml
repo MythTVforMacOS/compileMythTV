@@ -45,15 +45,21 @@ jobs:
           APP_OUT_DIR=$HOME/$APP_OUT_DIR
           DBVERS="mariadb"
           QTVERS="qt@6"
+          CODESIGN_ID="${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}"
+          NOTAR_KEYCHAIN="notary"
           echo "DBVERS=${DBVERS}" >> $GITHUB_ENV
           echo "QTVERS=${QTVERS}" >> $GITHUB_ENV
-          BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} \
+          echo "NOTAR_KEYCHAIN=${NOTAR_KEYCHAIN}" >> $GITHUB_ENV
+          BLD_FLGS="--working_dir=${GITHUB_WORKSPACE} \
             --version=${MYTHBRANCH} \
             --qt-version=${QTVERS} \
             --frontend-bundle=ON \
+            --signing-id=${CODESIGN_ID} \
             --generate-distribution=true \
+            --notarization-keychain=${NOTAR_KEYCHAIN} \
             --skip-ansible=true \
-            --update-git=false"
+            --update-git=false \
+            --extra-cmake-flags=-DMYTHTV_SOURCE_BRANCH=master"
           #check if this is a cross compile
           SYSARCH=$(/usr/bin/uname -m)
           case $MYTHBRANCH in
@@ -92,7 +98,7 @@ jobs:
           repository: MythTV/mythtv
           ref: ${{ env.MYTHBRANCH }}
           path: "mythtv-${{ env.VERSNUM }}/mythtv"
-      - name: "Compile MythTV"
+      - name: "Compile, Sign, and Notarize MythTV"
         uses: ./.github/actions/compile_cmake
         id: compile
         with:
@@ -105,7 +111,6 @@ jobs:
           USE_CCACHE: ${{ env.USE_CCACHE }}
           CERT: ${{ secrets.PROD_MACOS_CERTIFICATE }}
           CERT_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
-          CERT_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
           CI_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
           APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
           TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
@@ -129,8 +134,8 @@ jobs:
           echo "DMG_W=$DMG_W" >> $GITHUB_ENV
           echo "DMG_WO=$DMG_WO" >> $GITHUB_ENV
           # rename the already generated DMG files
-          mv ${APP_OUT_DIR}/Mythfronend_with.dmg $DMG_W
-          mv ${APP_OUT_DIR}/Mythfronend_wo.dmg $DMG_WO
+          mv ${APP_OUT_DIR}/mythfronend_with.dmg $DMG_W
+          mv ${APP_OUT_DIR}/mythfronend_wo.dmg $DMG_WO
       - uses: webfactory/ssh-agent@master
         with:
           ssh-private-key: ${{ secrets.SF_PRIV_KEY }}

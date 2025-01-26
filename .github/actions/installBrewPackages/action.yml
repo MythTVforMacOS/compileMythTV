@@ -23,15 +23,15 @@ runs:
         echo "Removing all previously install formula"
         brew remove --cask --force $(brew list)
         brew remove --force $(brew list --formula)
-        # check if we're cross-compiling, setting up the brew command appropriately
+        # check if we're cross-compiling, set up the brew command accordingly
         if $CROSS_COMPILE; then
-          PKGMGR_PATH=$(arch -${ARCH} brew --prefix)
-          PKGMGR_CMD="arch -${ARCH} $PKGMGR_PATH/bin/brew"
+          PKGMGR_PREFIX=$(arch -${ARCH} brew --prefix)
+          PKGMGR_CMD="arch -${ARCH} $PKGMGR_PREFIX/bin/brew"
         else
-          PKGMGR_PATH=$(brew --prefix)
-          PKGMGR_CMD="$PKGMGR_PATH/bin/brew"
+          PKGMGR_PREFIX=$(brew --prefix)
+          PKGMGR_CMD="$PKGMGR_PREFIX/bin/brew"
         fi
-        echo "PKGMGR_PATH=$PKGMGR_PATH" >> $GITHUB_ENV
+        echo "PKGMGR_PREFIX=$PKGMGR_PREFIX" >> $GITHUB_ENV
         echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
         echo "Updating homebrew"
         ${PKGMGR_CMD} update
@@ -45,14 +45,15 @@ runs:
         DBVERS: ${{ inputs.DBVERS }}
         COMPILER: ${{ inputs.COMPILER }}
       run: |
-        PKGMGR_BIN=$PKGMGR_PATH/bin
+        PKGMGR_BIN=$PKGMGR_PREFIX/bin
         echo "PKGMGR_BIN=$PKGMGR_BIN" >> $GITHUB_ENV
         export PATH=$PATH:$PKGMGR_BIN
         echo "Install requested python"
-        ${PKGMGR_CMD} install --force --overwrite python3 python-setuptools python-packaging
+        ${PKGMGR_CMD} install --force --overwrite \
+                              python3 python-setuptools python-packaging
         echo "Installing ansible and $DBVERS"
         ${PKGMGR_CMD} install --force --overwrite ansible $DBVERS pkg-config
-        ANS_PB="ANSIBLE_BECOME=false ANSIBLE_BECOME_ASK_PASS=False ${PKGMGR_PATH}/opt/ansible/bin/ansible-playbook"
+        ANS_PB="${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
         if $CROSS_COMPILE; then
           ANS_PB="arch -${ARCH} $ANS_PB"
         fi
@@ -66,18 +67,22 @@ runs:
       run: |
         cd ansible
         echo "Installing packages via ansible playbook"
-        export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PKGMGR_PATH/opt/mysql-client/lib/pkgconfig/
-        echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
-        export MYSQLCLIENT_LDFLAGS="$(${PKGMGR_PREFIX}/bin/pkg-config --libs mysqlclient)"
-        echo "MYSQLCLIENT_LDFLAGS=$MYSQLCLIENT_LDFLAGS" >> $GITHUB_ENV
-        export MYSQLCLIENT_CFLAGS="$(${PKGMGR_PREFIX}/bin/pkg-config --cflags mysqlclient)"
-        echo "MYSQLCLIENT_CFLAGS=$MYSQLCLIENT_CFLAGS" >> $GITHUB_ENV
         XTRA_VARS="database_version=${DBVERS}"
+        case $QTVERS in
+          qt@6)
+            XTRA_VARS="$XTRA_VARS qt6=true"
+          ;;
+        esac
         echo "Running ansible"
-        export C_INCLUDE_PATH=$C_INCLUDE_PATH:$PKGMGR_PATH/include
-        export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$PKGMGR_PATH/include
-        export LIBRARY_PATH=$LIBRARY_PATH:$PKGMGR_PATH/lib
         ${ANS_PB} mythtv.yml --extra-vars="$XTRA_VARS" --limit=localhost
+    - name: Fix the HDHomeRun library on ARM64
+      shell: bash
+      run: ln -s $PKGMGR_PREFIX/opt/libhdhomerun/lib/libhdhomerun.dylib $PKGMGR_PREFIX/opt/libhdhomerun/lib/libhdhomerun_arm64.dylib
+      if: ${{ inputs.ARCH == 'arm64' }}
+    - name: Fix the HDHomeRun library on x86_64
+      shell: bash
+      run: ln -s $PKGMGR_PREFIX/opt/libhdhomerun/lib/libhdhomerun.dylib $PKGMGR_PREFIX/opt/libhdhomerun/lib/libhdhomerun_x64.dylib
+      if: ${{ inputs.ARCH == 'x86_64' }}
     - name: "Cleanup homebrew install"
       id: homebrew_cleanup
       shell: bash

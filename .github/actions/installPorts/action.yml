@@ -32,8 +32,8 @@ runs:
         if hash port 2>/dev/null; then
           echo "Macports is already installed"
         else
-          PKGMGR_PATH=/opt/local
-          echo "PKGMGR_PATH=$PKGMGR_PATH" >> $GITHUB_ENV
+          PKGMGR_PREFIX=/opt/local
+          echo "PKGMGR_PREFIX=$PKGMGR_PREFIX" >> $GITHUB_ENV
           curl -LJO "${GH_URL}/${MP_URL}"
           chmod +x macports-ci
           arch -${{ matrix.os.arch }} bash -c "source ./macports-ci install"
@@ -64,7 +64,7 @@ runs:
           PKGMGR_CMD="sudo $PKGMGR_CMD"
         fi
         echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
-        echo "PKGMGR_BIN=$PKGMGR_PATH/bin" >> $GITHUB_ENV
+        echo "PKGMGR_BIN=$PKGMGR_PREFIX/bin" >> $GITHUB_ENV
         export PATH=$PATH:$PKGMGR_BIN
     - name: "Install required support ports"
       id: install_req_ports
@@ -100,7 +100,7 @@ runs:
       run: |
         cd ansible
         echo "Installing ports via ansible playbook"
-        export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PKGMGR_PATH/lib/mysql8/pkgconfig/
+        export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PKGMGR_PREFIX/lib/mysql8/pkgconfig/
         export MYSQLCLIENT_LDFLAGS=$(pkg-config --libs mysqlclient)
         export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags mysqlclient)
         XTRA_VARS="ansible_python_interpreter=${PKGMGR_BIN}/python${PYDOTVERS} \
@@ -115,5 +115,5 @@ runs:
         # force ownership for the users ansible / mythtv temp directories
         sudo chown $(id -u):$(id -g) ~/.ansible
         sudo chown $(id -u):$(id -g) ~/.mythtv
-        sudo rm -rf ${PKGMGR_PATH}/var/macports/build/*
-        sudo rm -rf ${PKGMGR_PATH}/var/macports/distfiles/*
+        sudo rm -rf ${PKGMGR_PREFIX}/var/macports/build/*
+        sudo rm -rf ${PKGMGR_PREFIX}/var/macports/distfiles/*
