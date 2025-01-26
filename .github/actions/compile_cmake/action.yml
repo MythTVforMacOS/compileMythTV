@@ -34,64 +34,84 @@ runs:
       shell: bash
       env:
         APP_OUT_DIR: ${{ inputs.APP_OUT_DIR }}
-        DMG_FILE: cpack_output/mythfrontend.dmg
+        VERSNUM: ${{ inputs.VERSNUM }}
+        BLD_FLGS: ${{ inputs.BLD_FLGS }}
+        DMG: mythtv-${{ env.VERSNUM }}/cpack_output/mythfrontend.dmg
       run: |
         mkdir -p $APP_OUT_DIR
+        echo "APP_OUT_DIR=$APP_OUT_DIR" >> $GITHUB_ENV
+        echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
+        echo "BLD_FLGS=$BLD_FLGS" >> $GITHUB_ENV
+        echo "DMG=$DMG" >> $GITHUB_ENV
+        ZSH_CMD="arch -${ARCH} /bin/zsh"
+        echo "ZSH_CMD=$ZSH_CMD" >> $GITHUB_ENV
         echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
-        echo "DMG_FILE=$DMG_FILE" >> $GITHUB_ENV
-        # check if we're cross-compiling setting proper build commands
-        if [ ! ${{ inputs.CROSS_COMPILE }} ]; then
-          ZSH_CMD="/bin/zsh"
-        else
-          ZSH_CMD="arch -${ARCH} /bin/zsh"
-        fi
+        CCACHE_STORE=${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}
+        echo "CCACHE_STORE=$CCACHE_STORE" >> $GITHUB_ENV
+    - name: "Setup Cross-Compile"
+      id: crosscompile
+      if: ${{ inputs.CROSS_COMPILE == 'true' }}
+      shell: bash
+      run: |
+        ZSH_CMD="/bin/zsh"
         echo "ZSH_CMD=$ZSH_CMD" >> $GITHUB_ENV
     - name: Check ccache
       id: setup_ccache
       if: ${{ inputs.USE_CCACHE == 'true' }}
       uses: actions/cache@master
-      env:
-        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}
       with:
         path: ${{ env.CCACHE_DIR }}
-        key: mythtv-ccache-${{ env.CCACHE_STORE }}-${{ github.sha }}
-        restore-keys: ${{ env.CCACHE_STORE}}-
+        key: mythtv-ccache-${CCACHE_STORE}-${{ github.sha }}
+        restore-keys: ${CCACHE_STORE}-
     - name: "Build MythTV with Plugins"
       id: build_with
       shell: bash
-      env:
-        APP_OUT_DIR: ${{ inputs.APP_OUT_DIR }}
-        BLD_FLGS: ${{ inputs.BLD_FLGS }}
-        CI_PWD: ${{ inputs.CI_PWD }}
       run: |
         # First build with plugins
-        export CCACHE_DIR=${{ env.CCACHE_DIR }}
+        export CCACHE_DIR=${CCACHE_DIR}
         /usr/bin/security unlock-keychain
-        security unlock-keychain -p "${{ env.CI_PWD }}" build.keychain
+        security unlock-keychain -p "${{ inputs.CI_PWD }}" build.keychain
         ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh ${{ env.BLD_FLGS }} --build-plugins=true
         echo "compile complete, copying into $APP_OUT_DIR"
-        mv ${DMG_FILE} "${APP_OUT_DIR}/mythfrontend_with.dmg"
+        TEMP_DMG_W="${APP_OUT_DIR}/mythfrontend_with.dmg"
+        echo "TEMP_DMG_W=$TEMP_DMG_W" >> $GITHUB_ENV
+        mv ${GITHUB_WORKSPACE}/${DMG} "${TEMP_DMG_W}"
     - name: "Re-Build MythTV without Plugins"
       id: build_wo
       shell: bash
-      env:
-        APP_OUT_DIR: ${{ inputs.APP_OUT_DIR }}
-        BLD_FLGS: ${{ inputs.BLD_FLGS }}
-        CI_PWD: ${{ inputs.CI_PWD }}
       run: |
         # clean up work from w_plugins build
-        rm -Rf cpack_output
+        rm -Rf ${GITHUB_WORKSPACE}/mythtv-${VERSNUM}/cpack_output
+        rm -Rf ${GITHUB_WORKSPACE}/mythtv-${VERSNUM}/build-qt*/MythPlugins*
         # Now make it without plugins
         /usr/bin/security unlock-keychain
-        security unlock-keychain -p "${{ env.CI_PWD }}" build.keychain
+        security unlock-keychain -p "${{ inputs.CI_PWD }}" build.keychain
         ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh ${{ env.BLD_FLGS }} --skip-build=true --build-plugins=false
         echo "compile complete, copying into $APP_OUT_DIR"
-        mv ${DMG_FILE} "${APP_OUT_DIR}/mythfrontend_wo.dmg"
+        TEMP_DMG_WO="${APP_OUT_DIR}/mythfrontend_without.dmg"
+        echo "TEMP_DMG_WO=$TEMP_DMG_WO" >> $GITHUB_ENV
+        mv ${GITHUB_WORKSPACE}/${DMG} "${TEMP_DMG_WO}"
+    - name: "Test Mythfrontend"
+      id: test_app
+      shell: bash
+      env:
+        TEST_APP: cpack_output/_CPack_Packages/Darwin/Bundle/mythfrontend/mythfrontend.app/Contents/MacOS/mythfrontend
+      run: |
+        echo "Testing mythfrontend.app"
+        EXE="${GITHUB_WORKSPACE}/mythtv-${{ env.VERSNUM }}/${TEST_APP} --version"
+        VERSTR=$($EXE |grep "MythTV Version"|gsed "s/^.*Version : *//")
+        echo "Extracted Version String: $VERSTR"
+        echo "Creating output DMG names"
+        DMG_W="${APP_OUT_DIR}/MythFrontend-${ARCH}-$OS_VERS-macOS$VERSTR-with-plugins.dmg"
+        DMG_WO="${APP_OUT_DIR}/MythFrontend-${ARCH}-$OS_VERS-macOS$VERSTR.dmg"
+        # rename the already generated DMG files
+        mv ${TEMP_DMG_W} $DMG_W
+        mv ${TEMP_DMG_WO} $DMG_WO
+        echo "DMG_W=$DMG_W" >> $GITHUB_ENV
+        echo "DMG_WO=$DMG_WO" >> $GITHUB_ENV
     - uses: actions/cache/save@master
       id: ccache_save
       if: ${{ steps.build_with.outcome == 'success' && inputs.USE_CCACHE == 'true' }}
-      env:
-        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}
       with:
         path: ${{ env.CCACHE_DIR }}
-        key: mythtv-ccache-${{ env.CCACHE_STORE }}-${{ github.sha }}
+        key: mythtv-ccache-${CCACHE_STORE}-${{ github.sha }}

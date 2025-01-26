@@ -33,7 +33,7 @@ jobs:
             cross_compile: false
     runs-on: ${{ matrix.os.runner }}
     env:
-      APP_OUT_DIR: "output_dir"
+      APP_OUT_DIR: "${GITHUB_WORKSPACE}/output_dir"
       MASTER_VERS: 35
       DBVERS: "mariadb"
       QTVERS: "qt@6"
@@ -45,7 +45,6 @@ jobs:
       - uses: actions/checkout@master
       - name: "Setup environemental variables"
         run: |
-          APP_OUT_DIR=$HOME/$APP_OUT_DIR
           # note the code sigining ID needs to be passed in later
           # as its a secret variable
           BLD_FLGS="--working_dir=${GITHUB_WORKSPACE} \
@@ -53,13 +52,11 @@ jobs:
             --qt-version=${QTVERS} \
             --frontend-bundle=ON \
             --generate-distribution=true \
-            --signing-id=${{ vars.PROD_MACOS_CERTIFICATE_NAME }} \
-            --notarization-keychain=${{ env.NOTAR_KEYCHAIN }}
+            --signing-id=\"${{ vars.PROD_MACOS_CERTIFICATE_NAME }}\" \
+            --notarization-keychain=\"${NOTAR_KEYCHAIN}\" \
             --skip-ansible=true \
             --update-git=false \
             --extra-cmake-flags=-DMYTHTV_SOURCE_BRANCH=master"
-          #check if this is a cross compile
-          SYSARCH=$(/usr/bin/uname -m)
           case $MYTHBRANCH in
             *fixes*)
               VERSNUM=${MYTHBRANCH#*/}
@@ -72,10 +69,9 @@ jobs:
               exit 1
             ;;
           esac
-          echo "APP_OUT_DIR=${APP_OUT_DIR}" >> $GITHUB_ENV
           echo "BLD_FLGS=${BLD_FLGS}" >> $GITHUB_ENV
-          echo "SYSARCH=$SYSARCH" >> $GITHUB_ENV
-          echo "OS_VERS=$(sw_vers -productVersion | awk -F '.' '{print $1}')" >> $GITHUB_ENV
+          OS_VERS="$(sw_vers -productVersion | awk -F '.' '{print $1}')"
+          echo "OS_VERS=$OS_VERS" >> $GITHUB_ENV
           echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
       - name: "Checkout MythTV/ansible repository"
         uses: actions/checkout@v4
@@ -109,7 +105,7 @@ jobs:
           NOTAR_KEYCHAIN: ${{ env.NOTAR_KEYCHAIN }}
       - name: "Compile, Sign, and Notarize MythTV"
         uses: ./.github/actions/compile_cmake
-        id: compile
+        id: compile_sign_notarize
         with:
           APP_OUT_DIR: ${{ env.APP_OUT_DIR }}
           OS: ${{ matrix.os.runner }}
@@ -119,27 +115,6 @@ jobs:
           BLD_FLGS: ${{ env.BLD_FLGS }}
           USE_CCACHE: ${{ env.USE_CCACHE }}
           CI_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
-      - name: "Test Mythfrontend"
-        id: test_app
-        shell: bash
-        env:
-          ARCH: ${{ matrix.os.arch }}
-        run: |
-          echo "Testing mythfrontend.app"
-          EXE="cpack_output/_CPack_Packages/Darwin/Bundle/mythfrontend/mythfrontend.app/Contents/MacOS/mythfrontend --version"
-          if ${CROSS_COMPILE}; then
-            EXE="arch -${ARCH} $EXE"
-          fi
-          VERSTR=$($EXE |grep "MythTV Version"|gsed "s/^.*Version : *//")
-          echo "Extracted Version String: $VERSTR"
-          echo "Creating output DMG names"
-          DMG_W="MythFrontend-${ARCH}-$OS_VERS-macOS$VERSTR-with-plugins.dmg"
-          DMG_WO="MythFrontend-${ARCH}-$OS_VERS-macOS$VERSTR.dmg"
-          echo "DMG_W=$DMG_W" >> $GITHUB_ENV
-          echo "DMG_WO=$DMG_WO" >> $GITHUB_ENV
-          # rename the already generated DMG files
-          mv ${APP_OUT_DIR}/mythfronend_with.dmg $DMG_W
-          mv ${APP_OUT_DIR}/mythfronend_wo.dmg $DMG_WO
       - uses: webfactory/ssh-agent@master
         with:
           ssh-private-key: ${{ secrets.SF_PRIV_KEY }}

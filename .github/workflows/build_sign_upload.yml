@@ -62,9 +62,6 @@ jobs:
             --update-git=false"
           echo "DBVERS=${DBVERS}" >> $GITHUB_ENV
           echo "QTVERS=${QTVERS}" >> $GITHUB_ENV
-
-          #check if this is a cross compile
-          SYSARCH=$(/usr/bin/uname -m)
           case $MYTHBRANCH in
             *fixes*)
               VERSNUM=${MYTHBRANCH#*/}
@@ -82,7 +79,6 @@ jobs:
           echo "APP_W=${APP_OUT_DIR}/with_plugins/$EXE" >> $GITHUB_ENV
           echo "APP_WO=${APP_OUT_DIR}/without_plugins/$EXE" >> $GITHUB_ENV
           echo "BLD_FLGS=${BLD_FLGS}" >> $GITHUB_ENV
-          echo "SYSARCH=$SYSARCH" >> $GITHUB_ENV
           echo "OS_VERS=$(sw_vers -productVersion | awk -F '.' '{print $1}')" >> $GITHUB_ENV
           echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
       - name: "Checkout MythTV/ansible repository"
@@ -149,7 +145,7 @@ jobs:
           DMG_WO: ${{ env.DMG_WO }}
           CERT: ${{ secrets.PROD_MACOS_CERTIFICATE }}
           CERT_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
-          CERT_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
+          CERT_NAME: ${{ vars.PROD_MACOS_CERTIFICATE_NAME }}
           CI_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
           APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
           TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}

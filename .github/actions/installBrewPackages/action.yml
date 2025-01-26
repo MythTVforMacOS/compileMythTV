@@ -26,21 +26,26 @@ runs:
         echo "Removing all previously install formula"
         brew remove --cask --force $(brew list)
         brew remove --force $(brew list --formula)
-        # check if we're cross-compiling, set up the brew command accordingly
-        if [ ! $CROSS_COMPILE ]; then
-          PKGMGR_PREFIX=$(brew --prefix)
-          PKGMGR_CMD="$PKGMGR_PREFIX/bin/brew"
-          ANS_PB="${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
-        else
-          PKGMGR_PREFIX=$(arch -${ARCH} brew --prefix)
-          PKGMGR_CMD="arch -${ARCH} $PKGMGR_PREFIX/bin/brew"
-          ANS_PB="arch -${ARCH} ${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
-        fi
+        PKGMGR_PREFIX=$(brew --prefix)
+        PKGMGR_CMD="$PKGMGR_PREFIX/bin/brew"
         echo "PKGMGR_PREFIX=$PKGMGR_PREFIX" >> $GITHUB_ENV
         echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
         echo "Updating homebrew"
         ${PKGMGR_CMD} update
+        ANS_PB="${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
         echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
+    - name: "Setup Cross-Compile"
+      id: crosscompile
+      if: ${{ inputs.CROSS_COMPILE == 'true' }}
+      shell: bash
+      run: |
+          CX_CMD="arch -${ARCH}"
+          PKGMGR_PREFIX=$($CX_CMD brew --prefix)
+          PKGMGR_CMD="$CX_CMD $PKGMGR_PREFIX/bin/brew"
+          ANS_PB="a$CX_CMD ${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
+          echo "PKGMGR_PREFIX=$PKGMGR_PREFIX" >> $GITHUB_ENV
+          echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
+          echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
     - name: "Install required support packages"
       id: install_req_packages
       shell: bash

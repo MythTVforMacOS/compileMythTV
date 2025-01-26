@@ -55,7 +55,7 @@ xcrun notarytool store-credentials KEYCHAIN_NAME --apple-id APPLE_ID --team-id=T
                                                 occasionally beyond the default keychain lock time.
                                                 To extend (unfortunately permanently) the keychain
                                                 lock time run the following command where the last
-                                                value is your preferred timeout in seconds 
+                                                value is your preferred timeout in seconds
                                                 two hours - 7200 sec has worked so far:
                                           security set-keychain-settings -t 7200
 
