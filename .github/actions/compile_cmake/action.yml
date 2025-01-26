@@ -66,9 +66,7 @@ runs:
       run: |
         # First build with plugins
         export CCACHE_DIR=${{ env.CCACHE_DIR }}
-        export CODESIGN_ID=${{ env.CODESIGN_ID }}
         /usr/bin/security unlock-keychain
-        export CODESIGN_ID=$(security find-generic-password -a "${USER}" -s CODESIGN_ID -w)
         security unlock-keychain -p "${{ env.CI_PWD }}" build.keychain
         ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh ${{ env.BLD_FLGS }} --build-plugins=true
         echo "compile complete, copying into $APP_OUT_DIR"
@@ -85,9 +83,8 @@ runs:
         rm -Rf cpack_output
         # Now make it without plugins
         /usr/bin/security unlock-keychain
-        export CODESIGN_ID=$(security find-generic-password -a "${USER}" -s CODESIGN_ID -w)
         security unlock-keychain -p "${{ env.CI_PWD }}" build.keychain
-        ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh ${{ env.BLD_FLGS }} --signing-id="$CODESIGN_ID" --skip-build=true --build-plugins=false
+        ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh ${{ env.BLD_FLGS }} --skip-build=true --build-plugins=false
         echo "compile complete, copying into $APP_OUT_DIR"
         mv ${DMG_FILE} "${APP_OUT_DIR}/mythfrontend_wo.dmg"
     - uses: actions/cache/save@master

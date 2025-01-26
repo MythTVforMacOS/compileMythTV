@@ -50,6 +50,7 @@ Bundling, Signing, and Notarization Options
                                             IF NOTAR_KEYCHAIN is not set, the distribution package
                                             will not be notarized
                                             hese can be stored by running the following command:
+xcrun notarytool store-credentials KEYCHAIN_NAME --apple-id APPLE_ID --team-id=TEAM_ID --password APP_PWD"
                                           Note: Notarization can take quite a bit of time
                                                 occasionally beyond the default keychain lock time.
                                                 To extend (unfortunately permanently) the keychain
@@ -57,8 +58,6 @@ Bundling, Signing, and Notarization Options
                                                 value is your preferred timeout in seconds 
                                                 two hours - 7200 sec has worked so far:
                                           security set-keychain-settings -t 7200
-
-xcrun notarytool store-credentials KEYCHAIN_NAME --apple-id APPLE_ID --team-id=TEAM_ID --password APP_PWD"
 
 EOF
   exit 0

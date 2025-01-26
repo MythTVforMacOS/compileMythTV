@@ -53,7 +53,8 @@ jobs:
             --qt-version=${QTVERS} \
             --frontend-bundle=ON \
             --generate-distribution=true \
-            --notarization-keychain=${NOTAR_KEYCHAIN} \
+            --signing-id=${{ vars.PROD_MACOS_CERTIFICATE_NAME }} \
+            --notarization-keychain=${{ env.NOTAR_KEYCHAIN }}
             --skip-ansible=true \
             --update-git=false \
             --extra-cmake-flags=-DMYTHTV_SOURCE_BRANCH=master"
@@ -99,7 +100,6 @@ jobs:
         uses: ./.github/actions/setup_signing
         id: signing
         with:
-          CODESIGN_ID: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
           CERT: ${{ secrets.PROD_MACOS_CERTIFICATE }}
           CERT_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
           CI_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
