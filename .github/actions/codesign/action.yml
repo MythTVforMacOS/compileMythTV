@@ -124,7 +124,9 @@ runs:
           /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue $APP_FMWK/*.framework
           # Next any files in the MacOS directory (binaries/scripts)
           echo "Codesigning Executables"
-          /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue $APP_EXE/python
+          if [ -f $APP_EXE/python ]; then
+              /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue $APP_EXE/python
+          fi
           /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue $APP_EXE/mythutil
           /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue $APP_EXE/mythpreviewgen
           /usr/bin/codesign --force -s "${CERT_NAME}" -v --timestamp -o runtime --entitlements entitlement.plist --continue $APP_EXE/mythfrontend
