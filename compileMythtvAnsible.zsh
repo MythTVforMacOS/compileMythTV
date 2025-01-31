@@ -139,7 +139,7 @@ REPO_PREFIX=$HOME
 case $PKGMGR in
   macports)
     DATABASE_VERS=mysql8
-    PYTHON_VERS="312"
+    PYTHON_VERS="313"
     QT_VERS=qt5
   ;;
   homebrew)
@@ -914,6 +914,7 @@ else
                          --disable-firewire         \
                          --disable-libcec           \
                          --disable-x11              \
+                         --disable-egl              \
                          --enable-libmp3lame        \
                          --enable-libxvid           \
                          --enable-libx264           \
