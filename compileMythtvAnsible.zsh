@@ -384,7 +384,7 @@ PYTHON_VENV_PATH="$HOME/.mythtv/python-venv$PYTHON_VERS"
 PY2APP_PKGS="MySQLdb,pycurl,requests_cache,urllib3,future,lxml,oauthlib,requests,simplejson,\
   audiofile,bs4,argparse,common,configparser,datetime,discid,et,features,HTMLParser,httplib2,\
   musicbrainzngs,traceback2,dateutil,importlib_metadata"
-PY2APP_EXLCUDE="soundfile"
+PY2APP_EXLCUDE="soundfile,py2app,wheel,pip,packaging"
 # Add flags to allow pip3 / python to find mysql8
 case $PKGMGR in
   macports)
