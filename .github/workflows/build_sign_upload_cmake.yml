@@ -51,14 +51,14 @@ jobs:
           mkdir -p $DMG_OUT_DIR
           # note the code sigining ID needs to be passed in later
           # as its a secret variable
-          BLD_FLGS="--working_dir=${GITHUB_WORKSPACE}\
-            --version=${MYTHBRANCH}\
-            --qt-version=${QTVERS}\
-            --frontend-bundle=ON\
-            --generate-distribution=true\
-            --signing-id=\"${{ vars.PROD_MACOS_CERTIFICATE_NAME }}\"\
-            --notarization-keychain=\"${NOTAR_KEYCHAIN}\"\
-            --skip-ansible=true\
+          BLD_FLGS="--working_dir=${GITHUB_WORKSPACE} \
+            --version=${MYTHBRANCH} \
+            --qt-version=${QTVERS} \
+            --frontend-bundle=ON \
+            --generate-distribution=true \
+            --signing-id=\"${{ vars.PROD_MACOS_CERTIFICATE_NAME }}\" \
+            --notarization-keychain=\"${NOTAR_KEYCHAIN}\" \
+            --skip-ansible=true \
             --update-git=false"
           echo "BLD_FLGS=${BLD_FLGS}" >> $GITHUB_ENV
           case $MYTHBRANCH in
