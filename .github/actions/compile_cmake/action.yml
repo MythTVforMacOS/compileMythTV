@@ -67,13 +67,17 @@ runs:
         ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh ${{ inputs.BLD_FLGS }} --build-plugins=true
         echo "compile complete, copying into ${{ inputs.DMG_OUT_DIR }}"
         mv ${DMG} "${{ inputs.DMG_OUT_DIR }}/mythfrontend_with.dmg"
-    - name: "Re-Build MythTV without Plugins"
-      id: build_wo
+    - name: "Clean up between builds"
+      id: cleanup
       shell: bash
       run: |
         # clean up work from w_plugins build
         rm -Rf "${GITHUB_WORKSPACE}/mythtv-${{ inputs.VERSNUM }}/cpack_output"
-        rm -Rf "${GITHUB_WORKSPACE}/mythtv-${{ inputs.VERSNUM }}/build-qt*/MythPlugins*""
+        rm -Rf "${GITHUB_WORKSPACE}/mythtv-${{ inputs.VERSNUM }}/build-qt*/MythPlugins*"
+    - name: "Re-Build MythTV without Plugins"
+      id: build_wo
+      shell: bash
+      run: |
         # Now make it without plugins
         /usr/bin/security unlock-keychain
         security unlock-keychain -p "${{ inputs.CI_PWD }}" build.keychain
