@@ -1,3 +1,4 @@
+# yamllint disable rule:line-length
 ---
 name: "Reusable WF: Build Sign and Upload Mythfrontend"
 
@@ -31,10 +32,10 @@ jobs:
             runner: 'macOS-14'
             arch: 'arm64'
             cross_compile: false
-          - desc: 'macOS 15 (Sequoia) arm64'
-            runner: 'macOS-15'
-            arch: 'arm64'
-            cross_compile: false
+          #- desc: 'macOS 15 (Sequoia) arm64'
+          #  runner: 'macOS-15'
+          #  arch: 'arm64'
+          #  cross_compile: false
     runs-on: ${{ matrix.os.runner }}
     env:
       APP_OUT_DIR: "output_dir"

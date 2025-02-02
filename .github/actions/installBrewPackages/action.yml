@@ -1,3 +1,4 @@
+# yamllint disable rule:line-length
 ---
 name: "Install Packages vi Homebrew"
 inputs:
@@ -19,9 +20,6 @@ runs:
     - name: "Remove formula for a fresh homebrew install"
       id: nuke_brew
       shell: bash
-      env:
-        ARCH: ${{ inputs.ARCH }}
-        CROSS_COMPILE: ${{ inputs.CROSS_COMPILE }}
       run: |
         echo "Removing all previously install formula"
         brew remove --cask --force $(brew list)
@@ -39,7 +37,7 @@ runs:
       if: ${{ inputs.CROSS_COMPILE == 'true' }}
       shell: bash
       run: |
-          CX_CMD="arch -${ARCH}"
+          CX_CMD="arch -${{ inputs.ARCH }}"
           PKGMGR_PREFIX=$($CX_CMD brew --prefix)
           PKGMGR_CMD="$CX_CMD $PKGMGR_PREFIX/bin/brew"
           ANS_PB="a$CX_CMD ${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
@@ -49,11 +47,6 @@ runs:
     - name: "Install required support packages"
       id: install_req_packages
       shell: bash
-      env:
-        PYVERS: ${{ inputs.PYVERS }}
-        ANSIBLEVERS: ${{ inputs.ANSIBLEVERS }}
-        DBVERS: ${{ inputs.DBVERS }}
-        COMPILER: ${{ inputs.COMPILER }}
       run: |
         PKGMGR_BIN=$PKGMGR_PREFIX/bin
         echo "PKGMGR_BIN=$PKGMGR_BIN" >> $GITHUB_ENV
@@ -61,17 +54,15 @@ runs:
         echo "Install requested python"
         ${PKGMGR_CMD} install --force --overwrite \
                               python3 python-setuptools python-packaging
-        echo "Installing ansible and $DBVERS"
-        ${PKGMGR_CMD} install --force --overwrite ansible $DBVERS pkg-config
+        echo "Installing ansible and ${{ inputs.DBVERS }}"
+        ${PKGMGR_CMD} install --force --overwrite ansible ${{ inputs.DBVERS }} pkg-config
     - name: "Install required packages via ansible"
       id: ansible_install
       shell: bash
-      env:
-        DBVERS: ${{ inputs.DBVERS }}
       run: |
         cd ansible
         echo "Installing packages via ansible playbook"
-        XTRA_VARS="database_version=${DBVERS}"
+        XTRA_VARS="database_version=${{ inputs.DBVERS }}"
         case $QTVERS in
           qt@6)
             XTRA_VARS="$XTRA_VARS qt6=true"

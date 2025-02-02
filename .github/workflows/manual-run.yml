@@ -1,3 +1,4 @@
+# yamllint disable rule:line-length
 ---
 name: "Manual build"
 
@@ -14,8 +15,8 @@ on:  # yamllint disable-line rule:truthy
         type: choice
         description: "Choose a package manager"
         options:
-          - "macports"
           - "homebrew"
+          - "macports"
 
 run-name: "Manual Build: ${{ inputs.mythbranch }} by @${{ github.actor }}
   with ${{ inputs.PKGMGR }}"

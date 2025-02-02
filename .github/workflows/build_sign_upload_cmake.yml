@@ -1,3 +1,4 @@
+# yamllint disable rule:line-length
 ---
 name: "Reusable WF: Build Sign and Upload Mythfrontend"
 
@@ -33,7 +34,6 @@ jobs:
             cross_compile: false
     runs-on: ${{ matrix.os.runner }}
     env:
-      APP_OUT_DIR: "${GITHUB_WORKSPACE}/output_dir"
       MASTER_VERS: 35
       DBVERS: "mariadb"
       QTVERS: "qt@6"
@@ -45,18 +45,22 @@ jobs:
       - uses: actions/checkout@master
       - name: "Setup environemental variables"
         run: |
+          # create place to store generated DMG files
+          DMG_OUT_DIR="${GITHUB_WORKSPACE}/output_dir"
+          echo "DMG_OUT_DIR=${DMG_OUT_DIR}" >> $GITHUB_ENV
+          mkdir -p $DMG_OUT_DIR
           # note the code sigining ID needs to be passed in later
           # as its a secret variable
-          BLD_FLGS="--working_dir=${GITHUB_WORKSPACE} \
-            --version=${MYTHBRANCH} \
-            --qt-version=${QTVERS} \
-            --frontend-bundle=ON \
-            --generate-distribution=true \
-            --signing-id=\"${{ vars.PROD_MACOS_CERTIFICATE_NAME }}\" \
-            --notarization-keychain=\"${NOTAR_KEYCHAIN}\" \
-            --skip-ansible=true \
-            --update-git=false \
-            --extra-cmake-flags=-DMYTHTV_SOURCE_BRANCH=master"
+          BLD_FLGS="--working_dir=${GITHUB_WORKSPACE}\
+            --version=${MYTHBRANCH}\
+            --qt-version=${QTVERS}\
+            --frontend-bundle=ON\
+            --generate-distribution=true\
+            --signing-id=\"${{ vars.PROD_MACOS_CERTIFICATE_NAME }}\"\
+            --notarization-keychain=\"${NOTAR_KEYCHAIN}\"\
+            --skip-ansible=true\
+            --update-git=false"
+          echo "BLD_FLGS=${BLD_FLGS}" >> $GITHUB_ENV
           case $MYTHBRANCH in
             *fixes*)
               VERSNUM=${MYTHBRANCH#*/}
@@ -69,10 +73,9 @@ jobs:
               exit 1
             ;;
           esac
-          echo "BLD_FLGS=${BLD_FLGS}" >> $GITHUB_ENV
+          echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
           OS_VERS="$(sw_vers -productVersion | awk -F '.' '{print $1}')"
           echo "OS_VERS=$OS_VERS" >> $GITHUB_ENV
-          echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
       - name: "Checkout MythTV/ansible repository"
         uses: actions/checkout@v4
         with:
@@ -107,7 +110,7 @@ jobs:
         uses: ./.github/actions/compile_cmake
         id: compile_sign_notarize
         with:
-          APP_OUT_DIR: ${{ env.APP_OUT_DIR }}
+          DMG_OUT_DIR: ${{ env.DMG_OUT_DIR }}
           OS: ${{ matrix.os.runner }}
           ARCH: ${{ matrix.os.arch }}
           CROSS_COMPILE: ${{ matrix.os.cross_compile }}
