@@ -562,7 +562,7 @@ postBuild(){
         # see help message for note on keychain lock time
         /usr/bin/security unlock-keychain
       fi
-      CPACK_CFG=$(find $WORKING_DIR/mythtv -name "CPackConfig.cmake")
+      CPACK_CFG=$(find $WORKING_DIR/mythtv/ -name "CPackConfig.cmake")
       CPACK_CMD="cpack --config $CPACK_CFG"
       eval "${CPACK_CMD}" || { echo 'Bundling MythTV failed' ; exit 1; }
     fi
