@@ -147,8 +147,9 @@ OS_ARCH=$(/usr/bin/arch)
 
 ### Github Specific Variables ##########################################################################
 isGITHUB=false
-if [ -n GITHUB_ENV ]; then isGITHUB=true; fi
-
+if [ -n "$GITHUB_ENV" ]; then
+  isGITHUB=true;
+fi
 ### Input Parsing ##################################################################################
 # setup default variables
 MYTHTV_VERS="master"
@@ -178,7 +179,7 @@ case $PKGMGR in
       DATABASE_VERS=mariadb-10.5
     fi
     QT_PKMGR_VERS=qt6
-    PYTHON_VERS="312"
+    PYTHON_VERS="313"
   ;;
   homebrew)
     DATABASE_VERS=mariadb
@@ -557,7 +558,7 @@ postBuild(){
     if [[ $DISTIBUTE_APP == "ON" ]]; then
       echoC "------------ Generating DragNDrop dmg's with CPack ------------" GREEN
       # no need to request security unlock on github
-      if [ ! $isGITHUB ]; then
+      if ! $isGITHUB; then
         # see help message for note on keychain lock time
         /usr/bin/security unlock-keychain
       fi
