@@ -30,10 +30,11 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: "Setup Build Environment Variable"
+    - name: "Setup Build Environment Variables"
       id: setup_env
       shell: bash
       run: |
+        # setup Environment variables
         DMG=${GITHUB_WORKSPACE}/mythtv-${{ inputs.VERSNUM }}/cpack_output/mythfrontend.dmg
         echo "DMG=$DMG" >> $GITHUB_ENV
         ZSH_CMD="arch -${ARCH} /bin/zsh"
@@ -56,33 +57,36 @@ runs:
         path: ${{ env.CCACHE_DIR }}
         key: mythtv-ccache-${CCACHE_STORE}-${{ github.sha }}
         restore-keys: ${CCACHE_STORE}-
-    - name: "Build MythTV without Plugins"
+    - name: "Build MythTV with Plugins"
       id: build_with
       shell: bash
       run: |
-        # First build without plugins
+        # First build with plugins
         export CCACHE_DIR=${CCACHE_DIR}
         /usr/bin/security unlock-keychain
         security unlock-keychain -p "${{ inputs.CI_PWD }}" build.keychain
-        ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh ${{ inputs.BLD_FLGS }} --build-plugins=false
+        ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh ${{ inputs.BLD_FLGS }} --build-plugins=true
         echo "compile complete, copying into ${{ inputs.DMG_OUT_DIR }}"
-        mv ${DMG} "${{ inputs.DMG_OUT_DIR }}/mythfrontend_without.dmg"
+        mv ${DMG} "${{ inputs.DMG_OUT_DIR }}/mythfrontend_with.dmg"
     - name: "Clean up between builds"
       id: cleanup
       shell: bash
       run: |
         # clean up work from w_plugins build
         rm -Rf "${GITHUB_WORKSPACE}/mythtv-${{ inputs.VERSNUM }}/cpack_output"
+        rm -Rf "${GITHUB_WORKSPACE}/mythtv-${{ inputs.VERSNUM }}/mythtv/build-*/PackageDarwin-prefix"
+        rm -Rf "${GITHUB_WORKSPACE}/mythtv-${{ inputs.VERSNUM }}/${{ inputs.VERSNUM }}-osx-64bit/mythfrontend.app"
+
     - name: "Re-Build MythTV without Plugins"
       id: build_wo
       shell: bash
       run: |
-        # Now make it with plugins
+        # Now make it without plugins
         /usr/bin/security unlock-keychain
         security unlock-keychain -p "${{ inputs.CI_PWD }}" build.keychain
-        ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh ${{ inputs.BLD_FLGS }} --build-plugins=true
+        ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh ${{ inputs.BLD_FLGS }} --build-plugins=false --skip-build=true
         echo "compile complete, copying into ${{ inputs.DMG_OUT_DIR }}"
-        mv ${DMG} "${{ inputs.DMG_OUT_DIR }}/mythfrontend_with.dmg"
+        mv ${DMG} "${{ inputs.DMG_OUT_DIR }}/mythfrontend_without.dmg"
     - name: "Test Mythfrontend"
       id: test_app
       shell: bash
