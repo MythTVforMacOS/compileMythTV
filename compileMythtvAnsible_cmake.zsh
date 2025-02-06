@@ -503,6 +503,14 @@ configureAndBuild(){
   # since we're using a custom python virtual environment, we need to source it to get the
   # build process to use it.
   source "$PYTHON_VENV_PATH/bin/activate"
+  if [ ! -n "$VIRTUAL_ENV" ]; then
+    if [[ $BUILD_FRONTEND_BUNDLE == "ON" ]]; then
+      echoC "Error: no python virtual envirnment found, exiting" RED
+      exit 1
+    else
+      echoC "Warning: no python virtual envirnment found, using system python" Yellow
+    fi
+  fi
 
   echoC "------------ Configuring MythTV ------------" GREEN
   # configure mythtv
