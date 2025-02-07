@@ -57,7 +57,7 @@ jobs:
             --frontend-bundle=ON \
             --generate-distribution=true \
             --signing-id=\"${{ vars.PROD_MACOS_CERTIFICATE_NAME }}\" \
-            --notarization-keychain=\"${NOTAR_KEYCHAIN}\" \
+            --notarization-keychain=${NOTAR_KEYCHAIN} \
             --skip-ansible=true \
             --update-git=false"
           echo "BLD_FLGS=${BLD_FLGS}" >> $GITHUB_ENV
