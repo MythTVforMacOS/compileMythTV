@@ -27,11 +27,19 @@ jobs:
           - desc: 'macOS 14 (Sonoma) arm64'
             runner: 'macOS-14'
             arch: 'arm64'
+            cross_compile: true
+          - desc: 'macOS 14 (Sonoma) arm64'
+            runner: 'macOS-14'
+            arch: 'arm64'
             cross_compile: false
           - desc: 'macOS 15 (Sequoia) arm64'
             runner: 'macOS-15'
             arch: 'arm64'
             cross_compile: false
+          - desc: 'macOS 15 (Sequoia) arm64'
+            runner: 'macOS-15'
+            arch: 'arm64'
+            cross_compile: true
     runs-on: ${{ matrix.os.runner }}
     env:
       MASTER_VERS: 35

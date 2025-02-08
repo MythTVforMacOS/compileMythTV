@@ -47,7 +47,8 @@ runs:
       if: ${{ inputs.CROSS_COMPILE == 'true' }}
       shell: bash
       run: |
-        ZSH_CMD="/bin/zsh"
+        CX_CMD="arch -${{ inputs.ARCH }}"
+        ZSH_CMD="$CX_CMD /bin/zsh"
         echo "ZSH_CMD=$ZSH_CMD" >> $GITHUB_ENV
     - name: Check ccache
       id: setup_ccache

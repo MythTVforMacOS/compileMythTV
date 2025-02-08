@@ -18,7 +18,7 @@ runs:
   using: "composite"
   steps:
     - name: "Remove formula for a fresh homebrew install"
-      id: nuke_brew
+      id: nuke_brew_native
       shell: bash
       run: |
         echo "Removing all previously install formula"
@@ -32,18 +32,33 @@ runs:
         ${PKGMGR_CMD} update
         ANS_PB="${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
         echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
-    - name: "Setup Cross-Compile"
-      id: crosscompile
+    - name: "Corss-Compile: Remove and reinstall homebrew install"
+      id: nuke_brew_cross_compile
       if: ${{ inputs.CROSS_COMPILE == 'true' }}
       shell: bash
+      env:
+        GH_URL: "https://raw.githubusercontent.com"
+        HB_RM_URL: "Homebrew/install/HEAD/uninstall.sh"
+        HB_INST_URL: "Homebrew/install/HEAD/install.sh"
       run: |
-          CX_CMD="arch -${{ inputs.ARCH }}"
-          PKGMGR_PREFIX=$($CX_CMD brew --prefix)
-          PKGMGR_CMD="$CX_CMD $PKGMGR_PREFIX/bin/brew"
-          ANS_PB="a$CX_CMD ${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
-          echo "PKGMGR_PREFIX=$PKGMGR_PREFIX" >> $GITHUB_ENV
-          echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
-          echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
+        if hash brew 2>/dev/null; then
+          # now remove homebrew to prevent python conflicts
+          /bin/bash -c "$(curl -fsSL ${GH_URL}/${HB_RM_URL})" --force
+          sudo rm -Rf /usr/local/bin/brew
+        fi
+        # reinstall homebrew for cross-compile
+        CX_CMD="arch -${{ inputs.ARCH }}"
+        echo "CX_CMD=$CX_CMD" >> $GITHUB_ENV
+        /bin/bash -c "$CX_CMD $(curl -fsSL ${GH_URL}/${HB_INST_URL})"
+
+        PKGMGR_PREFIX=$($CX_CMD brew --prefix)
+        PKGMGR_CMD="$CX_CMD $PKGMGR_PREFIX/bin/brew"
+        echo "PKGMGR_PREFIX=$PKGMGR_PREFIX" >> $GITHUB_ENV
+        echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
+        echo "Updating homebrew"
+        ${PKGMGR_CMD} update
+        ANS_PB="a$CX_CMD ${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
+        echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
     - name: "Install required support packages"
       id: install_req_packages
       shell: bash
