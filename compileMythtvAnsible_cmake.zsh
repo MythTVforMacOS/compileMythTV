@@ -31,7 +31,7 @@ Configure and Build Options
   --skip-ansible=SKIP_ANSIBLE             Skip ansible install (false)
                                             This avoids re-running ansible and should only be used
                                             if all packages have been correctly installed.
-  --skip-build=SKIP_BUILD                 Skip configure and make
+  --repackage-only=REPACKAGE_ONLY          Perform only the tasks necessary to repackage an app bundle
                                             This is used when you just want to repackage (false)
   --extra-cmake-flags=EXTRA_CMAKE_FLAGS   Addtional configure flags for mythtv ("")
 Bundling, Signing, and Notarization Options
@@ -161,7 +161,7 @@ WORKING_DIR_BASE=$HOME
 INSTALL_DIR=""
 UPDATE_GIT=true
 SKIP_ANSIBLE=false
-SKIP_BUILD=false
+REPACKAGE_ONLY=false
 EXTRA_CMAKE_FLAGS=""
 DISTIBUTE_APP=OFF
 if [[ ! -v CODESIGN_ID ]]; then
@@ -225,8 +225,8 @@ for i in "$@"; do
       --skip-ansible=*)
         SKIP_ANSIBLE="${i#*=}"
       ;;
-      --skip-build=*)
-        SKIP_BUILD="${i#*=}"
+      --repackage-only=*)
+        REPACKAGE_ONLY="${i#*=}"
       ;;
       --extra-cmake-flags=*)
         EXTRA_CMAKE_FLAGS="${i#*=}"
@@ -384,7 +384,7 @@ runAnsible(){
   if $SKIP_ANSIBLE; then
     echoC "    User requested skip of ansible package installation" ORANGE
     return 0
-  elif $SKIP_BUILD; then
+  elif $REPACKAGE_ONLY; then
     echoC "    User requested repackaging only - skipping package installation via ansible" ORANGE
     return 0
   fi
@@ -474,7 +474,7 @@ getSource(){
   # if the repo exists, update it (assuming the flag is set)
   if [ -d "$WORKING_DIR/mythtv" ]; then
     cd "$WORKING_DIR/mythtv" || exit 1
-    if $UPDATE_GIT && ! $SKIP_BUILD ; then
+    if $UPDATE_GIT && ! $REPACKAGE_ONLY ; then
       echoC "    Updating mythtv/mythplugins git repo" BLUE
       git pull
     else
@@ -520,33 +520,33 @@ configureAndBuild(){
   GIT_TAG=$(git describe --tags --exact-match 2>/dev/null)
   GIT_BRANCH_OR_TAG="${GIT_BRANCH:-${GIT_TAG}}"
 
-  if [ -d "$APP" ]; then
+  if $REPACKAGE_ONLY; then
     echoC "    Cleaning up past Builds" BLUE
-    find $SRC_DIR -name "*.app"|xargs rm -Rf
+    rm -Rf $WORKING_DIR/mythtv/build-$QT_CMAKE_VERS/PackageDarwin-prefix
+    rm -Rf $WORKING_DIR/cpack_output
+    find $WORKING_DIR/mythtv -name "*.app"|xargs rm -Rf
+    find $INSTALL_DIR -name "*.app"|xargs rm -Rf
   fi
-  if $SKIP_BUILD; then
-    echoC "    Skipping MythTV configure and build" ORANGE
+
+  cd "$CMAKE_CONFIGURE_DIR" || exit 1
+  EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS -DENABLE_VULKAN=OFF"
+  if $BUILD_PLUGINS; then
+      EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS -DMYTH_BUILD_PLUGINS=ON"
   else
-    cd "$CMAKE_CONFIGURE_DIR" || exit 1
-    EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS -DENABLE_VULKAN=OFF"
-    if $BUILD_PLUGINS; then
-        EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS -DMYTH_BUILD_PLUGINS=ON"
-    else
-        EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS -DMYTH_BUILD_PLUGINS=OFF"
-    fi
-    echoC "    Configuring via cmake" BLUE
-    CONFIG_CMD="cmake --preset $QT_CMAKE_VERS               \
-                      -B $CMAKE_BUILD_DIR                   \
-                      -G Ninja                              \
-                      -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR   \
-                      $EXTRA_CMAKE_FLAGS"
-    eval "${CONFIG_CMD}"
-    echoC "------------ Building MythTV ------------" GREEN
-    #compile MythTV
-    echoC "    Building via cmake" BLUE
-    BUILD_CMD="cmake --build build-$QT_CMAKE_VERS"
-    eval "${BUILD_CMD}" || { echo 'Building MythTV failed' ; exit 1; }
+      EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS -DMYTH_BUILD_PLUGINS=OFF"
   fi
+  echoC "    Configuring via cmake" BLUE
+  CONFIG_CMD="cmake --preset $QT_CMAKE_VERS               \
+                    -B $CMAKE_BUILD_DIR                   \
+                    -G Ninja                              \
+                    -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR   \
+                    $EXTRA_CMAKE_FLAGS"
+  eval "${CONFIG_CMD}"
+  echoC "------------ Building MythTV ------------" GREEN
+  #compile MythTV
+  echoC "    Building via cmake" BLUE
+  BUILD_CMD="cmake --build build-$QT_CMAKE_VERS"
+  eval "${BUILD_CMD}" || { echo 'Building MythTV failed' ; exit 1; }
 }
 
 # function to perform any post compile activities
