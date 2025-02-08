@@ -44,20 +44,20 @@ runs:
         if hash brew 2>/dev/null; then
           # now remove homebrew to prevent python conflicts
           /bin/bash -c "$(curl -fsSL ${GH_URL}/${HB_RM_URL})" --force
-          sudo rm -Rf /usr/local/bin/brew
+          sudo rm -Rf /opt/homebrew
         fi
         # reinstall homebrew for cross-compile
+        arch -${{ inputs.ARCH }} /bin/bash -c "$(curl -fsSL ${GH_URL}/${HB_INST_URL})"
         CX_CMD="arch -${{ inputs.ARCH }}"
         echo "CX_CMD=$CX_CMD" >> $GITHUB_ENV
-        /bin/bash -c "$CX_CMD $(curl -fsSL ${GH_URL}/${HB_INST_URL})"
-
-        PKGMGR_PREFIX=$($CX_CMD brew --prefix)
+        PKGMGR_CMD="$CX_CMD brew"
+        PKGMGR_PREFIX=$($PKGMGR_CMD --prefix)
         PKGMGR_CMD="$CX_CMD $PKGMGR_PREFIX/bin/brew"
         echo "PKGMGR_PREFIX=$PKGMGR_PREFIX" >> $GITHUB_ENV
         echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
         echo "Updating homebrew"
         ${PKGMGR_CMD} update
-        ANS_PB="a$CX_CMD ${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
+        ANS_PB="$CX_CMD ${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
         echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
     - name: "Install required support packages"
       id: install_req_packages

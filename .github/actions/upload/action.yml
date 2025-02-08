@@ -40,7 +40,14 @@ runs:
       run: |
         # setup destination folders
         SF_PROJ_PATH="/home/frs/project/m/my/mythtvformacosx"
-        SF_PATH="$SF_PROJ_PATH/v$VERSNUM"
+        case $PKGMGR in
+          macports)
+            SF_PATH="$SF_PROJ_PATH/v$VERSNUM"
+          ;;
+          homebrew)
+            SF_PATH="$SF_PROJ_PATH/test_builds/v$VERSNUM"
+          ;;
+        esac
         case $OS_VERS in
           11*)
             SF_PATH="$SF_PATH/macOS\ 11\ Big\ Sur"
