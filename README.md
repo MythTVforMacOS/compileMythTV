@@ -4,12 +4,12 @@ The use of this script is documented on the mythtv wiki here:
 https://www.mythtv.org/wiki/Building_MythFrontend_on_Mac_OS_X
 
 * **compileMythtvAnsible_cmake.zsh** - A script that compiles and installs all mythtv binaries with the new cmake mechanism introduced in v34 and updated significantly in v35. The script downloads and installs any mythtv/mythplugins dependencies as specified in the mythtv ansible repo via MacPorts.  It also clones the appropriate ansible/mythtv git repos from github, compiles mythtv and optionally mythplugins, bundles the necessary Support libraries and files into the application, and finally generates a .dmg file for distribution.  The scripts default behavior is to build the Mythfrontend.app app bundle, but a run switch is available to install all mythtv binaries (e.g. mythfrontend, mythbackend, mythutil) as unix executables (vs. app bundles) into a user secified path.
-* 
+
 * **compileMythtvAnsible.zsh** - A script that compiles and installs all mythtv binaries. The script downloads and installs any mythtv/mythplugins dependencies as specified in the mythtv ansible repo via MacPorts.  It also clones the appropriate ansible/mythtv/packaging git repos from github, compiles mythtv and optionally mythplugins, bundles the necessary Support libraries and files into the application, and finally generates a .dmg file for distribution.  The scripts default behavior is to build the Mythfrontend.app app bundle, but a run switch is available to install all mythtv binaries (e.g. mythfrontend, mythbackend, mythutil) as unix executables (vs. app bundles) into a user secified path.
-*  ** This script will be depricated after the release of v35 **
+** This script will be depricated after the release of v35 **
 
 * **codesignAndPackage.zsh** - A script that code signs / notarizes the Mythfrontend.app app bungle, generates a dmg file, and code signs. / notarizes the dmg bundle.
-*  ** This script will be depricated after the release of v35 **
+** This script will be depricated after the release of v35 **
 
 Before running the script, the user must have Xcode, Xcode Command Line Tools, and MacPorts or Homebrew working on their system.
 
