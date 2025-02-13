@@ -115,6 +115,3 @@ jobs:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_LEGACY_BRANCH }}
       PKGMGR: macports
     secrets: inherit
-      MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
-      PKGMGR: macports
-    secrets: inherit
