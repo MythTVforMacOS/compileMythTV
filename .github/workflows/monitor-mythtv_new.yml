@@ -1,6 +1,6 @@
-# yamllint disable rule:line-length
 ---
 name: "Monitor and Build MythTV"
+run-name: "monitor"
 
 on:  # yamllint disable-line rule:truthy
   schedule:
@@ -88,24 +88,26 @@ jobs:
             fi
           fi
           echo "UPDATE_FIXES=$UPDATE_FIXES" >> $GITHUB_ENV
-  build-mythtv-master:
-    needs: check-mythtv
-    if: needs.check-mythtv.outputs.UPDATE_MASTER == 'true'
-    uses: ./.github/workflows/build_sign_upload.yml
-    with:
-      USE_CCACHE: true
-      MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
-      PKGMGR: macports
-    secrets: inherit
-  build-mythtv-fixes:
-    needs: check-mythtv
-    if: needs.check-mythtv.outputs.UPDATE_FIXES == 'true'
-    uses: ./.github/workflows/build_sign_upload.yml
-    with:
-      USE_CCACHE: true
-      MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
-      PKGMGR: macports
-    secrets: inherit
+          # check on fixes legacy
+          if [ ! -d "FIXES__LEGACY_CACHE_DIR" ]; then
+            echo "Fixes Legacy: First time run, a new version was released, or cache was deleted"
+            sudo rm -Rf ${GIT_CACHE_DIR/fixes_legacy*}
+            mkdir -p "$FIXES_LEGACY_CACHE_DIR"
+            cd $FIXES_LEGACY_CACHE_DIR
+            git clone -b "$FIXES_LEGACY_BRANCH" https://github.com/MythTV/mythtv.git
+            UPDATE_FIXES_LEGACY="true"
+          else
+            cd "$FIXES_LEGACY_CACHE_DIR/mythtv"
+            FIXES_LEGACY_STATUS=$(git pull)
+            if [[ $FIXES_LEGACY_STATUS == *"Already up to date."* ]]; then
+              echo "fixes legacy was not updated"
+              UPDATE_FIXES_LEGACY=false
+            else
+              echo "fixes legacy was updated"
+              UPDATE_FIXES_LEGACY="true"
+            fi
+          fi
+          echo "UPDATE_FIXES_LEGACY=$UPDATE_FIXES_LEGACY" >> $GITHUB_ENV
   build-mythtv-fixes-legacy:
     needs: check-mythtv
     if: needs.check-mythtv.outputs.UPDATE_FIXES_LEGACY == 'true'
@@ -115,6 +117,21 @@ jobs:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_LEGACY_BRANCH }}
       PKGMGR: macports
     secrets: inherit
+  build-mythtv-fixes-cmake:
+    needs: check-mythtv
+    if: needs.check-mythtv.outputs.UPDATE_FIXES == 'true'
+    uses: ./.github/workflows/build_sign_upload_cmake.yml
+    with:
+      USE_CCACHE: true
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
+      PKGMGR: macports
+    secrets: inherit
+  build-mythtv-master-cmake:
+    needs: check-mythtv
+    if: needs.check-mythtv.outputs.UPDATE_MASTER == 'true'
+    uses: ./.github/workflows/build_sign_upload_cmake.yml
+    with:
+      USE_CCACHE: true
+      MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
       PKGMGR: macports
     secrets: inherit

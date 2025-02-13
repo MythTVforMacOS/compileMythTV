@@ -39,7 +39,7 @@ jobs:
     runs-on: ${{ matrix.os.runner }}
     env:
       APP_OUT_DIR: "output_dir"
-      MASTER_VERS: 35
+      MASTER_VERS: 36
       ARCH: ${{ matrix.os.arch }}
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       USE_CCACHE: ${{ inputs.USE_CCACHE }}

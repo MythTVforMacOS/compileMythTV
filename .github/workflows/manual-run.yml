@@ -10,6 +10,7 @@ on:  # yamllint disable-line rule:truthy
         description: "Choose a MythTV Version"
         options:
           - "master"
+          - "fixes/35"
           - "fixes/34"
       PKGMGR:
         type: choice
