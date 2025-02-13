@@ -26,8 +26,8 @@ jobs:
       FIXES_BRANCH: ${{ env.FIXES_BRANCH }}
       FIXES_VERS_NUM: ${{ env.FIXES_VERS_NUM }}
       UPDATE_FIXES: ${{ env.UPDATE_FIXES }}
-      FIXES_VERS_NUM: ${{ env.FIXES_LEGACY_VERS_NUM }}
-      UPDATE_FIXES: ${{ env.UPDATE_FIXES_LEGACY }}
+      FIXES_LEGACY_VERS_NUM: ${{ env.FIXES_LEGACY_VERS_NUM }}
+      FIXES_LEGACY_BRANCH: ${{ env.FIXES_LEGACY_BRANCH }}
       UPDATE_FIXES_LEGACY: ${{ env.UPDATE_FIXES_LEGACY }}
     steps:
       - uses: actions/checkout@master
@@ -108,15 +108,6 @@ jobs:
             fi
           fi
           echo "UPDATE_FIXES_LEGACY=$UPDATE_FIXES_LEGACY" >> $GITHUB_ENV
-  build-mythtv-fixes-legacy:
-    needs: check-mythtv
-    if: needs.check-mythtv.outputs.UPDATE_FIXES_LEGACY == 'true'
-    uses: ./.github/workflows/build_sign_upload.yml
-    with:
-      USE_CCACHE: true
-      MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_LEGACY_BRANCH }}
-      PKGMGR: macports
-    secrets: inherit
   build-mythtv-fixes-cmake:
     needs: check-mythtv
     if: needs.check-mythtv.outputs.UPDATE_FIXES == 'true'
@@ -133,5 +124,14 @@ jobs:
     with:
       USE_CCACHE: true
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
+      PKGMGR: macports
+    secrets: inherit
+  build-mythtv-fixes-legacy:
+    needs: check-mythtv
+    if: needs.check-mythtv.outputs.UPDATE_FIXES_LEGACY == 'true'
+    uses: ./.github/workflows/build_sign_upload.yml
+    with:
+      USE_CCACHE: true
+      MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_LEGACY_BRANCH }}
       PKGMGR: macports
     secrets: inherit

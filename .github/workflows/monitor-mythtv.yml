@@ -26,8 +26,8 @@ jobs:
       FIXES_BRANCH: ${{ env.FIXES_BRANCH }}
       FIXES_VERS_NUM: ${{ env.FIXES_VERS_NUM }}
       UPDATE_FIXES: ${{ env.UPDATE_FIXES }}
-      FIXES_VERS_NUM: ${{ env.FIXES_LEGACY_VERS_NUM }}
-      UPDATE_FIXES: ${{ env.UPDATE_FIXES_LEGACY }}
+      FIXES_LEGACY_VERS_NUM: ${{ env.FIXES_LEGACY_VERS_NUM }}
+      FIXES_LEGACY_BRANCH: ${{ env.FIXES_LEGACY_BRANCH }}
       UPDATE_FIXES_LEGACY: ${{ env.UPDATE_FIXES_LEGACY }}
     steps:
       - uses: actions/checkout@master
@@ -88,6 +88,26 @@ jobs:
             fi
           fi
           echo "UPDATE_FIXES=$UPDATE_FIXES" >> $GITHUB_ENV
+          # check on fixes legacy
+          if [ ! -d "FIXES__LEGACY_CACHE_DIR" ]; then
+            echo "Fixes Legacy: First time run, a new version was released, or cache was deleted"
+            sudo rm -Rf ${GIT_CACHE_DIR/fixes_legacy*}
+            mkdir -p "$FIXES_LEGACY_CACHE_DIR"
+            cd $FIXES_LEGACY_CACHE_DIR
+            git clone -b "$FIXES_LEGACY_BRANCH" https://github.com/MythTV/mythtv.git
+            UPDATE_FIXES_LEGACY="true"
+          else
+            cd "$FIXES_LEGACY_CACHE_DIR/mythtv"
+            FIXES_LEGACY_STATUS=$(git pull)
+            if [[ $FIXES_LEGACY_STATUS == *"Already up to date."* ]]; then
+              echo "fixes legacy was not updated"
+              UPDATE_FIXES_LEGACY=false
+            else
+              echo "fixes legacy was updated"
+              UPDATE_FIXES_LEGACY="true"
+            fi
+          fi
+          echo "UPDATE_FIXES_LEGACY=$UPDATE_FIXES_LEGACY" >> $GITHUB_ENV
   build-mythtv-master:
     needs: check-mythtv
     if: needs.check-mythtv.outputs.UPDATE_MASTER == 'true'
