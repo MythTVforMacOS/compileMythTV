@@ -5,14 +5,16 @@ inputs:
   BRANCH:
     required: true
     type: string
-  UPDATE_VAR:
-    required: true
-    type: string
+outputs:
+  UPDATED:
+    description: "Git Repo Updated"
+    type: boolean
+    value: ${{ steps.git_check.outputs.random-number }}
 runs:
   using: "composite"
   steps:
     - name: "Setup deployment variables"
-      id: setup_dep_vars
+      id: git_check
       shell: bash
       run: |
         BRANCH=${{ inputs.branch }}
@@ -36,4 +38,4 @@ runs:
             UPDATED="true"
           fi
         fi
-        echo "${{ inputs.UPDATE_VAR }}=$UPDATED" >> $GITHUB_ENV
+        echo "UPDATED=$(echo $UPDATED)" >> $GITHUB_OUTPUT

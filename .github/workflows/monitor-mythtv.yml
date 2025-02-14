@@ -15,18 +15,12 @@ jobs:
     runs-on: 'macos-latest'
     env:
       MASTER_BRANCH: "master"
-      UPDATE_MASTER: false
       FIXES_BRANCH: "fixes/35"
-      UPDATE_FIXES: false
       FIXES_LEGACY_BRANCH: "fixes/34"
-      UPDATE_FIXES_LEGACY: false
     outputs:
       MASTER_BRANCH: ${{ env.MASTER_BRANCH }}
-      UPDATE_MASTER: ${{ env.UPDATE_MASTER }}
       FIXES_BRANCH: ${{ env.FIXES_BRANCH }}
-      UPDATE_FIXES: ${{ env.UPDATE_FIXES }}
       FIXES_LEGACY_BRANCH: ${{ env.FIXES_LEGACY_BRANCH }}
-      UPDATE_FIXES_LEGACY: ${{ env.UPDATE_FIXES_LEGACY }}
     steps:
       - uses: actions/checkout@master
       - name: "Setup environmental variables"
@@ -45,15 +39,14 @@ jobs:
         id: gitcheck_master
         uses: ./.github/actions/git_check
         with:
-          BRANCH: ${{ env.MASTER_BRANCH }}
-          UPDATE_VAR: ${{ env.UPDATE_MASTER }}
-      - name: "Check $$FIXES_LEGACY_BRANCH git repository for updates"
+          BRANCH: ${{ env.MASTER_BRANCH }}R }}
+      - name: "Check ${{ env.FIXES_LEGACY_BRANCH }} git repository for updates"
         id: gitcheck_fixes
         uses: ./.github/actions/git_check
         with:
           BRANCH: ${{ env.FIXES_BRANCH }}
           UPDATE_VAR: ${{ env.UPDATE_FIXES }}
-      - name: "Check $FIXES_LEGACY_BRANCH repository for updates"
+      - name: "Check ${{ env.FIXES_LEGACY_BRANCH }} repository for updates"
         id: gitcheck_fixes_legacy
         uses: ./.github/actions/git_check
         with:
@@ -61,21 +54,21 @@ jobs:
           UPDATE_VAR: ${{ env.UPDATE_FIXES_LEGACY }}
   build-mythtv-fixes-cmake:
     needs: check-mythtv
-    if: needs.check-mythtv.outputs.UPDATE_FIXES == 'true'
+    if: steps.gitcheck_master.outputs.UPDATED == 'true'
     uses: ./.github/workflows/build_sign_upload_cmake.yml
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
     secrets: inherit
   build-mythtv-master-cmake:
     needs: check-mythtv
-    if: needs.check-mythtv.outputs.UPDATE_MASTER == 'true'
+    if: steps.gitcheck_fixes.outputs.UPDATED == 'true'
     uses: ./.github/workflows/build_sign_upload_cmake.yml
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
     secrets: inherit
   build-mythtv-fixes-legacy:
     needs: check-mythtv
-    if: needs.check-mythtv.outputs.UPDATE_FIXES_LEGACY == 'true'
+    if: steps.gitcheck_fixes_legacy.outputs.UPDATED == 'true'
     uses: ./.github/workflows/build_sign_upload.yml
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_LEGACY_BRANCH }}
