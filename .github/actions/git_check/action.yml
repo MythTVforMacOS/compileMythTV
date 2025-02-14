@@ -5,10 +5,13 @@ inputs:
   BRANCH:
     required: true
     type: string
+  GIT_CACHE_DIR:
+    required: true
+    type: string
 outputs:
   UPDATED:
     description: "Git Repo Updated"
-    value: ${{ steps.git_check.outputs.random-number }}
+    value: ${{ steps.git_check.outputs.UPDATED }}
 runs:
   using: "composite"
   steps:
@@ -17,10 +20,10 @@ runs:
       shell: bash
       run: |
         BRANCH=${{ inputs.branch }}
-        CACHE_DIR=$GIT_CACHE_DIR/$BRANCH
+        CACHE_DIR=${{ inputs.GIT_CACHE_DIR }}/$BRANCH
         UPDATED="false"
         # check on for updates
-        if [ ! -d "CACHE_DIR" ]; then
+        if [ ! -d "$CACHE_DIR" ]; then
           echo "Fixes First time run, a new version was released, or cache was deleted"
           sudo rm -Rf "$CACHE_DIR"
           mkdir -p "$CACHE_DIR"

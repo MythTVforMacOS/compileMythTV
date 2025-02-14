@@ -18,8 +18,11 @@ jobs:
       FIXES_LEGACY_BRANCH: "fixes/34"
     outputs:
       MASTER_BRANCH: ${{ env.MASTER_BRANCH }}
+      UPDATE_MASTER: ${{ env.UPDATE_MASTER }}
       FIXES_BRANCH: ${{ env.FIXES_BRANCH }}
+      UPDATE_FIXES: ${{ env.UPDATE_FIXES }}
       FIXES_LEGACY_BRANCH: ${{ env.FIXES_LEGACY_BRANCH }}
+      UPDATE_FIXES_LEGACY: ${{ env.UPDATE_FIXES_LEGACY }}
     steps:
       - uses: actions/checkout@master
       - name: "Setup environmental variables"
@@ -39,24 +42,25 @@ jobs:
         uses: ./.github/actions/git_check
         with:
           BRANCH: ${{ env.MASTER_BRANCH }}
+          GIT_CACHE_DIR: ${{ env.GIT_CACHE_DIR }}
       - name: Check ${{ env.FIXES_BRANCH }} git repository for updates
         id: gitcheck_fixes
         uses: ./.github/actions/git_check
         with:
           BRANCH: ${{ env.FIXES_BRANCH }}
-          UPDATE_VAR: ${{ env.UPDATE_FIXES }}
+          GIT_CACHE_DIR: ${{ env.GIT_CACHE_DIR }}
       - name: Check ${{ env.FIXES_LEGACY_BRANCH }} repository for updates
         id: gitcheck_fixes_legacy
         uses: ./.github/actions/git_check
         with:
           BRANCH: ${{ env.FIXES_LEGACY_BRANCH }}
-          UPDATE_VAR: ${{ env.UPDATE_FIXES_LEGACY }}
+          GIT_CACHE_DIR: ${{ env.GIT_CACHE_DIR }}
       - name: Set Update Outputs
         id: set_update_vars
         run: |
-          echo "UPDATE_MASTER=${{ steps.gitcheck_master.outputs.UPDATED }}" >> $GITHUB_OUTPUT
-          echo "UPDATE_FIXES=${{ steps.gitcheck_fixes.outputs.UPDATED }}" >> $GITHUB_OUTPUT
-          echo "UPDATE_FIXES_LEGACY=${{ steps.gitcheck_fixes_legacy.outputs.UPDATED }}" >> $GITHUB_OUTPUT
+          echo "UPDATE_MASTER=${{ steps.gitcheck_master.outputs.UPDATED }}" >> $GITHUB_ENV
+          echo "UPDATE_FIXES=${{ steps.gitcheck_fixes.outputs.UPDATED }}" >> $GITHUB_ENV
+          echo "UPDATE_FIXES_LEGACY=${{ steps.gitcheck_fixes_legacy.outputs.UPDATED }}" >> $GITHUB_ENV
   build-mythtv-master-cmake:
     needs: check-mythtv
     if: needs.check-mythtv.outputs.UPDATE_MASTER == 'true'
