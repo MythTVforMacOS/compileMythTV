@@ -1,7 +1,6 @@
 # yamllint disable rule:line-length
 ---
 name: "Monitor and Build MythTV"
-run-name: "monitor"
 
 on:  # yamllint disable-line rule:truthy
   schedule:
@@ -39,36 +38,42 @@ jobs:
         id: gitcheck_master
         uses: ./.github/actions/git_check
         with:
-          BRANCH: ${{ env.MASTER_BRANCH }}R }}
-      - name: "Check ${{ env.FIXES_LEGACY_BRANCH }} git repository for updates"
+          BRANCH: ${{ env.MASTER_BRANCH }}
+      - name: Check ${{ env.FIXES_BRANCH }} git repository for updates
         id: gitcheck_fixes
         uses: ./.github/actions/git_check
         with:
           BRANCH: ${{ env.FIXES_BRANCH }}
           UPDATE_VAR: ${{ env.UPDATE_FIXES }}
-      - name: "Check ${{ env.FIXES_LEGACY_BRANCH }} repository for updates"
+      - name: Check ${{ env.FIXES_LEGACY_BRANCH }} repository for updates
         id: gitcheck_fixes_legacy
         uses: ./.github/actions/git_check
         with:
           BRANCH: ${{ env.FIXES_LEGACY_BRANCH }}
           UPDATE_VAR: ${{ env.UPDATE_FIXES_LEGACY }}
-  build-mythtv-fixes-cmake:
-    needs: check-mythtv
-    if: steps.gitcheck_master.outputs.UPDATED == 'true'
-    uses: ./.github/workflows/build_sign_upload_cmake.yml
-    with:
-      MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
-    secrets: inherit
+      - name: Set Update Outputs
+        id: set_update_vars
+        run: |
+          echo "UPDATE_MASTER=${{ steps.gitcheck_master.outputs.UPDATED }}" >> $GITHUB_OUTPUT
+          echo "UPDATE_FIXES=${{ steps.gitcheck_fixes.outputs.UPDATED }}" >> $GITHUB_OUTPUT
+          echo "UPDATE_FIXES_LEGACY=${{ steps.gitcheck_fixes_legacy.outputs.UPDATED }}" >> $GITHUB_OUTPUT
   build-mythtv-master-cmake:
     needs: check-mythtv
-    if: steps.gitcheck_fixes.outputs.UPDATED == 'true'
+    if: needs.check-mythtv.outputs.UPDATE_MASTER == 'true'
     uses: ./.github/workflows/build_sign_upload_cmake.yml
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
     secrets: inherit
+  build-mythtv-fixes-cmake:
+    needs: check-mythtv
+    if: needs.check-mythtv.outputs.UPDATE_FIXES == 'true'
+    uses: ./.github/workflows/build_sign_upload_cmake.yml
+    with:
+      MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
+    secrets: inherit
   build-mythtv-fixes-legacy:
     needs: check-mythtv
-    if: steps.gitcheck_fixes_legacy.outputs.UPDATED == 'true'
+    if: needs.check-mythtv.outputs.UPDATE_FIXES_LEGACY == 'true'
     uses: ./.github/workflows/build_sign_upload.yml
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_LEGACY_BRANCH }}
