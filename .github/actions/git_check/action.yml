@@ -15,7 +15,7 @@ runs:
       id: setup_dep_vars
       shell: bash
       run: |
-        BRANCH=${inputs.branch}
+        BRANCH=${{ inputs.branch }}
         CACHE_DIR=$GIT_CACHE_DIR/$BRANCH
         UPDATED="false"
         # check on for updates
@@ -36,4 +36,4 @@ runs:
             UPDATED="true"
           fi
         fi
-        echo "$UPDATE_VAR=$UPDATED" >> $GITHUB_ENV
+        echo "${{ inputs.UPDATE_VAR }}=$UPDATED" >> $GITHUB_ENV
