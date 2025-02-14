@@ -31,7 +31,7 @@ runs:
           git clone -b "$BRANCH" https://github.com/MythTV/mythtv.git
           UPDATED="true"
         else
-          cd "$CACHE_DIR"
+          cd "$CACHE_DIR/mythtv"
           STATUS=$(git pull)
           if [[ $STATUS == *"Already up to date."* ]]; then
             echo "$BRANCH was not updated"
