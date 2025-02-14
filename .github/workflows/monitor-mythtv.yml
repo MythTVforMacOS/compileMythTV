@@ -43,19 +43,19 @@ jobs:
           restore-keys: mythtv-git-
       - name: "Check master git repository for updates"
         id: gitcheck_master
-        uses: ./.github/workflows/build_sign_upload_cmake.yml
+        uses: ./.github/actions/git_check
         with:
           BRANCH: ${{ env.MASTER_BRANCH }}
           UPDATE_VAR: ${{ env.UPDATE_MASTER }}
       - name: "Check $$FIXES_LEGACY_BRANCH git repository for updates"
         id: gitcheck_fixes
-        uses: ./.github/workflows/build_sign_upload_cmake.yml
+        uses: ./.github/actions/git_check
         with:
           BRANCH: ${{ env.FIXES_BRANCH }}
           UPDATE_VAR: ${{ env.UPDATE_FIXES }}
       - name: "Check $FIXES_LEGACY_BRANCH repository for updates"
         id: gitcheck_fixes_legacy
-        uses: ./.github/workflows/build_sign_upload_cmake.yml
+        uses: ./.github/actions/git_check
         with:
           BRANCH: ${{ env.FIXES_LEGACY_BRANCH }}
           UPDATE_VAR: ${{ env.UPDATE_FIXES_LEGACY }}
