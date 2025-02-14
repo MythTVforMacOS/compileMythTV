@@ -39,7 +39,6 @@ jobs:
     with:
       USE_CCACHE: false
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
-      PKGMGR: ${{ inputs.PKGMGR }}
     secrets: inherit
   build-mythtv-cmake:
     needs: check-inputs

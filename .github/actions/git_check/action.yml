@@ -1,0 +1,39 @@
+# yamllint disable rule:line-length
+---
+name: "Upload to SF"
+inputs:
+  BRANCH:
+    required: true
+    type: string
+  UPDATE_VAR:
+    required: true
+    type: string
+runs:
+  using: "composite"
+  steps:
+    - name: "Setup deployment variables"
+      id: setup_dep_vars
+      shell: bash
+      run: |
+        BRANCH=${inputs.branch}
+        CACHE_DIR=$GIT_CACHE_DIR/$BRANCH
+        UPDATED="false"
+        # check on for updates
+        if [ ! -d "CACHE_DIR" ]; then
+          echo "Fixes First time run, a new version was released, or cache was deleted"
+          sudo rm -Rf "$CACHE_DIR"
+          mkdir -p "$CACHE_DIR"
+          cd "$CACHE_DIR"
+          git clone -b "$BRANCH" https://github.com/MythTV/mythtv.git
+          UPDATED="true"
+        else
+          cd "$CACHE_DIR"
+          STATUS=$(git pull)
+          if [[ $STATUS == *"Already up to date."* ]]; then
+            echo "$BRANCH was not updated"
+          else
+            echo "$BRANCH was updated"
+            UPDATED="true"
+          fi
+        fi
+        echo "$UPDATE_VAR=$UPDATED" >> $GITHUB_ENV

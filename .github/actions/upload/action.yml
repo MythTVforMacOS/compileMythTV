@@ -40,14 +40,7 @@ runs:
       run: |
         # setup destination folders
         SF_PROJ_PATH="/home/frs/project/m/my/mythtvformacosx"
-        case $PKGMGR in
-          macports)
-            SF_PATH="$SF_PROJ_PATH/v$VERSNUM"
-          ;;
-          homebrew)
-            SF_PATH="$SF_PROJ_PATH/test_builds/v$VERSNUM"
-          ;;
-        esac
+        SF_PATH="$SF_PROJ_PATH/v$VERSNUM"
         case $OS_VERS in
           11*)
             SF_PATH="$SF_PATH/macOS\ 11\ Big\ Sur"
@@ -74,10 +67,10 @@ runs:
         echo "Preparing the Upload links"
         case $PKGMGR in
             macports)
-              APPLABEL="MythFrontend-${ARCH}-macOS${OS_VERS}-v${VERSNUM}"
+              APPLABEL="MythFrontend-MP-${ARCH}-macOS${OS_VERS}-v${VERSNUM}"
             ;;
             homebrew)
-              APPLABEL="MythFrontend-HB-${ARCH}-macOS${OS_VERS}-v${VERSNUM}"
+              APPLABEL="MythFrontend-${ARCH}-macOS${OS_VERS}-v${VERSNUM}"
             ;;
         esac
         UL_FILENAME="$APPLABEL-with-plugins.dmg"
