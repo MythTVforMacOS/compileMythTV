@@ -132,10 +132,10 @@ jobs:
           SF_PATH="/home/frs/project/m/my/mythtvformacosx/v$VERSNUM"
           case ${{ inputs.BUILDTYPE }} in
             *test*)
-              SF_PATH="$SF_PATH/v$VERSNUM/macOS $OS_VERS $OS_NAME"
+              SF_PATH="$SF_PATH/test_builds"
             ;;
             *)
-              SF_PATH="$SF_PATH/test_builds"
+              SF_PATH="$SF_PATH/v$VERSNUM/macOS $OS_VERS $OS_NAME"
             ;;
           esac
           UPLDLABEL="MythFrontend-${ARCH}-macOS${OS_VERS}-v${VERSNUM}"

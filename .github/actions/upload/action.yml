@@ -19,7 +19,7 @@ runs:
       shell: bash
       run: |
         UPLOADS=${{ inputs.UPLOADS }}
-        DMGs=${{ inputs.DMGS }
+        DMGs=${{ inputs.DMGS }}
         nDMGS=${#DMGS[@]}
         SCP_CMD="scp -o StrictHostKeyChecking=no"
         for (( ii = 0; $ii < $nDMGS; ii++ )); do
