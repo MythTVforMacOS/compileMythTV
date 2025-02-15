@@ -43,8 +43,8 @@ jobs:
       - name: "Setup environemental variables"
         run: |
           APP_OUT_DIR=$HOME/$APP_OUT_DIR
-          PYVERS="311"
-          PYDOTVERS="3.11"
+          PYVERS="313"
+          PYDOTVERS="3.13"
           echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
           echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
           DBVERS="mysql8"
