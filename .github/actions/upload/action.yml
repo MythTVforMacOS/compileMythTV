@@ -26,14 +26,14 @@ runs:
       run: |
         SCP_CMD="scp -o StrictHostKeyChecking=no"
         echo "SCP_CMD=${SCP_CMD}" >> $GITHUB_ENV
-    - name: "Upload DMGs to SourceForge"
-      id: upload
+    - name: "Upload DMGs with Plugins to SourceForge"
+      id: upload_with
       shell: bash
       run: |
         echo "Uploading DMG with plugins"
         sh -c "${SCP_CMD} \"${{ inputs.DMG_W }}\" \"${{ inputs.DEST_W }}\""
-    - name: "Upload DMGs to SourceForge"
-      id: upload
+    - name: "Upload DMGs without plugins to SourceForge"
+      id: upload_without
       shell: bash
       run: |
         echo "Uploading DMG without plugins"
