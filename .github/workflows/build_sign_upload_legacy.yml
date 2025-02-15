@@ -1,6 +1,6 @@
 # yamllint disable rule:line-length
 ---
-name: "Leagcy Reusable WF: Build Sign and Upload Mythfrontend"
+name: "Reusable WF: Leagcy Build Sign and Upload Mythfrontend"
 
 on:  # yamllint disable-line rule:truthy
   workflow_call:
