@@ -40,8 +40,6 @@ runs:
         ZSH_CMD="arch -${ARCH} /bin/zsh"
         echo "ZSH_CMD=$ZSH_CMD" >> $GITHUB_ENV
         echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
-        CCACHE_STORE=${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}
-        echo "CCACHE_STORE=$CCACHE_STORE" >> $GITHUB_ENV
     - name: "Setup Cross-Compile"
       id: crosscompile
       if: ${{ inputs.CROSS_COMPILE == 'true' }}
@@ -54,10 +52,12 @@ runs:
       id: setup_ccache
       if: ${{ inputs.USE_CCACHE == 'true' }}
       uses: actions/cache@master
+      env:
+        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}-legacy
       with:
         path: ${{ env.CCACHE_DIR }}
-        key: mythtv-ccache-${CCACHE_STORE}-${{ github.sha }}
-        restore-keys: ${CCACHE_STORE}-
+        key: mythtv-ccache-${{ env.CCACHE_STORE }}-${{ github.sha }}
+        restore-keys: ${{ env.CCACHE_STORE}}-
     - name: "Build MythTV with Plugins"
       id: build_with
       shell: bash
@@ -105,6 +105,8 @@ runs:
     - uses: actions/cache/save@master
       id: ccache_save
       if: ${{ steps.build_with.outcome == 'success' && inputs.USE_CCACHE == 'true' }}
+      env:
+        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}-legacy
       with:
         path: ${{ env.CCACHE_DIR }}
-        key: mythtv-ccache-${CCACHE_STORE}-${{ github.sha }}
+        key: mythtv-ccache-${{ env.CCACHE_STORE }}-${{ github.sha }}

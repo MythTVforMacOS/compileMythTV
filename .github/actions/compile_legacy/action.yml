@@ -30,9 +30,6 @@ inputs:
     required: false
     type: boolean
     default: false
-  PKGMGR:
-    require: true
-    type: string
 runs:
   using: "composite"
   steps:
@@ -63,7 +60,7 @@ runs:
       if: ${{ inputs.USE_CCACHE == 'true' }}
       uses: actions/cache@master
       env:
-        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}-${{ inputs.PKGMGR }}
+        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}-legacy
       with:
         path: ${{ env.CCACHE_DIR }}
         key: mythtv-ccache-${{ env.CCACHE_STORE }}-${{ github.sha }}
@@ -104,7 +101,7 @@ runs:
       id: ccache_save
       if: ${{ steps.build_with.outcome == 'success' && inputs.USE_CCACHE == 'true' }}
       env:
-        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}-${{ inputs.PKGMGR }}
+        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}-legacy
       with:
         path: ${{ env.CCACHE_DIR }}
-        key: mythtv-ccache-${{ env.CCACHE_STORE }}-${{ github.sha }}
+        key: mythtv-ccache-${{ env.CCACHE_STORE }}-${{ github.sha }}-legacy
