@@ -1,0 +1,110 @@
+# yamllint disable rule:line-length
+---
+name: "Compile MythTV"
+inputs:
+  APP_OUT_DIR:
+    required: true
+    type: string
+  APP_W:
+    require: true
+    type: string
+  APP_WO:
+    require: true
+    type: string
+  OS:
+    require: true
+    type: string
+  ARCH:
+    require: true
+    type: string
+  CROSS_COMPILE:
+    required: true
+    type: boolean
+  VERSNUM:
+    require: true
+    type: string
+  BLD_FLGS:
+    required: true
+    type: string
+  USE_CCACHE:
+    required: false
+    type: boolean
+    default: false
+  PKGMGR:
+    require: true
+    type: string
+runs:
+  using: "composite"
+  steps:
+    - name: "Setup Build Environment Variable"
+      id: setup_env
+      shell: bash
+      env:
+        APP_OUT_DIR: ${{ inputs.APP_OUT_DIR }}
+        VERSNUM: ${{ inputs.VERSNUM }}
+        CROSS_COMPILE: ${{ inputs.CROSS_COMPILE }}
+      run: |
+        mkdir -p $APP_OUT_DIR/with_plugins
+        mkdir -p $APP_OUT_DIR/without_plugins
+        APP_OUTPUT=$GITHUB_WORKSPACE/mythtv-${VERSNUM}/mythtv/mythtv/programs/mythfrontend/mythfrontend.app
+        echo "APP_OUTPUT=$APP_OUTPUT" >> $GITHUB_ENV
+        echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
+        echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
+
+        # check if we're cross-compiling setting proper build commands
+        if $CROSS_COMPILE; then
+          ZSH_CMD="arch -${ARCH} zsh"
+        else
+          ZSH_CMD="/bin/zsh"
+        fi
+        echo "ZSH_CMD=$ZSH_CMD" >> $GITHUB_ENV
+    - name: Check ccache
+      id: setup_ccache
+      if: ${{ inputs.USE_CCACHE == 'true' }}
+      uses: actions/cache@master
+      env:
+        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}-${{ inputs.PKGMGR }}
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: mythtv-ccache-${{ env.CCACHE_STORE }}-${{ github.sha }}
+        restore-keys: ${{ env.CCACHE_STORE}}-
+    - name: "Build MythTV with Plugins"
+      id: build_with
+      shell: bash
+      env:
+        APP_OUT_DIR: ${{ inputs.APP_OUT_DIR }}
+        APP_W: ${{ inputs.APP_W }}
+        BLD_FLGS: ${{ inputs.BLD_FLGS }}
+      run: |
+        # First build with plugins
+        export CCACHE_DIR=${{ env.CCACHE_DIR }}
+        ${ZSH_CMD} ./compileMythtvAnsible.zsh $BLD_FLGS --build-plugins=true
+        echo "compile complete, copying into $APP_OUT_DIR"
+        ditto "${APP_OUTPUT}" "${APP_W}"
+    - name: "Re-Build MythTV without Plugins"
+      id: build_wo
+      shell: bash
+      env:
+        APP_OUT_DIR: ${{ inputs.APP_OUT_DIR }}
+        APP_W: ${{ inputs.APP_WO }}
+        BLD_FLGS: ${{ inputs.BLD_FLGS }}
+      run: |
+        # Now make it without plugins
+        BLD_FLGS="$BLD_FLGS --skip-build=true --build-plugins=false"
+        ${ZSH_CMD} ./compileMythtvAnsible.zsh $BLD_FLGS
+        echo "compile complete, copying into $APP_OUT_DIR"
+        ditto "${APP_OUTPUT}" "${APP_WO}"
+    - name: "Clean Up Workspace"
+      id: cleanup
+      shell: bash
+      run: |
+        echo "Cleaning up workspace"
+        rm -Rf $GITHUB_WORKSPACE/mythtv-${VERSNUM}
+    - uses: actions/cache/save@master
+      id: ccache_save
+      if: ${{ steps.build_with.outcome == 'success' && inputs.USE_CCACHE == 'true' }}
+      env:
+        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}-${{ inputs.PKGMGR }}
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: mythtv-ccache-${{ env.CCACHE_STORE }}-${{ github.sha }}

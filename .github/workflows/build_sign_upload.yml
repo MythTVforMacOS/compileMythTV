@@ -14,7 +14,7 @@ on:  # yamllint disable-line rule:truthy
         default: true
 jobs:
   build:
-    name: Building MythTV on ${{ matrix.os.desc }}
+    name: Building MythTV on ${{ matrix.os.desc }} using ${{ matrix.compiler.desc }}
     strategy:
       fail-fast: false
       matrix:
@@ -27,10 +27,16 @@ jobs:
             runner: 'macOS-14'
             arch: 'arm64'
             cross_compile: false
+          - desc: 'macOS 15 (Sequoia) arm64'
+            runner: 'macOS-15'
+            arch: 'arm64'
+            cross_compile: false
     runs-on: ${{ matrix.os.runner }}
     env:
-      APP_OUT_DIR: "output_dir"
       MASTER_VERS: 36
+      DBVERS: "mariadb"
+      QTVERS: "qt@6"
+      NOTAR_KEYCHAIN: "notary"
       ARCH: ${{ matrix.os.arch }}
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       USE_CCACHE: ${{ inputs.USE_CCACHE }}
@@ -38,22 +44,22 @@ jobs:
       - uses: actions/checkout@master
       - name: "Setup environemental variables"
         run: |
-          APP_OUT_DIR=$HOME/$APP_OUT_DIR
-          PYVERS="311"
-          PYDOTVERS="3.11"
-          echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
-          echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
-          DBVERS="mysql8"
-          QTVERS="qt5"
-          BLD_FLGS="--repo-prefix=${GITHUB_WORKSPACE} \
+          # create place to store generated DMG files
+          DMG_OUT_DIR="${GITHUB_WORKSPACE}/output_dir"
+          echo "DMG_OUT_DIR=${DMG_OUT_DIR}" >> $GITHUB_ENV
+          mkdir -p $DMG_OUT_DIR
+          # note the code sigining ID needs to be passed in later
+          # as its a secret variable
+          BLD_FLGS="--working_dir=${GITHUB_WORKSPACE} \
             --version=${MYTHBRANCH} \
-            --python-version=${PYVERS} \
-            --database-version=${DBVERS} \
             --qt-version=${QTVERS} \
+            --frontend-bundle=ON \
+            --generate-distribution=true \
+            --signing-id=\"${{ vars.PROD_MACOS_CERTIFICATE_NAME }}\" \
+            --notarization-keychain=${NOTAR_KEYCHAIN} \
             --skip-ansible=true \
             --update-git=false"
-          echo "DBVERS=${DBVERS}" >> $GITHUB_ENV
-          echo "QTVERS=${QTVERS}" >> $GITHUB_ENV
+          echo "BLD_FLGS=${BLD_FLGS}" >> $GITHUB_ENV
           case $MYTHBRANCH in
             *fixes*)
               VERSNUM=${MYTHBRANCH#*/}
@@ -66,82 +72,51 @@ jobs:
               exit 1
             ;;
           esac
-          echo "APP_OUT_DIR=${APP_OUT_DIR}" >> $GITHUB_ENV
-          EXE="mythfrontend.app"
-          echo "APP_W=${APP_OUT_DIR}/with_plugins/$EXE" >> $GITHUB_ENV
-          echo "APP_WO=${APP_OUT_DIR}/without_plugins/$EXE" >> $GITHUB_ENV
-          echo "BLD_FLGS=${BLD_FLGS}" >> $GITHUB_ENV
-          echo "OS_VERS=$(sw_vers -productVersion | awk -F '.' '{print $1}')" >> $GITHUB_ENV
           echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
+          OS_VERS="$(sw_vers -productVersion | awk -F '.' '{print $1}')"
+          echo "OS_VERS=$OS_VERS" >> $GITHUB_ENV
       - name: "Checkout MythTV/ansible repository"
         uses: actions/checkout@v4
         with:
           repository: MythTV/ansible
           path: ansible
-      - name: "Install MacPorts Ports"
-        uses: ./.github/actions/installPorts
-        id: installMP
+      - name: "Install Homebrew Packages"
+        uses: ./.github/actions/installBrewPackages
+        id: installHB
         with:
           ARCH: ${{ matrix.os.arch }}
           CROSS_COMPILE: ${{ matrix.os.cross_compile }}
-          PYVERS: ${{ env.PYVERS }}
-          PYDOTVERS: ${{ env.PYDOTVERS }}
           DBVERS: ${{ env.DBVERS }}
-          QTVERS: ${{env.QTVERS}}
+          QTVERS: ${{ env.QTVERS }}
       - name: Checkout Mythtv/mythtv repository
         uses: actions/checkout@v4
         with:
           repository: MythTV/mythtv
           ref: ${{ env.MYTHBRANCH }}
           path: "mythtv-${{ env.VERSNUM }}/mythtv"
-      - name: "Compile MythTV"
-        uses: ./.github/actions/compile
-        id: compile
+      - name: "Setup Signing Keychain"
+        uses: ./.github/actions/setup_signing
+        id: signing
         with:
-          APP_OUT_DIR: ${{ env.APP_OUT_DIR }}
-          APP_W: ${{ env.APP_W }}
-          APP_WO: ${{ env.APP_WO }}
-          OS: ${{ matrix.os.runner }}
-          ARCH: ${{ matrix.os.arch }}
-          CROSS_COMPILE: ${{ matrix.os.cross_compile }}
-          BLD_FLGS: ${{ env.BLD_FLGS }}
-          VERSNUM: ${{ env.VERSNUM }}
-          USE_CCACHE: ${{ env.USE_CCACHE }}
-          PKGMGR: macports
-      - name: "Test Mythfrontend"
-        id: test_app
-        shell: bash
-        env:
-          ARCH: ${{ matrix.os.arch }}
-        run: |
-          echo "Testing mythfrontend.app"
-          EXE="$APP_W/Contents/MacOS/mythfrontend --version"
-          if ${CROSS_COMPILE}; then
-            EXE="arch -${ARCH} $EXE"
-          fi
-          VERSTR=$($EXE |grep "MythTV Version"|gsed "s/^.*Version : *//")
-          echo "Extracted Version String: $VERSTR"
-          echo "Creating output DMG names"
-          DMG_W="MythFrontend-${ARCH}-$OS_VERS-macOS$VERSTR-with-plugins.dmg"
-          DMG_WO="MythFrontend-${ARCH}-$OS_VERS-macOS$VERSTR.dmg"
-          echo "DMG_W=$DMG_W" >> $GITHUB_ENV
-          echo "DMG_WO=$DMG_WO" >> $GITHUB_ENV
-      - name: "Codesign Mythfrontend"
-        uses: ./.github/actions/codesign
-        id: codesign
-        with:
-          APP_OUT_DIR: ${{ env.APP_OUT_DIR }}
-          APP_W: ${{ env.APP_W }}
-          APP_WO: ${{ env.APP_WO }}
-          DMG_W: ${{ env.DMG_W }}
-          DMG_WO: ${{ env.DMG_WO }}
           CERT: ${{ secrets.PROD_MACOS_CERTIFICATE }}
           CERT_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
-          CERT_NAME: ${{ vars.PROD_MACOS_CERTIFICATE_NAME }}
           CI_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
           APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
           TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
-          NOTA_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
+          NOTAR_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
+          NOTAR_KEYCHAIN: ${{ env.NOTAR_KEYCHAIN }}
+      - name: "Compile, Sign, and Notarize MythTV"
+        uses: ./.github/actions/compile
+        id: compile_sign_notarize
+        with:
+          DMG_OUT_DIR: ${{ env.DMG_OUT_DIR }}
+          OS: ${{ matrix.os.runner }}
+          ARCH: ${{ matrix.os.arch }}
+          CROSS_COMPILE: ${{ matrix.os.cross_compile }}
+          VERSNUM: ${{ env.VERSNUM }}
+          BLD_FLGS: ${{ env.BLD_FLGS }}
+          USE_CCACHE: ${{ env.USE_CCACHE }}
+          CI_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
       - uses: webfactory/ssh-agent@master
         with:
           ssh-private-key: ${{ secrets.SF_PRIV_KEY }}
@@ -154,5 +129,5 @@ jobs:
           VERSNUM: ${{ env.VERSNUM }}
           OS_VERS: ${{ env.OS_VERS }}
           ARCH: ${{ matrix.os.arch }}
-          PKGMGR: macports
+          PKGMGR: homebrew
           SF_LOGIN: ${{ secrets.SF_LOGIN }}

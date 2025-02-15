@@ -64,21 +64,21 @@ jobs:
   build-mythtv-master-cmake:
     needs: check-mythtv
     if: needs.check-mythtv.outputs.UPDATE_MASTER == 'true'
-    uses: ./.github/workflows/build_sign_upload_cmake.yml
+    uses: ./.github/workflows/build_sign_upload.yml
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
     secrets: inherit
   build-mythtv-fixes-cmake:
     needs: check-mythtv
     if: needs.check-mythtv.outputs.UPDATE_FIXES == 'true'
-    uses: ./.github/workflows/build_sign_upload_cmake.yml
+    uses: ./.github/workflows/build_sign_upload.yml
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
     secrets: inherit
   build-mythtv-fixes-legacy:
     needs: check-mythtv
     if: needs.check-mythtv.outputs.UPDATE_FIXES_LEGACY == 'true'
-    uses: ./.github/workflows/build_sign_upload.yml
+    uses: ./.github/workflows/build_sign_upload_legacy.yml
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_LEGACY_BRANCH }}
     secrets: inherit
