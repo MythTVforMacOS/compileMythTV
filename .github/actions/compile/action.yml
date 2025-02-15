@@ -90,7 +90,7 @@ runs:
         VERSTR=$($EXE |grep "MythTV Version"|gsed "s/^.*Version : *//")
         echo "Extracted Version String: $VERSTR"
         echo "VERSTR=$VERSTR" >> $GITHUB_ENV
-    - name: "Prepare for Upload"
+    - name: "Generate Upload Variabls"
       id: upload_prep
       shell: bash
       run: |
@@ -101,8 +101,7 @@ runs:
         # rename the already generated DMG files
         mv mythfrontend_with.dmg $DMG_W
         mv mythfrontend_without.dmg $DMG_WO
-        echo "DMG_W=$DMG_W" >> $GITHUB_ENV
-        echo "DMG_WO=$DMG_WO" >> $GITHUB_ENV
+        echo "DMGS=[$DMG_W, $DMG_WO]" >> $GITHUB_ENV
     - uses: actions/cache/save@master
       id: ccache_save
       if: ${{ steps.build_with.outcome == 'success' && inputs.USE_CCACHE == 'true' }}

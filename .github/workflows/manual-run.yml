@@ -19,6 +19,13 @@ on:  # yamllint disable-line rule:truthy
           - "homebrew"
           - "macports"
 
+      BUILDTYPE:
+        type: choice
+        description: "Choose a build type"
+        options:
+          - "production"
+          - "test"
+
 run-name: "Manual Build: ${{ inputs.mythbranch }} by @${{ github.actor }}
   with ${{ inputs.PKGMGR }}"
 
@@ -39,6 +46,7 @@ jobs:
     with:
       USE_CCACHE: false
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
+      BUILDTYPE: ${{ inputs.BUILDTYPE }}
     secrets: inherit
   build-mythtv-cmake:
     needs: check-inputs
@@ -47,4 +55,5 @@ jobs:
     with:
       USE_CCACHE: false
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
+      BUILDTYPE: ${{ inputs.BUILDTYPE }}
     secrets: inherit

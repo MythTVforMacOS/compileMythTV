@@ -12,6 +12,10 @@ on:  # yamllint disable-line rule:truthy
         required: false
         type: boolean
         default: true
+      BUILDTYE:
+        required: false
+        type: string
+        default: production
 jobs:
   build:
     name: Building MythTV on ${{ matrix.os.desc }} using ${{ matrix.compiler.desc }}
@@ -74,7 +78,9 @@ jobs:
           esac
           echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
           OS_VERS="$(sw_vers -productVersion | awk -F '.' '{print $1}')"
+          OS_NAME="$(awk '/SOFTWARE LICENSE AGREEMENT FOR macOS/' '/System/Library/CoreServices/Setup Assistant.app/Contents/Resources/en.lproj/OSXSoftwareLicense.rtf' | awk -F 'macOS ' '{print $NF}' | awk '{print substr($0, 0, length($0)-1)}')"
           echo "OS_VERS=$OS_VERS" >> $GITHUB_ENV
+          echo "OS_NAME=$OS_NAME" >> $GITHUB_ENV
       - name: "Checkout MythTV/ansible repository"
         uses: actions/checkout@v4
         with:
@@ -117,17 +123,33 @@ jobs:
           BLD_FLGS: ${{ env.BLD_FLGS }}
           USE_CCACHE: ${{ env.USE_CCACHE }}
           CI_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
-      - uses: webfactory/ssh-agent@master
+      - name: "Generate Upload Variables"
+        id: upload_prep
+        shell: bash
+        run: |
+          # setup destination folders
+          echo "Generating Upload Paths"
+          SF_PATH="/home/frs/project/m/my/mythtvformacosx/v$VERSNUM"
+          case $MYTHBRANCH in
+            *test*)
+              SF_PATH="$SF_PATH/v$VERSNUM/macOS $OS_VERS $OS_NAME"
+            ;;
+            *)
+              SF_PATH="$SF_PATH/test_builds"
+            ;;
+          esac
+          UPLDLABEL="MythFrontend-${ARCH}-macOS${OS_VERS}-v${VERSNUM}"
+          DEST_W="${SF_LOGIN}@frs.sourceforge.net:${SF_PATH}/$UPLDLABEL-with-plugins.dmg"
+          DEST_WO="${SF_LOGIN}@frs.sourceforge.net:${SF_PATH}/$UPLDLABEL.dmg"
+          echo "UPLOADS=[$DEST_W, $DEST_WO]" >> $GITHUB_ENV
+      - name: "setup SSH Keys"
+        uses: webfactory/ssh-agent@master
         with:
           ssh-private-key: ${{ secrets.SF_PRIV_KEY }}
       - name: "Upload to SourceForge"
         uses: ./.github/actions/upload
         id: upload
         with:
-          DMG_W: ${{ env.DMG_W }}
-          DMG_WO: ${{ env.DMG_WO }}
-          VERSNUM: ${{ env.VERSNUM }}
-          OS_VERS: ${{ env.OS_VERS }}
-          ARCH: ${{ matrix.os.arch }}
-          PKGMGR: homebrew
+          DMGS: ${{ env.DMGS }}
+          UPLOADS: ${{ env.UPLOADS }}
           SF_LOGIN: ${{ secrets.SF_LOGIN }}

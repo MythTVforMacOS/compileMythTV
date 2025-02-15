@@ -67,6 +67,7 @@ jobs:
     uses: ./.github/workflows/build_sign_upload.yml
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
+      BUILDTYPE: production
     secrets: inherit
   build-mythtv-fixes-cmake:
     needs: check-mythtv
@@ -74,6 +75,7 @@ jobs:
     uses: ./.github/workflows/build_sign_upload.yml
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
+      BUILDTYPE: production
     secrets: inherit
   build-mythtv-fixes-legacy:
     needs: check-mythtv
@@ -81,4 +83,5 @@ jobs:
     uses: ./.github/workflows/build_sign_upload_legacy.yml
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_LEGACY_BRANCH }}
+      BUILDTYPE: production
     secrets: inherit

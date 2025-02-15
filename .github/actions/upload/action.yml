@@ -2,22 +2,10 @@
 ---
 name: "Upload to SF"
 inputs:
-  DMG_W:
+  DMGS:
     required: true
     type: string
-  DMG_WO:
-    required: true
-    type: string
-  VERSNUM:
-    required: true
-    type: string
-  OS_VERS:
-    required: true
-    type: string
-  PKGMGR:
-    required: true
-    type: string
-  ARCH:
+  UPLOADS:
     required: true
     type: string
   SF_LOGIN:
@@ -26,67 +14,18 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: "Setup deployment variables"
-      id: setup_dep_vars
-      shell: bash
-      env:
-        DMG_W: ${{ inputs.DMG_W }}
-        DMG_WO: ${{ inputs.DMG_WO }}
-        VERSNUM: ${{ inputs.VERSNUM }}
-        OS_VERS: ${{ inputs.OS_VERS }}
-        PKGMGR: ${{ inputs.PKGMGR }}
-        ARCH: ${{ inputs.ARCH }}
-        SF_LOGIN: ${{ inputs.SF_LOGIN }}
-      run: |
-        # setup destination folders
-        SF_PROJ_PATH="/home/frs/project/m/my/mythtvformacosx"
-        SF_PATH="$SF_PROJ_PATH/v$VERSNUM"
-        case $OS_VERS in
-          11*)
-            SF_PATH="$SF_PATH/macOS\ 11\ Big\ Sur"
-            ;;
-          12*)
-            SF_PATH="$SF_PATH/macOS\ 12\ Monterey"
-            ;;
-          13*)
-            # Apparently the Ventura builders do not need the escape "\"
-            SF_PATH="$SF_PATH/macOS 13 Ventura"
-            ;;
-          14*)
-            # Apparently the Sonoma builders do not need the escape "\"
-            SF_PATH="$SF_PATH/macOS 14 Sonoma"
-            ;;
-          15*)
-            SF_PATH="$SF_PATH/macOS 15 Sequoia"
-            ;;
-          *)
-            echo "Unsupported macOS Version"
-            exit 2
-            ;;
-        esac
-        echo "Preparing the Upload links"
-        case $PKGMGR in
-            macports)
-              APPLABEL="MythFrontend-MP-${ARCH}-macOS${OS_VERS}-v${VERSNUM}"
-            ;;
-            homebrew)
-              APPLABEL="MythFrontend-${ARCH}-macOS${OS_VERS}-v${VERSNUM}"
-            ;;
-        esac
-        UL_FILENAME="$APPLABEL-with-plugins.dmg"
-        DEST_WITH="${SF_LOGIN}@frs.sourceforge.net:${SF_PATH}/$UL_FILENAME"
-        UL_FILENAME="$APPLABEL.dmg"
-        DEST_WITHOUT="${SF_LOGIN}@frs.sourceforge.net:${SF_PATH}/$UL_FILENAME"
-        echo "DEST_WITH=$DEST_WITH" >> $GITHUB_ENV
-        echo "DEST_WITHOUT=$DEST_WITHOUT" >> $GITHUB_ENV
     - name: "Upload DMGs to SourceForge"
       id: upload
       shell: bash
       run: |
-        echo "Tranmitting the dmg files"
+        UPLOADS=${{ inputs.UPLOADS }}
+        DMGs=${{ inputs.DMGS }
+        nDMGS=${#DMGS[@]}
         SCP_CMD="scp -o StrictHostKeyChecking=no"
-        sh -c "${SCP_CMD} \"${DMG_W}\" \"${DEST_WITH}\""
-        sh -c "${SCP_CMD} \"${DMG_WO}\" \"${DEST_WITHOUT}\""
+        for (( ii = 0; $ii < $nDMGS; ii++ )); do
+          echo "Uploading $"
+          sh -c "${SCP_CMD} \"${DMG[$ii]}\" \"${UPLOADS[$ii]}\""
+        done
     - name: "Clean up ssh keys"
       id: cleanup_ssh
       shell: bash
