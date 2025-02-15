@@ -177,7 +177,6 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SF_PRIV_KEY }}
       - name: "Upload to SourceForge"
-        needs: compile_sign_notarize
         uses: ./.github/actions/upload
         id: upload
         with:
