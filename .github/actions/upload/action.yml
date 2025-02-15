@@ -2,10 +2,16 @@
 ---
 name: "Upload to SF"
 inputs:
-  DMGS:
+  DMG_W:
     required: true
     type: string
-  UPLOADS:
+  DMG_WO:
+    required: true
+    type: string
+  DEST_W:
+    required: true
+    type: string
+  DEST_WO:
     required: true
     type: string
   SF_LOGIN:
@@ -14,18 +20,24 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: "Setup scp command"
+      id: scp_setup
+      shell: bash
+      run: |
+        SCP_CMD="scp -o StrictHostKeyChecking=no"
+        echo "SCP_CMD=${SCP_CMD}" >> $GITHUB_ENV
     - name: "Upload DMGs to SourceForge"
       id: upload
       shell: bash
       run: |
-        UPLOADS=${{ inputs.UPLOADS }}
-        DMGs=${{ inputs.DMGS }}
-        nDMGS=${#DMGS[@]}
-        SCP_CMD="scp -o StrictHostKeyChecking=no"
-        for (( ii = 0; $ii < $nDMGS; ii++ )); do
-          echo "Uploading $"
-          sh -c "${SCP_CMD} \"${DMG[$ii]}\" \"${UPLOADS[$ii]}\""
-        done
+        echo "Uploading DMG with plugins"
+        sh -c "${SCP_CMD} \"${{ inputs.DMG_W }}\" \"${{ inputs.DEST_W }}\""
+    - name: "Upload DMGs to SourceForge"
+      id: upload
+      shell: bash
+      run: |
+        echo "Uploading DMG without plugins"
+        sh -c "${SCP_CMD} \"${{ inputs.DMG_W }}\" \"${{ inputs.DEST_W }}\""
     - name: "Clean up ssh keys"
       id: cleanup_ssh
       shell: bash

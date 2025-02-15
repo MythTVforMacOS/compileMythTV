@@ -141,7 +141,8 @@ jobs:
           UPLDLABEL="MythFrontend-${ARCH}-macOS${OS_VERS}-v${VERSNUM}"
           DEST_W="${SF_LOGIN}@frs.sourceforge.net:${SF_PATH}/$UPLDLABEL-with-plugins.dmg"
           DEST_WO="${SF_LOGIN}@frs.sourceforge.net:${SF_PATH}/$UPLDLABEL.dmg"
-          echo "UPLOADS=[$DEST_W, $DEST_WO]" >> $GITHUB_ENV
+          echo "DEST_W=${DEST_W}" >> $GITHUB_ENV
+          echo "DEST_WO=${DEST_WO}" >> $GITHUB_ENV
       - name: "setup SSH Keys"
         uses: webfactory/ssh-agent@master
         with:
@@ -150,6 +151,8 @@ jobs:
         uses: ./.github/actions/upload
         id: upload
         with:
-          DMGS: ${{ env.DMGS }}
-          UPLOADS: ${{ env.UPLOADS }}
+          DMG_W: ${{ env.DMG_W }}
+          DMG_WO: ${{ env.DMG_WO }}
+          DEST_W: ${{ env.DEST_W }}
+          DEST_WO: ${{ env.DEST_WO }}
           SF_LOGIN: ${{ secrets.SF_LOGIN }}
