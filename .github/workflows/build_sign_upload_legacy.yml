@@ -158,7 +158,7 @@ jobs:
         shell: bash
         run: |
           echo "Generating Upload Paths"
-          SF_PATH="/home/frs/project/m/my/mythtvformacosx/v$VERSNUM"
+          SF_PATH="/home/frs/project/m/my/mythtvformacosx"
           case ${{ inputs.BUILDTYPE }} in
             *test*)
               SF_PATH="$SF_PATH/test_builds"
@@ -169,7 +169,7 @@ jobs:
           esac
           UPLDLABEL="MythFrontend-${ARCH}-macOS${OS_VERS}-v${VERSNUM}"
           DEST_W="frs.sourceforge.net:${SF_PATH}/$UPLDLABEL-with-plugins.dmg"
-          DEST_WO=frs.sourceforge.net:${SF_PATH}/$UPLDLABEL.dmg"
+          DEST_WO="frs.sourceforge.net:${SF_PATH}/$UPLDLABEL.dmg"
           echo "DEST_W=${DEST_W}" >> $GITHUB_ENV
           echo "DEST_WO=${DEST_WO}" >> $GITHUB_ENV
       - name: "Upload to SourceForge"
