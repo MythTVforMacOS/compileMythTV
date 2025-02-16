@@ -38,13 +38,13 @@ runs:
       shell: bash
       run: |
         echo "Uploading DMG with plugins"
-        sh -c "${SCP_CMD} \"${{ inputs.DMG_W }}\" \"${{ inputs.DEST_W }}\""
+        sh -c "${SCP_CMD} \"${{ inputs.DMG_W }}\" \"${{ inputs.SF_LOGIN }}@${{ inputs.DEST_W }}\""
     - name: "Upload DMGs without plugins to SourceForge"
       id: upload_without
       shell: bash
       run: |
         echo "Uploading DMG without plugins"
-        sh -c "${SCP_CMD} \"${{ inputs.DMG_W }}\" \"${{ inputs.DEST_W }}\""
+        sh -c "${SCP_CMD} \"${{ inputs.DMG_WO }}\" \"${{ inputs.SF_LOGIN }}@${{ inputs.DEST_WO }}\""
     - name: "Clean up ssh keys"
       id: cleanup_ssh
       shell: bash

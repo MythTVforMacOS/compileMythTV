@@ -168,8 +168,8 @@ jobs:
             ;;
           esac
           UPLDLABEL="MythFrontend-${ARCH}-macOS${OS_VERS}-v${VERSNUM}"
-          DEST_W="${SF_LOGIN}@frs.sourceforge.net:${SF_PATH}/$UPLDLABEL-with-plugins.dmg"
-          DEST_WO="${SF_LOGIN}@frs.sourceforge.net:${SF_PATH}/$UPLDLABEL.dmg"
+          DEST_W="frs.sourceforge.net:${SF_PATH}/$UPLDLABEL-with-plugins.dmg"
+          DEST_WO=frs.sourceforge.net:${SF_PATH}/$UPLDLABEL.dmg"
           echo "DEST_W=${DEST_W}" >> $GITHUB_ENV
           echo "DEST_WO=${DEST_WO}" >> $GITHUB_ENV
       - name: "Upload to SourceForge"
