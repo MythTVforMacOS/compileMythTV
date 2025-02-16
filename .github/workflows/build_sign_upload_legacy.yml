@@ -172,14 +172,11 @@ jobs:
           DEST_WO="${SF_LOGIN}@frs.sourceforge.net:${SF_PATH}/$UPLDLABEL.dmg"
           echo "DEST_W=${DEST_W}" >> $GITHUB_ENV
           echo "DEST_WO=${DEST_WO}" >> $GITHUB_ENV
-      - name: "setup SSH Keys"
-        uses: webfactory/ssh-agent@master
-        with:
-          ssh-private-key: ${{ secrets.SF_PRIV_KEY }}
       - name: "Upload to SourceForge"
         uses: ./.github/actions/upload
         id: upload
         with:
+          SF_PRIV_KEY: ${{ secrets.SF_PRIV_KEY }}
           DMG_W: ${{ env.DMG_W }}
           DMG_WO: ${{ env.DMG_WO }}
           DEST_W: ${{ env.DEST_W }}

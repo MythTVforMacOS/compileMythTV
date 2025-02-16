@@ -2,6 +2,9 @@
 ---
 name: "Upload to SF"
 inputs:
+  SF_PRIV_KEY:
+    required: true
+    type: string
   DMG_W:
     required: true
     type: string
@@ -20,6 +23,10 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: "setup SSH Keys"
+      uses: webfactory/ssh-agent@master
+      with:
+        ssh-private-key: ${{ inputs.SF_PRIV_KEY }}
     - name: "Setup scp command"
       id: scp_setup
       shell: bash
