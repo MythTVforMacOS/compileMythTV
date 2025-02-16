@@ -129,7 +129,7 @@ jobs:
         run: |
           # setup destination folders
           echo "Generating Upload Paths"
-          SF_PATH="/home/frs/project/m/my/mythtvformacosx/v$VERSNUM"
+          SF_PATH="/home/frs/project/m/my/mythtvformacosx"
           case ${{ inputs.BUILDTYPE }} in
             *test*)
               SF_PATH="$SF_PATH/test_builds"
