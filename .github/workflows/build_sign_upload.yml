@@ -39,7 +39,7 @@ jobs:
     env:
       MASTER_VERS: 36
       DBVERS: "mariadb"
-      QTVERS: "qt@6"
+      QTVERS: "qt@5"
       NOTAR_KEYCHAIN: "notary"
       ARCH: ${{ matrix.os.arch }}
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
