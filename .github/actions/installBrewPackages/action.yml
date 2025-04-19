@@ -22,6 +22,7 @@ runs:
       shell: bash
       run: |
         echo "Removing all previously install formula"
+        brew unlink qt
         brew remove --cask --force $(brew list)
         brew remove --force $(brew list --formula)
         PKGMGR_PREFIX=$(brew --prefix)
@@ -85,6 +86,8 @@ runs:
         esac
         echo "Running ansible"
         ${ANS_PB} mythtv.yml --extra-vars="$XTRA_VARS" --limit=localhost
+        brew unlink qt
+        brew link qt
     - name: Fix the HDHomeRun library on ARM64
       shell: bash
       run: ln -s $PKGMGR_PREFIX/opt/libhdhomerun/lib/libhdhomerun.dylib $PKGMGR_PREFIX/opt/libhdhomerun/lib/libhdhomerun_arm64.dylib
