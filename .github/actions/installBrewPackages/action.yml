@@ -22,7 +22,6 @@ runs:
       shell: bash
       run: |
         echo "Removing all previously install formula"
-        brew unlink qt
         brew remove --cask --force $(brew list)
         brew remove --force $(brew list --formula)
         PKGMGR_PREFIX=$(brew --prefix)
