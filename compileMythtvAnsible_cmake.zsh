@@ -9,7 +9,7 @@ Standard Options:
   --help                                  Print this help message
   --version=MYTHTV_VERS                   Requested mythtv git repo (${1})
                                             Example: master for the latest master
-                                                     fixes/34 for version 34
+                                                     fixes/35 for version 35
   --build-plugins=BUILD_PLUGINS           Build MythTV Plugins (false)
 Environmental Options:
   --database-version=DATABASE_VERS        Requested version of mariadb/mysql to build agains (${3})
