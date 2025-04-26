@@ -348,7 +348,6 @@ else
     INSTALL_DIR=$PKGMGR_INST_PATH
   fi
 fi
-
 RUNPREFIX=$INSTALL_DIR
 echoC "    Installing Build Outputs to $INSTALL_DIR" BLUE
 
@@ -540,6 +539,7 @@ configureAndBuild(){
                     -B $CMAKE_BUILD_DIR                   \
                     -G Ninja                              \
                     -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR   \
+                    -DCMAKE_RUN_PREFIX=$RUNPREFIX         \
                     $EXTRA_CMAKE_FLAGS"
   eval "${CONFIG_CMD}"
   echoC "------------ Building MythTV ------------" GREEN
