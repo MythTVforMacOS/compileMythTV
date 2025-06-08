@@ -379,7 +379,12 @@ case $PKGMGR in
 esac
 
 ### Configure and Build Functions ##################################################################
+# check to see if the working directory exists, if not create it
+if [ ! -d $WORKING_DIR ]; then
+  mkdir -p $WORKING_DIR
+fi
 runAnsible(){
+  cd $WORKING_DIR
   if $SKIP_ANSIBLE; then
     echoC "    User requested skip of ansible package installation" ORANGE
     return 0
