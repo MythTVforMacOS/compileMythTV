@@ -84,7 +84,7 @@ runs:
           ;;
         esac
         echo "Running ansible"
-        ${ANS_PB} mythtv.yml --extra-vars="$XTRA_VARS" --limit=localhost
+        ANSIBLE_BECOME=false ANSIBLE_BECOME_ASK_PASS=False ${ANS_PB} mythtv.yml --extra-vars="$XTRA_VARS" --limit=localhost
         brew unlink qt
         brew link qt
     - name: Fix the HDHomeRun library on ARM64
