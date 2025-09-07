@@ -115,6 +115,6 @@ runs:
         echo "Cleaning up macports builds"
         # force ownership for the users ansible / mythtv temp directories
         sudo chown $(id -u):$(id -g) ~/.ansible
-        sudo chown $(id -u):$(id -g) ~/.mythtv
+        sudo chown $(id -u):$(id -g) ~/.virtualenvs
         sudo rm -rf ${PKGMGR_PREFIX}/var/macports/build/*
         sudo rm -rf ${PKGMGR_PREFIX}/var/macports/distfiles/*

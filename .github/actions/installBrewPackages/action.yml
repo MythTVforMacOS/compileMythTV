@@ -102,4 +102,4 @@ runs:
         echo "Cleaning up homebrew builds"
         # force ownership for the users ansible / mythtv temp directories
         sudo chown $(id -u):$(id -g) ~/.ansible
-        sudo chown $(id -u):$(id -g) ~/.mythtv
+        sudo chown $(id -u):$(id -g) ~/.virtualenvs
