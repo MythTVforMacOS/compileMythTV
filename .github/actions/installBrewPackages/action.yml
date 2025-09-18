@@ -21,15 +21,17 @@ runs:
       id: nuke_brew_native
       shell: bash
       run: |
-        echo "Removing all previously install formula"
-        brew remove --cask --force $(brew list)
-        brew remove --force $(brew list --formula)
         PKGMGR_PREFIX=$(brew --prefix)
         PKGMGR_CMD="$PKGMGR_PREFIX/bin/brew"
+        if [ ${{ env.OS_VERS }} != 13 ]; then
+          echo "Removing all previously install formula"
+          brew remove --cask --force $(brew list)
+          brew remove --force $(brew list --formula)
+          echo "Updating homebrew"
+          ${PKGMGR_CMD} update
+        fi
         echo "PKGMGR_PREFIX=$PKGMGR_PREFIX" >> $GITHUB_ENV
         echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
-        echo "Updating homebrew"
-        ${PKGMGR_CMD} update
         ANS_PB="${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
         echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
     - name: "Corss-Compile: Remove and reinstall homebrew install"
