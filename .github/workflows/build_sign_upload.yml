@@ -26,6 +26,7 @@ on:  # yamllint disable-line rule:truthy
         default: homebrew
 jobs:
   init:
+    name: Initialize Run Matrix
     runs-on: macOS-latest
     env:
       ARM64_RUNNERS: 'macOS-14,macOS-15'
@@ -123,6 +124,7 @@ jobs:
           case $OS_VERS in
             14)
               OS_NAME="Sonoma"
+            ;;
             15)
               OS_NAME="Sequoia"
             ;;
