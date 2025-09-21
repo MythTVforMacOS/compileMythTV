@@ -62,7 +62,7 @@ jobs:
       MASTER_VERS: 36
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       USE_CCACHE: ${{ inputs.USE_CCACHE }}
-      steps:
+    steps:
       - name: "Check Architecture"
         id: check_arch
         run: |
