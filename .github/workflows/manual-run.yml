@@ -62,6 +62,6 @@ jobs:
     with:
       USE_CCACHE: false
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
-      BUILDTYPE: ${{ inputs.BUILDTYPE }}A
+      BUILDTYPE: ${{ inputs.BUILDTYPE }}
       ARCHITECTURE: ${{ inputs.ARCHITECTURE }}
     secrets: inherit

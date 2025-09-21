@@ -21,47 +21,69 @@ on:  # yamllint disable-line rule:truthy
         type: string
         default: arm64
 jobs:
+  init:
+    runs-on: macOS-latest
+    env:
+      ARM64_RUNNERS: 'macOS-14,macOS-15,macOS-26'
+      X86_64_RUNNERS: 'macOS-14-large,macOS-15-large'
+    outputs:
+      RUNNER: ${{ steps.generate-matrix.outputs.RUNNER }}
+    steps:
+      - name: generate-matrix
+        id: generate-matrix
+        run: |
+          arch=""
+          cross_compile=""
+          if [ "${{ inputs.ARCHITECTURE }}" == "all" ]; then
+            echo "Adding all runners."
+            RUNNER=${{ env.ARM64_RUNNERS }},${{ env.X86_64_RUNNERS }}
+          elif [ "${{ inputs.ARCHITECTURE }}" == "arm64" ]; then
+            echo "Adding arm64 runners."
+            RUNNER=${{ env.ARM64_RUNNERS }}
+          elif [ "${{ inputs.ARCHITECTURE }}" == "x86_64" ]; then
+            echo "Adding x86_64 runners."
+            RUNNER=${{ env.X86_64_RUNNERS }}
+          fi
+          echo pre-split $RUNNER
+          JSON_MATRIX=$(jq --null-input --arg str "$RUNNER" '$str | split(",")')
+          echo JSON_MATRIX-$JSON_MATRIX
+          #echo "RUNNER=$JSON_MATRIX" >> '$GITHUB_OUTPUT'
+          echo "RUNNER=$(jq -cr '@json' <<< "$JSON_MATRIX")" >> $GITHUB_OUTPUT
   build:
-    name: Building MythTV on ${{ matrix.os.desc }} using ${{ matrix.compiler.desc }}
+    needs: init
+    name: Building MythTV on ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - desc: 'macOS 14 (Sonoma) arm64'
-            runner: 'macOS-14'
-            arch: 'arm64'
-            cross_compile: false
-          - desc: 'macOS 14 (Sonoma) x86_64'
-            runner: 'macOS-14-large'
-            arch: 'x86_64'
-            cross_compile: false
-          - desc: 'macOS 15 (Sequoia) arm64'
-            runner: 'macOS-15'
-            arch: 'arm64'
-            cross_compile: false
-          - desc: 'macOS 15 (Sequoia) x86_64'
-            runner: 'macOS-15-large'
-            arch: 'x86_64'
-            cross_compile: false
-          - desc: 'macOS 26 (Tahoe) arm64'
-            runner: 'macOS-26'
-            arch: 'arm64'
-            cross_compile: false
-        exclude:
-          - os.arch: 'arm64'
-            if: ${{ inputs.ARCHITECTURE == 'arm64' }}
-          - os.arch: 'x86_64'
-            if: ${{ inputs.ARCHITECTURE == 'x86_64' }}
-    runs-on: ${{ matrix.os.runner }}
+        os: ${{ fromJson(needs.init.outputs.RUNNER) }}
+    runs-on: ${{ matrix.os }}
     env:
       MASTER_VERS: 36
       DBVERS: "mariadb"
       QTVERS: "qt@6"
       NOTAR_KEYCHAIN: "notary"
-      ARCH: ${{ matrix.os.arch }}
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       USE_CCACHE: ${{ inputs.USE_CCACHE }}
     steps:
+      - name: "Check Architecture"
+        id: check_arch
+        run: |
+          case ${{ matrix.os }} in
+            'macOS-14'|'macOS-15'|'macOS-26')
+              ARCH='arm64'
+              OS=${{ matrix.os }}
+            ;;
+            'macOS-14-large'|'macOS-15-large')
+              ARCH='x86_64'
+              OS=${${{ matrix.os }}%"-large"}
+            ;;
+            *)
+              echo "Architecture detection failure"
+              exit 1
+            ;;
+          esac
+          echo "ARCH=${ARCH}" >> $GITHUB_ENV
+          echo "OS=${OS}" >> $GITHUB_ENV
       - uses: actions/checkout@master
       - name: "Setup environemental variables"
         run: |
@@ -107,8 +129,8 @@ jobs:
         uses: ./.github/actions/installBrewPackages
         id: installHB
         with:
-          ARCH: ${{ matrix.os.arch }}
-          CROSS_COMPILE: ${{ matrix.os.cross_compile }}
+          ARCH: ${{ env.ARCH }}
+          CROSS_COMPILE: false
           DBVERS: ${{ env.DBVERS }}
           QTVERS: ${{ env.QTVERS }}
       - name: Checkout Mythtv/mythtv repository
@@ -133,9 +155,9 @@ jobs:
         id: compile_sign_notarize
         with:
           DMG_OUT_DIR: ${{ env.DMG_OUT_DIR }}
-          OS: ${{ matrix.os.runner }}
-          ARCH: ${{ matrix.os.arch }}
-          CROSS_COMPILE: ${{ matrix.os.cross_compile }}
+          OS: ${{ env.OS }}
+          ARCH: ${{ env.ARCH }}
+          CROSS_COMPILE: false
           VERSNUM: ${{ env.VERSNUM }}
           BLD_FLGS: ${{ env.BLD_FLGS }}
           USE_CCACHE: ${{ env.USE_CCACHE }}
