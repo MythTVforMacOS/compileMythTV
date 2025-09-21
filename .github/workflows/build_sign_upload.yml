@@ -16,6 +16,10 @@ on:  # yamllint disable-line rule:truthy
         required: false
         type: string
         default: production
+      ARCHITECTURE:
+        required: false
+        type: string
+        default: arm64
 jobs:
   build:
     name: Building MythTV on ${{ matrix.os.desc }} using ${{ matrix.compiler.desc }}
@@ -27,10 +31,27 @@ jobs:
             runner: 'macOS-14'
             arch: 'arm64'
             cross_compile: false
+          - desc: 'macOS 14 (Sonoma) x86_64'
+            runner: 'macOS-14-large'
+            arch: 'x86_64'
+            cross_compile: false
           - desc: 'macOS 15 (Sequoia) arm64'
             runner: 'macOS-15'
             arch: 'arm64'
             cross_compile: false
+          - desc: 'macOS 15 (Sequoia) x86_64'
+            runner: 'macOS-15-large'
+            arch: 'x86_64'
+            cross_compile: false
+          - desc: 'macOS 26 (Tahoe) arm64'
+            runner: 'macOS-26'
+            arch: 'arm64'
+            cross_compile: false
+        exclude:
+          - if: ${{ inputs.ARCHITECTURE == 'x86_64' }}
+            arch: 'arm64'
+          - if: ${{ inputs.ARCHITECTURE == 'arm64' }}
+            arch: 'x86_64'
     runs-on: ${{ matrix.os.runner }}
     env:
       MASTER_VERS: 36

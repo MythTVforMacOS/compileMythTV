@@ -18,7 +18,13 @@ on:  # yamllint disable-line rule:truthy
         options:
           - "homebrew"
           - "macports"
-
+      ARCHITECTURE:
+        type: choice
+        description: "Choose an architecture"
+        options:
+          - "all"
+          - "arm64"
+          - "x86_64"
       BUILDTYPE:
         type: choice
         description: "Choose a build type"
@@ -47,6 +53,7 @@ jobs:
       USE_CCACHE: false
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       BUILDTYPE: ${{ inputs.BUILDTYPE }}
+      ARCHITECTURE: ${{ inputs.ARCHITECTURE }}
     secrets: inherit
   build-mythtv-cmake:
     needs: check-inputs
@@ -55,5 +62,6 @@ jobs:
     with:
       USE_CCACHE: false
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
-      BUILDTYPE: ${{ inputs.BUILDTYPE }}
+      BUILDTYPE: ${{ inputs.BUILDTYPE }}A
+      ARCHITECTURE: ${{ inputs.ARCHITECTURE }}
     secrets: inherit

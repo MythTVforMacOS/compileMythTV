@@ -5,6 +5,7 @@ name: "Monitor and Build MythTV"
 on:  # yamllint disable-line rule:truthy
   schedule:
     - cron: '0 0 * * 0'
+    - cron: '0 0 1 * *'
   workflow_dispatch:  # workflow_dispatch allows this to be triggered manually
     inputs:
       text_to_print:
@@ -23,8 +24,15 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: "Setup environmental variables"
+        id: set-env-vars
         run: |
           echo "GIT_CACHE_DIR=$HOME/mythtv" >> $GITHUB_ENV
+          echo "DAY_OF_MONTH=$(date +'%d')" >> $GITHUB_ENV
+          if [ $DAY_OF_MONTH==1 ]; then
+            echo "ARCHITECTURE=all" >> $GITHUB_OUTPUT
+          else
+            echo "ARCHITECTURE=arm64" >> $GITHUB_OUTPUT
+          fi
       - name: "Setup Mythtv Repo Cache"
         id: cache
         env:
@@ -58,6 +66,7 @@ jobs:
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
       BUILDTYPE: production
+      ARCHITECTURE: ${{ needs.set-env-vars.outputs.ARCHITECTURE }}
     secrets: inherit
   build-mythtv-fixes-cmake:
     needs: check-mythtv
@@ -66,4 +75,5 @@ jobs:
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
       BUILDTYPE: production
+      ARCHITECTURE: ${{ needs.set-env-vars.outputs.ARCHITECTURE }}
     secrets: inherit
