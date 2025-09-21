@@ -22,9 +22,9 @@ on:  # yamllint disable-line rule:truthy
         type: choice
         description: "Choose an architecture"
         options:
-          - "all"
           - "arm64"
           - "x86_64"
+          - "all"
       BUILDTYPE:
         type: choice
         description: "Choose a build type"
