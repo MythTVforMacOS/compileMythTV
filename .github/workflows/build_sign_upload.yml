@@ -24,8 +24,10 @@ jobs:
   init:
     runs-on: macOS-latest
     env:
-      ARM64_RUNNERS: 'macOS-14,macOS-15,macOS-26'
-      X86_64_RUNNERS: 'macOS-14-large,macOS-15-large'
+      ARM64_RUNNERS: 'macOS-14,macOS-15'
+      #ARM64_RUNNERS: 'macOS-14,macOS-15,macOS-26'
+      X86_64_RUNNERS: 'macOS-14-large'
+      #X86_64_RUNNERS: 'macOS-14-large,macOS-15-large'
     outputs:
       RUNNER: ${{ steps.generate-matrix.outputs.RUNNER }}
     steps:
@@ -117,7 +119,19 @@ jobs:
           esac
           echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
           OS_VERS="$(sw_vers -productVersion | awk -F '.' '{print $1}')"
-          OS_NAME="$(awk '/SOFTWARE LICENSE AGREEMENT FOR macOS/' '/System/Library/CoreServices/Setup Assistant.app/Contents/Resources/en.lproj/OSXSoftwareLicense.rtf' | awk -F 'macOS ' '{print $NF}' | awk '{print substr($0, 0, length($0)-1)}')"
+          case $OS_VERS in
+            14)
+              OS_NAME="Sonoma"
+            15)
+              OS_NAME="Sequoia"
+            ;;
+            24)
+              OS_NAME="Tahoe"
+            ;;
+            *)
+              OS_NAME="$(awk '/SOFTWARE LICENSE AGREEMENT FOR macOS/' '/System/Library/CoreServices/Setup Assistant.app/Contents/Resources/en.lproj/OSXSoftwareLicense.rtf' | awk -F 'macOS ' '{print $NF}' | awk '{print substr($0, 0, length($0)-1)}')"
+            ;;
+          esac
           echo "OS_VERS=$OS_VERS" >> $GITHUB_ENV
           echo "OS_NAME=$OS_NAME" >> $GITHUB_ENV
       - name: "Checkout MythTV/ansible repository"
