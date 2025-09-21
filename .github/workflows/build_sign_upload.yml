@@ -31,7 +31,7 @@ jobs:
     env:
       ARM64_RUNNERS: 'macOS-14,macOS-15'
       #ARM64_RUNNERS: 'macOS-14,macOS-15,macOS-26'
-      X86_64_RUNNERS: 'macOS-14-large'
+      X86_64_RUNNERS: 'macOS-13,macOS-14-large'
       #X86_64_RUNNERS: 'macOS-14-large,macOS-15-large'
     outputs:
       RUNNER: ${{ steps.generate-matrix.outputs.RUNNER }}
@@ -122,6 +122,9 @@ jobs:
           echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
           OS_VERS="$(sw_vers -productVersion | awk -F '.' '{print $1}')"
           case $OS_VERS in
+            13)
+              OS_NAME="Ventura"
+            ;;
             14)
               OS_NAME="Sonoma"
             ;;
