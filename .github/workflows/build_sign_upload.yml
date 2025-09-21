@@ -48,10 +48,10 @@ jobs:
             arch: 'arm64'
             cross_compile: false
         exclude:
-          - if: ${{ inputs.ARCHITECTURE == 'x86_64' }}
-            arch: 'arm64'
-          - if: ${{ inputs.ARCHITECTURE == 'arm64' }}
-            arch: 'x86_64'
+          - os.arch: 'arm64'
+            if: ${{ inputs.ARCHITECTURE == 'arm64' }}
+          - os.arch: 'x86_64'
+            if: ${{ inputs.ARCHITECTURE == 'x86_64' }}
     runs-on: ${{ matrix.os.runner }}
     env:
       MASTER_VERS: 36
