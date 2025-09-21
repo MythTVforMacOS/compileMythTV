@@ -45,23 +45,23 @@ jobs:
         run: |
           outputSTR="Building MyhtvTV Branch $mythbranch"
           echo $outputSTR
-  build-mythtv:
-    needs: check-inputs
-    if: inputs.PKGMGR == 'macports'
-    uses: ./.github/workflows/build_sign_upload_legacy.yml
-    with:
-      USE_CCACHE: false
-      MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
-      BUILDTYPE: ${{ inputs.BUILDTYPE }}
-      ARCHITECTURE: ${{ inputs.ARCHITECTURE }}
-    secrets: inherit
+  #build-mythtv:
+  #  needs: check-inputs
+  #  if: inputs.PKGMGR == 'macports'
+  #  uses: ./.github/workflows/build_sign_upload_legacy.yml
+  #  with:
+  #    USE_CCACHE: false
+  #    MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
+  #    BUILDTYPE: ${{ inputs.BUILDTYPE }}
+  #    ARCHITECTURE: ${{ inputs.ARCHITECTURE }}
+  #  secrets: inherit
   build-mythtv-cmake:
     needs: check-inputs
-    if: inputs.PKGMGR == 'homebrew'
     uses: ./.github/workflows/build_sign_upload.yml
     with:
       USE_CCACHE: false
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       BUILDTYPE: ${{ inputs.BUILDTYPE }}
       ARCHITECTURE: ${{ inputs.ARCHITECTURE }}
+      PKGMGR: ${{ inputs.PKGMGR }}
     secrets: inherit

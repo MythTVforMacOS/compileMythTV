@@ -90,7 +90,9 @@ runs:
         VERSTR=$($EXE |grep "MythTV Version"|gsed "s/^.*Version : *//")
         echo "Extracted Version String: $VERSTR"
         echo "VERSTR=$VERSTR" >> $GITHUB_ENV
-    - name: "Generate Upload Variabls"
+        cd ${GITHUB_WORKSPACE}/mythtv
+        cmake --build build-qt6 -t MythTV-tests'
+    - name: "Generate Upload Variables"
       id: upload_prep
       shell: bash
       run: |

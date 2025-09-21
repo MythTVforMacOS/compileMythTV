@@ -17,9 +17,6 @@ inputs:
   DBVERS:
     required: true
     type: string
-  QTVERS:
-    required: true
-    type: string
 runs:
   using: "composite"
   steps:
@@ -105,8 +102,7 @@ runs:
         export MYSQLCLIENT_LDFLAGS=$(pkg-config --libs mysqlclient)
         export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags mysqlclient)
         XTRA_VARS="ansible_python_interpreter=${PKGMGR_BIN}/python${PYDOTVERS} \
-          database_version=${DBVERS} \
-          install_qtwebkit=true"
+          database_version=${DBVERS}
         ${ANS_PB} mythtv.yml --extra-vars="$XTRA_VARS" --limit=localhost
     - name: "Cleanup maports install"
       id: port_cleanup
