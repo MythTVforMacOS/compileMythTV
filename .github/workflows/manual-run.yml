@@ -5,6 +5,9 @@ name: "Manual build"
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
     inputs:
+      USE_PAID_RUNNERS:
+        type: boolean
+        description: "Use paid runners"
       MYTHBRANCH:
         type: choice
         description: "Choose a MythTV Version"
@@ -21,15 +24,19 @@ on:  # yamllint disable-line rule:truthy
       BUILD_13:
         type: boolean
         description: "Build for macOS 13"
+        default: false
       BUILD_14:
         type: boolean
         description: "Build for macOS 14"
+        default: true
       BUILD_15:
         type: boolean
         description: "Build for macOS 15"
+        default: true
       BUILD_26:
         type: boolean
         description: "Build for macOS 26"
+        default: false
       ARCHITECTURE:
         type: choice
         description: "Choose an architecture"
@@ -43,9 +50,6 @@ on:  # yamllint disable-line rule:truthy
         options:
           - "production"
           - "test"
-      USE_PAID_RUNNERS:
-        type: boolean
-        description: "Use paid runners"
 
 
 run-name: "Manual Build: ${{ inputs.mythbranch }} by @${{ github.actor }}
@@ -84,5 +88,5 @@ jobs:
       BUILD_26: ${{ inputs.BUILD_26 }}
       ARCHITECTURE: ${{ inputs.ARCHITECTURE }}
       PKGMGR: ${{ inputs.PKGMGR }}
-      RUNNERTYPE: ${{ inputs.RUNNERTYPE }}
+      USE_PAID_RUNNERS: ${{ inputs.USE_PAID_RUNNERS }}
     secrets: inherit
