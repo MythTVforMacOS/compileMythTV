@@ -61,28 +61,28 @@ jobs:
             RUNNER="$RUNNER macOS-13"
           fi
           # macOS 14 x86_64 runner
-          if [ ${ inputs.BUILD_14 } ] && [ $USE_PAID_RUNNERS ] && [ ${{ inputs.ARCHITECTURE }} != "arm64" ]; then
+          if [ ${{ inputs.BUILD_14 }} ] && [ ${{ inputs.USE_PAID_RUNNERS }} ] && [ ${{ inputs.ARCHITECTURE }} != "arm64" ]; then
             echo "Adding macOS 14 x84_64 runner"
             RUNNER="$RUNNER macOS-14-large"
           fi
           # macOS 14 arm64 runner
-          if [ ${{ inputs.BUILD_14 }} ] && [ ${{ inputs.ARCHITECTURE }} != "X86_64" ]; then
+          if [ ${{ inputs.BUILD_14 }} ] && [ ${{ inputs.ARCHITECTURE }} != "x86_64" ]; then
             echo "Adding macOS 14 arm64 runner"
             RUNNER="$RUNNER macOS-14"
           fi
 
           # macOS 15 x86_64 runner
-          if [ ${{ inputs.BUILD_15 }} ] && [ $USE_PAID_RUNNERS ] && [ ${{ inputs.ARCHITECTURE }} != "arm64" ]; then
+          if [ ${{ inputs.BUILD_15 }} ] && [ ${{ inputs.USE_PAID_RUNNERS }} ] && [ ${{ inputs.ARCHITECTURE }} != "arm64" ]; then
             echo "Adding macOS 15 x84_64 runner"
           #  RUNNER="$RUNNER macOS-15-large"
           fi
           # macOS 15 arm64 runner
-          if [ ${{ inputs.BUILD_15 }} ] && [ ${{ inputs.ARCHITECTURE }} != "X86_64" ]; then
+          if [ ${{ inputs.BUILD_15 }} ] && [ ${{ inputs.ARCHITECTURE }} != "x86_64" ]; then
             echo "Adding macOS 15 arm64 runner"
             RUNNER="$RUNNER macOS-15"
           fi
           # macOS 26 arm64 runner
-          if [ ${{ inputs.BUILD_26 }} ] && [ ${{ inputs.ARCHITECTURE }} != "X86_64" ]; then
+          if [ ${{ inputs.BUILD_26 }} ] && [ ${{ inputs.ARCHITECTURE }} != "x86_64" ]; then
             echo "Adding macOS 26 arm64 runner"
           #  RUNNER="$RUNNER macOS-26"
           fi
