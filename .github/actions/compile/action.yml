@@ -84,13 +84,14 @@ runs:
       shell: bash
       env:
         TEST_APP: cpack_output/_CPack_Packages/Darwin/Bundle/mythfrontend/mythfrontend.app/Contents/MacOS/mythfrontend
+        CMAKE_DIR: ${GITHUB_WORKSPACE}/mythtv-${{ inputs.VERSNUM }}/mythtv
       run: |
         echo "Testing mythfrontend.app"
         EXE="${GITHUB_WORKSPACE}/mythtv-${{ inputs.VERSNUM }}/${TEST_APP} --version"
         VERSTR=$($EXE |grep "MythTV Version"|gsed "s/^.*Version : *//")
         echo "Extracted Version String: $VERSTR"
         echo "VERSTR=$VERSTR" >> $GITHUB_ENV
-        cd ${GITHUB_WORKSPACE}/mythtv
+        cd ${CMAKE_DIR}
         cmake --build build-qt6 -t MythTV-tests'
     - name: "Generate Upload Variables"
       id: upload_prep

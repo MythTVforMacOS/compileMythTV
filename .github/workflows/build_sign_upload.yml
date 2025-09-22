@@ -16,6 +16,22 @@ on:  # yamllint disable-line rule:truthy
         required: false
         type: string
         default: production
+      BUILD_13:
+        required: false
+        type: boolean
+        default: false
+      BUILD_14:
+        required: false
+        type: boolean
+        default: false
+      BUILD_15:
+        required: false
+        type: boolean
+        default: false
+      BUILD_26:
+        required: false
+        type: boolean
+        default: false
       ARCHITECTURE:
         required: false
         type: string
@@ -24,6 +40,10 @@ on:  # yamllint disable-line rule:truthy
         required: false
         type: string
         default: homebrew
+      USE_PAID_RUNNERS:
+        required: false
+        type: boolean
+        default: false
 jobs:
   init:
     name: Initialize Run Matrix
@@ -39,17 +59,38 @@ jobs:
       - name: generate-matrix
         id: generate-matrix
         run: |
-          arch=""
-          cross_compile=""
-          if [ "${{ inputs.ARCHITECTURE }}" == "all" ]; then
-            echo "Adding all runners."
-            RUNNER=${{ env.ARM64_RUNNERS }},${{ env.X86_64_RUNNERS }}
-          elif [ "${{ inputs.ARCHITECTURE }}" == "arm64" ]; then
-            echo "Adding arm64 runners."
-            RUNNER=${{ env.ARM64_RUNNERS }}
-          elif [ "${{ inputs.ARCHITECTURE }}" == "x86_64" ]; then
-            echo "Adding x86_64 runners."
-            RUNNER=${{ env.X86_64_RUNNERS }}
+          RUNNER=''
+          PKGMGR=''
+          # macOS 13 runner is intel only and requires macports
+          if [ "${{ inputs.BUILD_13 }}" ] && [ "${{ inputs.ARCHITECTURE }}" != "arm64" ]; then
+            echo "Adding macOS 13 x84_64 runners"
+            RUNNER=$RUNNER,"macOS-13"
+          fi
+          # macOS 14 x86_64 runner
+          if [ "${{ inputs.BUILD_14 }}" ] && [ $USE_PAID_RUNNERS ] && [ "${{ inputs.ARCHITECTURE }}" != "arm64" ] && ; then
+            echo "Adding macOS 14 x84_64 runners"
+            RUNNER=$RUNNER,"macOS-14-large"
+          fi
+          # macOS 14 arm64 runner
+          if [ "${{ inputs.BUILD_14 }}" ] && [ "${{ inputs.ARCHITECTURE }}" != "X86_64" ]; then
+            echo "Adding macOS 14 arm64 runners"
+            RUNNER=$RUNNER,"macOS-14"
+          fi
+
+          # macOS 15 x86_64 runner
+          if [ "${{ inputs.BUILD_15 }}" ] && [ $USE_PAID_RUNNERS ] && [ "${{ inputs.ARCHITECTURE }}" != "arm64" ] && ; then
+            echo "Adding macOS 15 x84_64 runners"
+            RUNNER=$RUNNER,"macOS-15-large"
+          fi
+          # macOS 15 arm64 runner
+          if [ "${{ inputs.BUILD_15 }}" ] && [ "${{ inputs.ARCHITECTURE }}" != "X86_64" ]; then
+            echo "Adding macOS 15 arm64 runners"
+            RUNNER=$RUNNER,"macOS-15"
+          fi
+          # macOS 26 arm64 runner
+          if [ "${{ inputs.BUILD_26 }}" ] && [ "${{ inputs.ARCHITECTURE }}" != "X86_64" ]; then
+            echo "Adding macOS 26 arm64 runners"
+            RUNNER=$RUNNER,"macOS-26"
           fi
           echo pre-split $RUNNER
           JSON_MATRIX=$(jq --null-input --arg str "$RUNNER" '$str | split(",")')
@@ -146,7 +187,7 @@ jobs:
           repository: MythTV/ansible
           path: ansible
       - name: "Install Homebrew Packages"
-        if: inputs.PKGMGR == 'homebrew'
+        if: ${{ inputs.PKGMGR == 'homebrew' && env.OS_VERS != 13 }}
         uses: ./.github/actions/installBrewPackages
         id: installHB
         with:
@@ -154,7 +195,7 @@ jobs:
           CROSS_COMPILE: false
           DBVERS: mariadb
       - name: "Install MacPorts Packages"
-        if: inputs.PKGMGR == 'macports'
+        if: ${{ inputs.PKGMGR == 'macports' || env.OS_VERS == 13 }}
         uses: ./.github/actions/installPorts
         id: installPorts
         with:

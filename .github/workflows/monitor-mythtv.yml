@@ -29,9 +29,9 @@ jobs:
           echo "GIT_CACHE_DIR=$HOME/mythtv" >> $GITHUB_ENV
           echo "DAY_OF_MONTH=$(date +'%d')" >> $GITHUB_ENV
           if [ $DAY_OF_MONTH==1 ]; then
-            echo "ARCHITECTURE=all" >> $GITHUB_OUTPUT
+            echo "USE_PAID_RUNNERS=true >> $GITHUB_OUTPUT
           else
-            echo "ARCHITECTURE=arm64" >> $GITHUB_OUTPUT
+            echo "USE_PAID_RUNNERS=false >> $GITHUB_OUTPUT
           fi
       - name: "Setup Mythtv Repo Cache"
         id: cache
@@ -66,7 +66,12 @@ jobs:
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
       BUILDTYPE: production
-      ARCHITECTURE: ${{ needs.set-env-vars.outputs.ARCHITECTURE }}
+      BUILD_13: true
+      BUILD_14: true
+      BUILD_15: true
+      BUILD_26: true
+      ARCHITECTURE: all
+      USE_PAID_RUNNERS: ${{ needs.set-env-vars.outputs.USE_PAID_RUNNERS }}
     secrets: inherit
   build-mythtv-fixes-cmake:
     needs: check-mythtv
@@ -75,5 +80,10 @@ jobs:
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
       BUILDTYPE: production
-      ARCHITECTURE: ${{ needs.set-env-vars.outputs.ARCHITECTURE }}
+      BUILD_13: true
+      BUILD_14: true
+      BUILD_15: true
+      BUILD_26: true
+      ARCHITECTURE: all
+      USE_PAID_RUNNERS: ${{ needs.set-env-vars.outputs.USE_PAID_RUNNERS }}
     secrets: inherit

@@ -18,6 +18,18 @@ on:  # yamllint disable-line rule:truthy
         options:
           - "homebrew"
           - "macports"
+      BUILD_13:
+        type: boolean
+        description: "Build for macOS 13"
+      BUILD_14:
+        type: boolean
+        description: "Build for macOS 14"
+      BUILD_15:
+        type: boolean
+        description: "Build for macOS 15"
+      BUILD_26:
+        type: boolean
+        description: "Build for macOS 26"
       ARCHITECTURE:
         type: choice
         description: "Choose an architecture"
@@ -31,6 +43,10 @@ on:  # yamllint disable-line rule:truthy
         options:
           - "production"
           - "test"
+      USE_PAID_RUNNERS:
+        type: boolean
+        description: "Use paid runners"
+
 
 run-name: "Manual Build: ${{ inputs.mythbranch }} by @${{ github.actor }}
   with ${{ inputs.PKGMGR }}"
@@ -62,6 +78,11 @@ jobs:
       USE_CCACHE: false
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       BUILDTYPE: ${{ inputs.BUILDTYPE }}
+      BUILD_13: ${{ inputs.BUILD_13 }}
+      BUILD_14: ${{ inputs.BUILD_14 }}
+      BUILD_15: ${{ inputs.BUILD_15 }}
+      BUILD_26: ${{ inputs.BUILD_26 }}
       ARCHITECTURE: ${{ inputs.ARCHITECTURE }}
       PKGMGR: ${{ inputs.PKGMGR }}
+      RUNNERTYPE: ${{ inputs.RUNNERTYPE }}
     secrets: inherit
