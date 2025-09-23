@@ -16,34 +16,34 @@ on:  # yamllint disable-line rule:truthy
         required: false
         type: string
         default: production
-      BUILD_13:
-        required: false
+      BUILD_13_X86_64:
+        required: true
         type: boolean
         default: false
-      BUILD_14:
-        required: false
+      BUILD_14_X86_64:
+        required: true
         type: boolean
         default: false
-      BUILD_15:
-        required: false
+      BUILD_14_ARM64:
+        required: true
         type: boolean
         default: false
-      BUILD_26:
-        required: false
+      BUILD_15_X86_64:
+        required: true
         type: boolean
         default: false
-      ARCHITECTURE:
-        required: false
-        type: string
-        default: arm64
+      BUILD_15_ARM64:
+        required: true
+        type: boolean
+        default: false
+      BUILD_26_ARM64:
+        required: true
+        type: boolean
+        default: false
       PKGMGR:
         required: false
         type: string
         default: homebrew
-      USE_PAID_RUNNERS:
-        required: false
-        type: boolean
-        default: false
 jobs:
   init:
     name: Initialize Run Matrix
@@ -56,33 +56,33 @@ jobs:
         run: |
           RUNNER=''
           # macOS 13 runner is intel only and requires macports
-          if ${{ inputs.BUILD_13 }} && [ ${{ inputs.ARCHITECTURE }} == "x86_64" ]; then
+          if ${{ inputs.BUILD_13_X86_64 }}; then
             echo "Adding macOS 13 x84_64 runner"
             RUNNER="$RUNNER macOS-13"
           fi
           # macOS 14 x86_64 runner
-          if ${{ inputs.BUILD_14 }} && ${{ inputs.USE_PAID_RUNNERS }} && [ ${{ inputs.ARCHITECTURE }} == "x86_64" ]; then
+          if ${{ inputs.BUILD_14_X86_64 }}; then
             echo "Adding macOS 14 x84_64 runner"
             #RUNNER="$RUNNER macOS-14-large"
           fi
           # macOS 14 arm64 runner
-          if ${{ inputs.BUILD_14 }} && [ ${{ inputs.ARCHITECTURE }} == "arm64" ]; then
+          if ${{ inputs.BUILD_14_ARM64 }}; then
             echo "Adding macOS 14 arm64 runner"
             RUNNER="$RUNNER macOS-14"
           fi
 
           # macOS 15 x86_64 runner
-          if ${{ inputs.BUILD_15 }} && ${{ inputs.USE_PAID_RUNNERS }} && [ ${{ inputs.ARCHITECTURE }} == "x86_64" ]; then
+          if ${{ inputs.BUILD_15_X86_64 }}; then
             echo "Adding macOS 15 x84_64 runner"
             #RUNNER="$RUNNER macOS-15-large"
           fi
           # macOS 15 arm64 runner
-          if ${{ inputs.BUILD_15 }} && [ ${{ inputs.ARCHITECTURE }} == "arm64" ]; then
+          if ${{ inputs.BUILD_15_ARM64 }}; then
             echo "Adding macOS 15 arm64 runner"
             RUNNER="$RUNNER macOS-15"
           fi
           # macOS 26 arm64 runner
-          if ${{ inputs.BUILD_26 }} && [ ${{ inputs.ARCHITECTURE }} == "arm64" ]; then
+          if ${{ inputs.BUILD_26_ARM64 }}; then
             echo "Adding macOS 26 arm64 runner"
           #  RUNNER="$RUNNER macOS-26"
           fi

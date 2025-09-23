@@ -66,12 +66,12 @@ jobs:
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
       BUILDTYPE: production
-      BUILD_13: true
-      BUILD_14: true
-      BUILD_15: true
-      BUILD_26: true
-      ARCHITECTURE: all
-      USE_PAID_RUNNERS: ${{ needs.set-env-vars.outputs.USE_PAID_RUNNERS }}
+      BUILD_13_X86_64: true
+      BUILD_14_X86_64: ${{ needs.set-env-vars.outputs.USE_PAID_RUNNERS }}
+      BUILD_14_ARM64: true
+      BUILD_15_X86_64: ${{ needs.set-env-vars.outputs.USE_PAID_RUNNERS }}
+      BUILD_15_ARM64: true
+      BUILD_26_ARM64: true
     secrets: inherit
   build-mythtv-fixes-cmake:
     needs: check-mythtv
@@ -80,10 +80,10 @@ jobs:
     with:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
       BUILDTYPE: production
-      BUILD_13: true
-      BUILD_14: true
-      BUILD_15: true
-      BUILD_26: true
-      ARCHITECTURE: all
-      USE_PAID_RUNNERS: ${{ needs.set-env-vars.outputs.USE_PAID_RUNNERS }}
+      BUILD_13_X86_64: true
+      BUILD_14_X86_64: ${{ needs.set-env-vars.outputs.USE_PAID_RUNNERS }}
+      BUILD_14_ARM64: true
+      BUILD_15_X86_64: ${{ needs.set-env-vars.outputs.USE_PAID_RUNNERS }}
+      BUILD_15_ARM64: true
+      BUILD_26_ARM64: true
     secrets: inherit

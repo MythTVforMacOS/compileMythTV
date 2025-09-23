@@ -5,9 +5,6 @@ name: "Manual build"
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
     inputs:
-      USE_PAID_RUNNERS:
-        type: boolean
-        description: "Use paid runners"
       MYTHBRANCH:
         type: choice
         description: "Choose a MythTV Version"
@@ -21,29 +18,30 @@ on:  # yamllint disable-line rule:truthy
         options:
           - "homebrew"
           - "macports"
-      BUILD_13:
+      BUILD_13_X86_64:
         type: boolean
-        description: "Build for macOS 13"
+        description: "Build for macOS 13 x86_64"
         default: false
-      BUILD_14:
+      BUILD_14_X86_64:
         type: boolean
-        description: "Build for macOS 14"
+        description: "Build for macOS 14 x86_64 (PAID)"
         default: true
-      BUILD_15:
+      BUILD_14_ARM64:
         type: boolean
-        description: "Build for macOS 15"
+        description: "Build for macOS 14 arm64"
         default: true
-      BUILD_26:
+      BUILD_15_X86_64:
+        type: boolean
+        description: "Build for macOS 15 x86_64 (PAID)"
+        default: true
+      BUILD_15_ARM64:
+        type: boolean
+        description: "Build for macOS 15 arm64"
+        default: true
+      BUILD_26_ARM64:
         type: boolean
         description: "Build for macOS 26"
         default: false
-      ARCHITECTURE:
-        type: choice
-        description: "Choose an architecture"
-        options:
-          - "arm64"
-          - "x86_64"
-          - "all"
       BUILDTYPE:
         type: choice
         description: "Choose a build type"
@@ -82,11 +80,11 @@ jobs:
       USE_CCACHE: false
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       BUILDTYPE: ${{ inputs.BUILDTYPE }}
-      BUILD_13: ${{ inputs.BUILD_13 }}
-      BUILD_14: ${{ inputs.BUILD_14 }}
-      BUILD_15: ${{ inputs.BUILD_15 }}
-      BUILD_26: ${{ inputs.BUILD_26 }}
-      ARCHITECTURE: ${{ inputs.ARCHITECTURE }}
+      BUILD_13_X86_64: ${{ inputs.BUILD_13_X86_64 }}
+      BUILD_14_X86_64: ${{ inputs.BUILD_14_X86_64 }}
+      BUILD_14_ARM64: ${{ inputs.BUILD_14_ARM64 }}
+      BUILD_15_X86_64: ${{ inputs.BUILD_15_X86_64 }}
+      BUILD_15_ARM64: ${{ inputs.BUILD_15_ARM64 }}
+      BUILD_26_ARM64: ${{ inputs.BUILD_26_ARM64 }}
       PKGMGR: ${{ inputs.PKGMGR }}
-      USE_PAID_RUNNERS: ${{ inputs.USE_PAID_RUNNERS }}
     secrets: inherit
