@@ -72,6 +72,7 @@ runs:
       shell: bash
       env:
         PYVERS: ${{ inputs.PYVERS }}
+        PYDOTVERS: ${{ inputs.PYDOTVERS }}
         DBVERS: ${{ inputs.DBVERS }}
       run: |
         ${PKGMGR_CMD} -N install gsed \
@@ -88,7 +89,7 @@ runs:
         ${PKGMGR_CMD} select --set pip3 pip${PYVERS}
         ${PKGMGR_CMD} select --set ansible py${PYVERS}-ansible
         ${PKGMGR_CMD} select --set virtualenv virtualenv${PYVERS}
-        ANS_PB=${PKGMGR_BIN}/ansible-playbook-${PYDOTVERS}
+        ANS_PB="${PKGMGR_BIN}/ansible-playbook-${PYDOTVERS}""
         if $CROSS_COMPILE; then
           ANS_PB="arch -${ARCH} $ANS_PB"
         fi
@@ -106,7 +107,7 @@ runs:
         export MYSQLCLIENT_LDFLAGS=$(pkg-config --libs mysqlclient)
         export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags mysqlclient)
         XTRA_VARS="ansible_python_interpreter=${PKGMGR_BIN}/python${PYDOTVERS} \
-          database_version=${DBVERS}
+          database_version=${DBVERS}"
         ${ANS_PB} mythtv.yml --extra-vars="$XTRA_VARS" --limit=localhost
     - name: "Cleanup maports install"
       id: port_cleanup

@@ -195,7 +195,7 @@ jobs:
           CROSS_COMPILE: false
           DBVERS: mysql8
           PYVERS: 312
-          PYDOTVERS: "3.12"
+          PYDOTVERS: 3.12
           QTVERS: qt6
       - name: Checkout Mythtv/mythtv repository
         uses: actions/checkout@v4
