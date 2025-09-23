@@ -17,6 +17,9 @@ inputs:
   DBVERS:
     required: true
     type: string
+  QTVERS:
+    required: true
+    type: string
 runs:
   using: "composite"
   steps:
@@ -26,7 +29,6 @@ runs:
       env:
         GH_URL: "https://raw.githubusercontent.com"
         MP_URL: "GiovanniBussi/macports-ci/master/macports-ci"
-        QT_VERS: qt6
       run: |
         if hash port 2>/dev/null; then
           echo "Macports is already installed"
@@ -36,7 +38,7 @@ runs:
           curl -LJO "${GH_URL}/${MP_URL}"
           chmod +x macports-ci
           arch -${{ inputs.arch }} bash -c "source ./macports-ci install"
-          export PATH=${PKGMGR_PREFIX}/bin:${PKGMGR_PREFIX}/libexec/${QT_VERS}/bin:${PKGMGR_PREFIX}/sbin:$PATH
+          export PATH=${PKGMGR_PREFIX}/bin:${PKGMGR_PREFIX}/libexec/${{ inputs.QTVERS }}/bin:${PKGMGR_PREFIX}/sbin:$PATH
           echo "PKGMGR_CMD=sudo $PKGMGR_PREFIX/bin/port" >> $GITHUB_ENV
         fi
     - name: "Remove Homebrew"
