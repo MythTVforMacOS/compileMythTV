@@ -196,7 +196,7 @@ jobs:
           DBVERS: mysql8
           PYVERS: 312
           PYDOTVERS: "3.12"
-          QT_VERS: qt6
+          QTVERS: qt6
       - name: Checkout Mythtv/mythtv repository
         uses: actions/checkout@v4
         with:
