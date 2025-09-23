@@ -194,8 +194,8 @@ jobs:
           ARCH: ${{ env.ARCH }}
           CROSS_COMPILE: false
           DBVERS: mysql8
-          PYVERS: 313
-          PYDOTVERS: "3.13"
+          PYVERS: 312
+          PYDOTVERS: "3.12"
           QT_VERS: qt6
       - name: Checkout Mythtv/mythtv repository
         uses: actions/checkout@v4
