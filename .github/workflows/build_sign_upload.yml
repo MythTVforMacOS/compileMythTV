@@ -35,7 +35,7 @@ on:  # yamllint disable-line rule:truthy
       BUILD_15_ARM64:
         required: true
         type: boolean
-        default: false
+        default: true
       BUILD_26_ARM64:
         required: true
         type: boolean
