@@ -308,7 +308,7 @@ case $PKGMGR in
     PKGMGR_INST_PATH=$(brew --prefix)
     PKGMGR_BIN="$PKGMGR_INST_PATH/bin"
     PKGMGR_LIB="$PKGMGR_INST_PATH/lib"
-    ANSIBLE_PB_EXE="ANSIBLE_BECOME=false ANSIBLE_BECOME_ASK_PASS=False $PKGMGR_BIN/ansible-playbook"
+    ANSIBLE_PB_EXE="ANSIBLE_BECOME=false ANSIBLE_BECOME_ASK_PASS=False$PKGMGR_BIN/ansible-playbook"
     FONT_PATH="$HOME/Library/Fonts"
   ;;
 esac
@@ -552,6 +552,9 @@ configureAndBuild(){
   echoC "    Building via cmake" BLUE
   BUILD_CMD="cmake --build build-$QT_CMAKE_VERS"
   eval "${BUILD_CMD}" || { echo 'Building MythTV failed' ; exit 1; }
+  TEST_CMD="cmake --build build-$QT_CMAKE_VERS -t MythTV-tests"
+  eval "${TEST_CMD}" || { echo 'Testing MythTV failed' ; exit 1; }
+  echoC "    Testing via cmake" BLUE
 }
 
 # function to perform any post compile activities
