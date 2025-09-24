@@ -338,6 +338,7 @@ if $BUNDLE_APPLICTION; then
   fi
   EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS \
                      -DCMAKE_BUILD_TYPE=Release \
+                     -DENABLE_LTO=OFF \
                      -DDARWIN_FRONTEND_BUNDLE=$BUILD_FRONTEND_BUNDLE \
                      -DDARWIN_GENERATE_DISTRIBUTION=$DISTIBUTE_APP \
                      -DDARWIN_SIGNING_ID=\"$CODESIGN_ID\" \
