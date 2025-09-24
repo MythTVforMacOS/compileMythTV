@@ -89,7 +89,7 @@ runs:
         ${PKGMGR_CMD} select --set pip3 pip${PYVERS}
         ${PKGMGR_CMD} select --set ansible py${PYVERS}-ansible
         ${PKGMGR_CMD} select --set virtualenv virtualenv${PYVERS}
-        ANS_PB="${PKGMGR_BIN}/ansible-playbook-${PYDOTVERS}""
+        ANS_PB="${PKGMGR_BIN}/ansible-playbook-${PYDOTVERS}"
         if $CROSS_COMPILE; then
           ANS_PB="arch -${ARCH} $ANS_PB"
         fi
