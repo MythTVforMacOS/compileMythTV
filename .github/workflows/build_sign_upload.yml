@@ -180,7 +180,8 @@ jobs:
           repository: MythTV/ansible
           path: ansible
       - name: "Install Homebrew Packages"
-        if: ${{ inputs.PKGMGR == 'homebrew' && env.OS_VERS != 13 }}
+        if: ${{ inputs.PKGMGR == 'homebrew' }}
+        # if: ${{ inputs.PKGMGR == 'homebrew' && env.OS_VERS != 13 }}
         uses: ./.github/actions/installBrewPackages
         id: installHB
         with:
@@ -188,7 +189,8 @@ jobs:
           CROSS_COMPILE: false
           DBVERS: mariadb
       - name: "Install MacPorts Packages"
-        if: ${{ inputs.PKGMGR == 'macports' || env.OS_VERS == 13 }}
+        if: ${{ inputs.PKGMGR == 'macports' }}
+        # if: ${{ inputs.PKGMGR == 'macports' || env.OS_VERS == 13 }}
         uses: ./.github/actions/installPorts
         id: installPorts
         with:

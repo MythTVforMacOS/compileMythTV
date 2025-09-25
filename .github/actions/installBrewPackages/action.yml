@@ -11,51 +11,63 @@ inputs:
   DBVERS:
     required: true
     type: string
+  UPDATEBREW:
+    required: false
+    type: boolean
+    default: true
 runs:
   using: "composite"
   steps:
     - name: "Remove formula for a fresh homebrew install"
-      id: nuke_brew_native
+      id: reset_brew
+      if: ${{ inputs.UPDATEBREW == 'true' || inputs.CROSS_COMPILE == 'true' }}
       shell: bash
       run: |
         echo "Removing all previously install formula"
         brew remove --cask --force $(brew list)
         brew remove --force $(brew list --formula)
+    - name: "Setup Homebre Environmental Variables"
+      id: setup_brew_vars
+      if: ${{ inputs.CROSS_COMPILE != 'true' }}
+      shell: bash
+      run: |
         PKGMGR_PREFIX=$(brew --prefix)
         PKGMGR_CMD="$PKGMGR_PREFIX/bin/brew"
         echo "PKGMGR_PREFIX=$PKGMGR_PREFIX" >> $GITHUB_ENV
         echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
-        echo "Updating homebrew"
-        ${PKGMGR_CMD} update
         ANS_PB="${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
         echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
-    - name: "Corss-Compile: Remove and reinstall homebrew install"
-      id: nuke_brew_cross_compile
-      if: ${{ inputs.CROSS_COMPILE == 'true' }}
-      shell: bash
-      env:
-        GH_URL: "https://raw.githubusercontent.com"
-        HB_RM_URL: "Homebrew/install/HEAD/uninstall.sh"
-        HB_INST_URL: "Homebrew/install/HEAD/install.sh"
-      run: |
-        if hash brew 2>/dev/null; then
-          # now remove homebrew to prevent python conflicts
-          /bin/bash -c "$(curl -fsSL ${GH_URL}/${HB_RM_URL})" --force
-          sudo rm -Rf /opt/homebrew
+        if [ ${{ env.OS_VERS }} > 13 ];then
+          echo "Updating homebrew"
+          brew update
         fi
-        # reinstall homebrew for cross-compile
-        arch -${{ inputs.ARCH }} /bin/bash -c "$(curl -fsSL ${GH_URL}/${HB_INST_URL})"
-        CX_CMD="arch -${{ inputs.ARCH }}"
-        echo "CX_CMD=$CX_CMD" >> $GITHUB_ENV
-        PKGMGR_CMD="$CX_CMD brew"
-        PKGMGR_PREFIX=$($PKGMGR_CMD --prefix)
-        PKGMGR_CMD="$CX_CMD $PKGMGR_PREFIX/bin/brew"
-        echo "PKGMGR_PREFIX=$PKGMGR_PREFIX" >> $GITHUB_ENV
-        echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
-        echo "Updating homebrew"
-        ${PKGMGR_CMD} update
-        ANS_PB="$CX_CMD ${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
-        echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
+  #  - name: "Corss-Compile: Remove and reinstall homebrew install"
+  #    id: setup_brew_cross_compile
+  #    if: ${{ inputs.CROSS_COMPILE == 'true' }}
+  #    shell: bash
+  #    env:
+  #      GH_URL: "https://raw.githubusercontent.com"
+  #      HB_RM_URL: "Homebrew/install/HEAD/uninstall.sh"
+  #      HB_INST_URL: "Homebrew/install/HEAD/install.sh"
+  #    run: |
+  #      if hash brew 2>/dev/null; then
+  #        # now remove homebrew to prevent python conflicts
+  #        /bin/bash -c "$(curl -fsSL ${GH_URL}/${HB_RM_URL})" --force
+  #        sudo rm -Rf /opt/homebrew
+  #      fi
+  #      # reinstall homebrew for cross-compile
+  #      arch -${{ inputs.ARCH }} /bin/bash -c "$(curl -fsSL ${GH_URL}/${HB_INST_URL})"
+  #      CX_CMD="arch -${{ inputs.ARCH }}"
+  #      echo "CX_CMD=$CX_CMD" >> $GITHUB_ENV
+  #      PKGMGR_CMD="$CX_CMD brew"
+  #      PKGMGR_PREFIX=$($PKGMGR_CMD --prefix)
+  #      PKGMGR_CMD="$CX_CMD $PKGMGR_PREFIX/bin/brew"
+  #      echo "PKGMGR_PREFIX=$PKGMGR_PREFIX" >> $GITHUB_ENV
+  #      echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
+  #      echo "Updating homebrew"
+  #      ${PKGMGR_CMD} update
+  #      ANS_PB="$CX_CMD ${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
+  #      echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
     - name: "Install required support packages"
       id: install_req_packages
       shell: bash
