@@ -111,9 +111,13 @@ jobs:
             'macOS-14'|'macOS-15'|'macOS-26')
               ARCH='arm64'
               OS=${{ matrix.os }}
+              PYVERS=313
+              PYDOTVERS=3.13
             ;;
             'macOS-13'|'macOS-14-large'|'macOS-15-large')
               ARCH='x86_64'
+              PYVERS=312
+              PYDOTVERS=3.12
               OS=${${{ matrix.os }}%"-large"}
             ;;
             *)
@@ -123,6 +127,8 @@ jobs:
           esac
           echo "ARCH=${ARCH}" >> $GITHUB_ENV
           echo "OS=${OS}" >> $GITHUB_ENV
+          echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
+          echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
       - uses: actions/checkout@master
       - name: "Setup environemental variables"
         run: |
@@ -188,6 +194,10 @@ jobs:
           ARCH: ${{ env.ARCH }}
           CROSS_COMPILE: false
           DBVERS: mariadb
+          PYVERS: ${{ env.PYVERS }}
+          PYDOTVERS: ${{ env.PYDOTVERS }}
+          QTVERS: qt6
+          VERSNUM: ${{ env.VERSNUM }}
       - name: "Install MacPorts Packages"
         if: ${{ inputs.PKGMGR == 'macports' }}
         # if: ${{ inputs.PKGMGR == 'macports' || env.OS_VERS == 13 }}

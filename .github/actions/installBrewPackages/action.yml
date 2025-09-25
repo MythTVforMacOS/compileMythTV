@@ -11,16 +11,24 @@ inputs:
   DBVERS:
     required: true
     type: string
-  UPDATEBREW:
-    required: false
-    type: boolean
-    default: true
+  PYVERS:
+    required: true
+    type: string
+  PYDOTVERS:
+    required: true
+    type: string
+  QTVERS:
+    required: true
+    type: string
+  VERSNUM:
+    required: true
+    type: string
 runs:
   using: "composite"
   steps:
     - name: "Remove formula for a fresh homebrew install"
       id: reset_brew
-      if: ${{ inputs.UPDATEBREW == 'true' || inputs.CROSS_COMPILE == 'true' }}
+      if: ${{ inputs.VERSNUM > 13 || inputs.CROSS_COMPILE == 'true' }}
       shell: bash
       run: |
         echo "Removing all previously install formula"
