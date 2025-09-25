@@ -63,7 +63,7 @@ jobs:
           # macOS 14 x86_64 runner
           if ${{ inputs.BUILD_14_X86_64 }}; then
             echo "Adding macOS 14 x84_64 runner"
-            #RUNNER="$RUNNER macOS-14-large"
+            RUNNER="$RUNNER macOS-14-large"
           fi
           # macOS 14 arm64 runner
           if ${{ inputs.BUILD_14_ARM64 }}; then
@@ -74,7 +74,7 @@ jobs:
           # macOS 15 x86_64 runner
           if ${{ inputs.BUILD_15_X86_64 }}; then
             echo "Adding macOS 15 x84_64 runner"
-            #RUNNER="$RUNNER macOS-15-large"
+            RUNNER="$RUNNER macOS-15-large"
           fi
           # macOS 15 arm64 runner
           if ${{ inputs.BUILD_15_ARM64 }}; then
@@ -84,7 +84,7 @@ jobs:
           # macOS 26 arm64 runner
           if ${{ inputs.BUILD_26_ARM64 }}; then
             echo "Adding macOS 26 arm64 runner"
-          #  RUNNER="$RUNNER macOS-26"
+            RUNNER="$RUNNER macOS-26"
           fi
           RUNNER=${RUNNER## }
           JSON_MATRIX=$(jq --null-input --arg str "$RUNNER" '$str | split(" ")')
