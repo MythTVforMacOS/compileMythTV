@@ -156,6 +156,7 @@ jobs:
           # as its a secret variable
           BLD_FLGS="--working_dir=${GITHUB_WORKSPACE} \
             --version=${MYTHBRANCH} \
+            --qt-version=${{ env.QTVERS }} \
             --frontend-bundle=ON \
             --generate-distribution=true \
             --signing-id=\"${{ vars.PROD_MACOS_CERTIFICATE_NAME }}\" \

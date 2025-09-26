@@ -424,7 +424,7 @@ runAnsible(){
   cd "$WORKING_DIR/ansible" || exit 1
   case $QT_PKMGR_VERS in
       *5*)
-         ANSIBLE_EXTRA_FLAGS="--extra-vars \"ansible_python_interpreter=$PYTHON_PKMGR_BIN database_version=$DATABASE_VERS\""
+         ANSIBLE_EXTRA_FLAGS="--extra-vars \"qt5=true ansible_python_interpreter=$PYTHON_PKMGR_BIN database_version=$DATABASE_VERS\""
       ;;
       *)
          ANSIBLE_EXTRA_FLAGS="--extra-vars \"qt6=true ansible_python_interpreter=$PYTHON_PKMGR_BIN database_version=$DATABASE_VERS\""

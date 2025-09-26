@@ -110,7 +110,7 @@ runs:
           database_version=${DBVERS}"
         if [ ${{ inputs.QTVERS }} == "qt5" ] || [ ${{ inputs.QTVERS }} == "qt@5" ]; then
           XTRA_VARS="$XTRA_VARS qt5=true"
-        then
+        fi
         ${ANS_PB} mythtv.yml --extra-vars="$XTRA_VARS" --limit=localhost
     - name: "Cleanup maports install"
       id: port_cleanup
