@@ -26,6 +26,13 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: ""
+      id: tier3_check
+      if: ${{ inputs.VERSNUM <= 13 }}
+      shell: bash
+      run: |
+        echo This is a tier 3 install, disabling auto updates
+        export HOMEBREW_NO_AUTO_UPDATE=1
     - name: "Remove formula for a fresh homebrew install"
       id: reset_brew
       if: ${{ inputs.VERSNUM > 13 || inputs.CROSS_COMPILE == 'true' }}
