@@ -108,6 +108,9 @@ runs:
         export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags mysqlclient)
         XTRA_VARS="ansible_python_interpreter=${PKGMGR_BIN}/python${PYDOTVERS} \
           database_version=${DBVERS}"
+        if [ ${{ inputs.QTVERS }} == "qt5" ] || [ ${{ inputs.QTVERS }} == "qt@5" ]; then
+          XTRA_VARS="$XTRA_VARS qt5=true"
+        then
         ${ANS_PB} mythtv.yml --extra-vars="$XTRA_VARS" --limit=localhost
     - name: "Cleanup maports install"
       id: port_cleanup

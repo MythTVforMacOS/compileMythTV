@@ -104,6 +104,28 @@ jobs:
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       USE_CCACHE: ${{ inputs.USE_CCACHE }}
     steps:
+      - name: Setup default versions
+        id: version_setup
+        run: |
+          QTVERS=qt6
+          PYVERS=313
+          PYDOTVERS=3.13
+          case ${{ inputs.PKGMGR }} in
+            macports)
+              DBVERS=mysql8
+            ;;
+            homebrew)
+              DBVERS=mariadb
+            ;;
+          esac
+          # override qt for macOS13 due to compatability issues
+          if [ ${{ matrix.os == 'macOS-13' }} ]; then
+            QTVERS=qt5
+          fi
+          echo "DBVERS=${DBVERS}" >> $GITHUB_ENV
+          echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
+          echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
+          echo "QTVERS=${QTVERS}" >> $GITHUB_ENV
       - name: "Check Architecture"
         id: check_arch
         run: |
@@ -111,13 +133,9 @@ jobs:
             'macOS-14'|'macOS-15'|'macOS-26')
               ARCH='arm64'
               OS=${{ matrix.os }}
-              PYVERS=313
-              PYDOTVERS=3.13
             ;;
             'macOS-13'|'macOS-14-large'|'macOS-15-large')
               ARCH='x86_64'
-              PYVERS=312
-              PYDOTVERS=3.12
               OS=${${{ matrix.os }}%"-large"}
             ;;
             *)
@@ -127,8 +145,6 @@ jobs:
           esac
           echo "ARCH=${ARCH}" >> $GITHUB_ENV
           echo "OS=${OS}" >> $GITHUB_ENV
-          echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
-          echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
       - uses: actions/checkout@master
       - name: "Setup environemental variables"
         run: |
@@ -193,11 +209,10 @@ jobs:
         with:
           ARCH: ${{ env.ARCH }}
           CROSS_COMPILE: false
-          DBVERS: mariadb
+          DBVERS: ${{ env.DBVERS }}
           PYVERS: ${{ env.PYVERS }}
           PYDOTVERS: ${{ env.PYDOTVERS }}
-          QTVERS: qt6
-          VERSNUM: ${{ env.VERSNUM }}
+          QTVERS: ${{ env.QTVERS }}
       - name: "Install MacPorts Packages"
         if: ${{ inputs.PKGMGR == 'macports' }}
         # if: ${{ inputs.PKGMGR == 'macports' || env.OS_VERS == 13 }}
@@ -206,10 +221,10 @@ jobs:
         with:
           ARCH: ${{ env.ARCH }}
           CROSS_COMPILE: false
-          DBVERS: mysql8
-          PYVERS: 312
-          PYDOTVERS: 3.12
-          QTVERS: qt6
+          DBVERS: ${{ env.DBVERS }}
+          PYVERS: ${{ env.PYVERS }}
+          PYDOTVERS: ${{ env.PYDOTVERS }}
+          QTVERS: ${{ env.QTVERS }}
       - name: Checkout Mythtv/mythtv repository
         uses: actions/checkout@v4
         with:
