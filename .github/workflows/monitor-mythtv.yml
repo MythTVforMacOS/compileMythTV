@@ -64,6 +64,7 @@ jobs:
     if: needs.check-mythtv.outputs.UPDATE_MASTER == 'true'
     uses: ./.github/workflows/build_sign_upload.yml
     with:
+      USE_CCACHE: true
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
       BUILDTYPE: production
       BUILD_13_X86_64: true
@@ -78,6 +79,7 @@ jobs:
     if: needs.check-mythtv.outputs.UPDATE_FIXES == 'true'
     uses: ./.github/workflows/build_sign_upload.yml
     with:
+      USE_CCACHE: true
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
       BUILDTYPE: production
       BUILD_13_X86_64: true
