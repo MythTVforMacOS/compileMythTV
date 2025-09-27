@@ -10,6 +10,10 @@ on:  # yamllint disable-line rule:truthy
     inputs:
       text_to_print:
         description: 'Manual trigger'
+      FORCE_BUILD:
+        type: boolean
+        default: false
+        description: "Force Build"
 jobs:
   check-mythtv:
     runs-on: 'macos-latest'
@@ -59,6 +63,11 @@ jobs:
         run: |
           echo "UPDATE_MASTER=${{ steps.gitcheck_master.outputs.UPDATED }}" >> $GITHUB_ENV
           echo "UPDATE_FIXES=${{ steps.gitcheck_fixes.outputs.UPDATED }}" >> $GITHUB_ENV
+      - name: Force Updates
+        if: inputs.FORCE_BUILD == 'true'
+        id: force_update
+          echo "UPDATE_MASTER=true" >> $GITHUB_ENV
+          echo "UPDATE_FIXES=true" >> $GITHUB_ENV
   build-mythtv-master-cmake:
     needs: check-mythtv
     if: needs.check-mythtv.outputs.UPDATE_MASTER == 'true'
