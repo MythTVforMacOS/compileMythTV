@@ -1,17 +1,13 @@
-# Compiling MythTV via Ansible with MacPorts or Homebrew
-This is directory contains a packaging script for MythFrontend for MacOS and a codesigning utlity.
+# Compiling MythTV via Ansible and MacPorts
+This is directory contains a packaging script for MythFrontend for MacOS and a codesigning utility.
 The use of this script is documented on the mythtv wiki here:
 https://www.mythtv.org/wiki/Building_MythFrontend_on_Mac_OS_X
 
-* **compileMythtvAnsible_cmake.zsh** - A script that compiles and installs all mythtv binaries with the new cmake mechanism introduced in v34 and updated significantly in v35. The script downloads and installs any mythtv/mythplugins dependencies as specified in the mythtv ansible repo via MacPorts.  It also clones the appropriate ansible/mythtv git repos from github, compiles mythtv and optionally mythplugins, bundles the necessary Support libraries and files into the application, and finally generates a .dmg file for distribution.  The scripts default behavior is to build the Mythfrontend.app app bundle, but a run switch is available to install all mythtv binaries (e.g. mythfrontend, mythbackend, mythutil) as unix executables (vs. app bundles) into a user secified path.
+* **compileMythtvAnsible_cmake.zsh** - A script that compiles and installs all mythtv binaries using cmake. The script downloads and installs any mythtv/mythplugins dependencies as specified in the mythtv ansible repo via MacPorts.  It also clones the appropriate ansible/mythtv/packaging git repos from github, compiles mythtv and optionally mythplugins, bundles the necessary Support libraries and files into the application, and finally generates a .dmg file for distribution.  The scripts default behavior is to build the Mythfrontend.app app bundle, but a run switch
+is available to install all mythtv binaries (e.g. mythfrontend, mythbackend, mythutil) as unix executables (vs. app bundles) into a user specified path.
 
-* **compileMythtvAnsible.zsh** - A script that compiles and installs all mythtv binaries. The script downloads and installs any mythtv/mythplugins dependencies as specified in the mythtv ansible repo via MacPorts.  It also clones the appropriate ansible/mythtv/packaging git repos from github, compiles mythtv and optionally mythplugins, bundles the necessary Support libraries and files into the application, and finally generates a .dmg file for distribution.  The scripts default behavior is to build the Mythfrontend.app app bundle, but a run switch is available to install all mythtv binaries (e.g. mythfrontend, mythbackend, mythutil) as unix executables (vs. app bundles) into a user secified path.
-** This script will be depricated after the release of v35 **
-
-* **codesignAndPackage.zsh** - A script that code signs / notarizes the Mythfrontend.app app bungle, generates a dmg file, and code signs. / notarizes the dmg bundle.
-** This script will be depricated after the release of v35 **
-
-Before running the script, the user must have Xcode, Xcode Command Line Tools, and MacPorts or Homebrew working on their system.
+Before running the script, the user must have Xcode, Xcode Command Line Tools, and MacPorts
+or Hombrew working on their system.
 
 ## Step One: Install Xcode, and Xcode Command Line Tools and either Macports or Homebrew
 Both Xcode and Xcode Command Line Tools are available for installation via the Apple App Store.
@@ -27,7 +23,7 @@ Follow MacPorts' directions here: https://www.macports.org/install.php
 * Remember to run update the ports tree after installing MacPorts
 > sudo port -v selfupdate
 
-### Homebrew Instrutions
+### Homebrew Instructions
 Follow Homebrew's directions here: https://brew.sh/
 
 * Remember to run update Homebrew after installation
@@ -37,13 +33,14 @@ Follow Homebrew's directions here: https://brew.sh/
 Run "compileMythtvAnsible_cmake.zsh".
 
 The script automatically performs the following steps:
-1. Sets up the build directory structure (tries to mirror the mythtv dev team's structure)
+1. Sets up the build directory structure
 1. Installs ansible-playbook via MacPorts or Homebrew
 1. Clones the MythTV ansible git repository
-1. Installs MythTV compile requirements and their dependencies va ansible/macports/homebrew/pip/cpanm
-1. Clones the MythTV git repository, applying any user specified patches to mythtv or plugins
-1. Configures, builds, and installs MythTV and optionally MythPlugins
-1. Deploys QT and python to the compiled mythfrontend.app
-1. Copies the required dylibs, support data, and fonts into the app linking
-1. Optionally code signs and notarizes the application
-1. Packages mythfrontend.app into a .dmg file, optionally notarizaing it.
+1. Installs MythTV compile requirements and their dependencies via ansible/macports/homebrew/pip/cpanm
+1. Clones the MythTV git repository
+1. Clones the MythTV Packaging git repository
+1. Configures, builds, and installs MythTV to a user specified directory
+1. Optionally Configures, builds, and installs MythPlugins
+1. Optionally generates the mythfrontend.app bundle
+1. Optionally code signs and notarizes the app bundle
+1. Optionally Packages mythfrontend.app into a .dmg file
