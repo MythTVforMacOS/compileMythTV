@@ -8,19 +8,24 @@ on:  # yamllint disable-line rule:truthy
     - cron: '0 0 1 * *'
   workflow_dispatch:  # workflow_dispatch allows this to be triggered manually
     inputs:
-      text_to_print:
-        description: 'Manual trigger'
+      FORCE_BUILD:
+        type: boolean
+        default: false
+        description: "Force Build"
 jobs:
   check-mythtv:
     runs-on: 'macos-latest'
     env:
       MASTER_BRANCH: "master"
       FIXES_BRANCH: "fixes/35"
+      USE_PAID_RUNNERS: false
     outputs:
       MASTER_BRANCH: ${{ env.MASTER_BRANCH }}
       UPDATE_MASTER: ${{ env.UPDATE_MASTER }}
       FIXES_BRANCH: ${{ env.FIXES_BRANCH }}
       UPDATE_FIXES: ${{ env.UPDATE_FIXES }}
+      USE_PAID_RUNNERS: ${{ env.USE_PAID_RUNNERS }}
+      FORCE_BUILD: ${{ inputs.FORCE_BUILD }}
     steps:
       - uses: actions/checkout@master
       - name: "Setup environmental variables"
@@ -29,9 +34,9 @@ jobs:
           echo "GIT_CACHE_DIR=$HOME/mythtv" >> $GITHUB_ENV
           echo "DAY_OF_MONTH=$(date +'%d')" >> $GITHUB_ENV
           if [ $DAY_OF_MONTH==1 ]; then
-            echo "USE_PAID_RUNNERS=true >> $GITHUB_OUTPUT
+            echo "USE_PAID_RUNNERS=true" >> $GITHUB_ENV
           else
-            echo "USE_PAID_RUNNERS=false >> $GITHUB_OUTPUT
+            echo "USE_PAID_RUNNERS=false" >> $GITHUB_ENV
           fi
       - name: "Setup Mythtv Repo Cache"
         id: cache
@@ -59,16 +64,17 @@ jobs:
         run: |
           echo "UPDATE_MASTER=${{ steps.gitcheck_master.outputs.UPDATED }}" >> $GITHUB_ENV
           echo "UPDATE_FIXES=${{ steps.gitcheck_fixes.outputs.UPDATED }}" >> $GITHUB_ENV
+          echo "UPDATE_FIXES=${{ steps.gitcheck_fixes.outputs.UPDATED }}" >> $GITHUB_ENV
   build-mythtv-master-cmake:
     needs: check-mythtv
-    if: needs.check-mythtv.outputs.UPDATE_MASTER == 'true'
+    if: ${{ needs.check-mythtv.outputs.FORCE_BUILD || needs.check-mythtv.outputs.UPDATE_MASTER }}
     uses: ./.github/workflows/build_sign_upload.yml
     with:
       USE_CCACHE: true
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
       BUILDTYPE: production
       BUILD_13_X86_64: true
-      BUILD_14_X86_64: ${{ needs.set-env-vars.outputs.USE_PAID_RUNNERS }}
+      BUILD_14_X86_64: ${{ needs.check-mythtv.outputs.USE_PAID_RUNNERS }}
       BUILD_14_ARM64: true
       BUILD_15_X86_64: false
       BUILD_15_ARM64: true
@@ -76,14 +82,14 @@ jobs:
     secrets: inherit
   build-mythtv-fixes-cmake:
     needs: check-mythtv
-    if: needs.check-mythtv.outputs.UPDATE_FIXES == 'true'
+    if: ${{ needs.check-mythtv.outputs.FORCE_BUILD || needs.check-mythtv.outputs.UPDATE_FIXES }}
     uses: ./.github/workflows/build_sign_upload.yml
     with:
       USE_CCACHE: true
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
       BUILDTYPE: production
       BUILD_13_X86_64: true
-      BUILD_14_X86_64: ${{ needs.set-env-vars.outputs.USE_PAID_RUNNERS }}
+      BUILD_14_X86_64: ${{ needs.check-mythtv.outputs.USE_PAID_RUNNERS }}
       BUILD_14_ARM64: true
       BUILD_15_X86_64: false
       BUILD_15_ARM64: true
