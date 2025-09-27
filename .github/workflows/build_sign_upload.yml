@@ -56,34 +56,34 @@ jobs:
         run: |
           RUNNER=''
           # macOS 13 runner is intel only and requires macports
-          if ${{ inputs.BUILD_13_X86_64 }}; then
+          if [ ${{ inputs.BUILD_13_X86_64 }} == 'true' ]; then
             echo "Adding macOS 13 x84_64 runner"
             RUNNER="$RUNNER macOS-13"
           fi
           # macOS 14 x86_64 runner
-          if ${{ inputs.BUILD_14_X86_64 }}; then
+          if [ ${{ inputs.BUILD_14_X86_64 }} == 'true' ]; then
             ### THIS IS A PAID RUNNER ###
             echo "Adding macOS 14 x84_64 runner"
             RUNNER="$RUNNER macOS-14-large"
           fi
           # macOS 14 arm64 runner
-          if ${{ inputs.BUILD_14_ARM64 }}; then
+          if [ ${{ inputs.BUILD_14_ARM64 }} == 'true' ]; then
             echo "Adding macOS 14 arm64 runner"
             RUNNER="$RUNNER macOS-14"
           fi
           # macOS 15 x86_64 runner
-          if ${{ inputs.BUILD_15_X86_64 }}; then
+          if [ ${{ inputs.BUILD_15_X86_64 }} == 'true' ]; then
             ### THIS IS A PAID RUNNER ###
             echo "Adding macOS 15 x84_64 runner"
             RUNNER="$RUNNER macOS-15-large"
           fi
           # macOS 15 arm64 runner
-          if ${{ inputs.BUILD_15_ARM64 }}; then
+          if [ ${{ inputs.BUILD_15_ARM64 }} == 'true' ]; then
             echo "Adding macOS 15 arm64 runner"
             RUNNER="$RUNNER macOS-15"
           fi
           # macOS 26 arm64 runner
-          if ${{ inputs.BUILD_26_ARM64 }}; then
+          if [ ${{ inputs.BUILD_26_ARM64 }} == 'true' ]; then
             echo "Adding macOS 26 arm64 runner"
             RUNNER="$RUNNER macOS-26"
           fi

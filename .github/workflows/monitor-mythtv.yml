@@ -25,7 +25,7 @@ jobs:
       FIXES_BRANCH: ${{ env.FIXES_BRANCH }}
       UPDATE_FIXES: ${{ env.UPDATE_FIXES }}
       USE_PAID_RUNNERS: ${{ env.USE_PAID_RUNNERS }}
-      FORCE_BUILD: ${{ inputs.FORCE_BUILD }}
+      FORCE_BUILD: ${{ env.FORCE_BUILD }}
     steps:
       - uses: actions/checkout@master
       - name: "Setup environmental variables"
@@ -33,10 +33,8 @@ jobs:
         run: |
           echo "GIT_CACHE_DIR=$HOME/mythtv" >> $GITHUB_ENV
           echo "DAY_OF_MONTH=$(date +'%d')" >> $GITHUB_ENV
-          if [ $DAY_OF_MONTH==1 ]; then
+          if [ $DAY_OF_MONTH = 1 ]; then
             echo "USE_PAID_RUNNERS=true" >> $GITHUB_ENV
-          else
-            echo "USE_PAID_RUNNERS=false" >> $GITHUB_ENV
           fi
       - name: "Setup Mythtv Repo Cache"
         id: cache
@@ -64,7 +62,6 @@ jobs:
         run: |
           echo "UPDATE_MASTER=${{ steps.gitcheck_master.outputs.UPDATED }}" >> $GITHUB_ENV
           echo "UPDATE_FIXES=${{ steps.gitcheck_fixes.outputs.UPDATED }}" >> $GITHUB_ENV
-          echo "UPDATE_FIXES=${{ steps.gitcheck_fixes.outputs.UPDATED }}" >> $GITHUB_ENV
   build-mythtv-master-cmake:
     needs: check-mythtv
     if: ${{ needs.check-mythtv.outputs.FORCE_BUILD || needs.check-mythtv.outputs.UPDATE_MASTER }}
@@ -74,7 +71,7 @@ jobs:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
       BUILDTYPE: production
       BUILD_13_X86_64: true
-      BUILD_14_X86_64: ${{ needs.check-mythtv.outputs.USE_PAID_RUNNERS }}
+      BUILD_14_X86_64: false
       BUILD_14_ARM64: true
       BUILD_15_X86_64: false
       BUILD_15_ARM64: true
@@ -89,9 +86,39 @@ jobs:
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
       BUILDTYPE: production
       BUILD_13_X86_64: true
-      BUILD_14_X86_64: ${{ needs.check-mythtv.outputs.USE_PAID_RUNNERS }}
+      BUILD_14_X86_64: false
       BUILD_14_ARM64: true
       BUILD_15_X86_64: false
       BUILD_15_ARM64: true
       BUILD_26_ARM64: true
+    secrets: inherit
+  build-mythtv-master-paid:
+    needs: check-mythtv
+    if: ${{ needs.check-mythtv.outputs.USE_PAID_RUNNERS == 'true' }} && ${{ needs.check-mythtv.outputs.UPDATE_MASTER == 'true' }}
+    uses: ./.github/workflows/build_sign_upload.yml
+    with:
+      USE_CCACHE: true
+      MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
+      BUILDTYPE: production
+      BUILD_13_X86_64: false
+      BUILD_14_X86_64: true
+      BUILD_14_ARM64: false
+      BUILD_15_X86_64: false
+      BUILD_15_ARM64: false
+      BUILD_26_ARM64: false
+    secrets: inherit
+  build-mythtv-fixes-paid:
+    needs: check-mythtv
+    if: ${{ needs.check-mythtv.outputs.USE_PAID_RUNNERS == 'true' }} && ${{ needs.check-mythtv.outputs.UPDATE_FIXES == 'true' }}
+    uses: ./.github/workflows/build_sign_upload.yml
+    with:
+      USE_CCACHE: true
+      MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
+      BUILDTYPE: production
+      BUILD_13_X86_64: false
+      BUILD_14_X86_64: true
+      BUILD_14_ARM64: false
+      BUILD_15_X86_64: false
+      BUILD_15_ARM64: false
+      BUILD_26_ARM64: false
     secrets: inherit
