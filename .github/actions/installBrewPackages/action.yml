@@ -97,7 +97,7 @@ runs:
         XTRA_VARS="database_version=${{ inputs.DBVERS }}"
         if [ ${{ inputs.QTVERS }} == "qt@5" ] || [ ${{ inputs.QTVERS }} == "qt5" ]; then
           XTRA_VARS="$XTRA_VARS qt5=true"
-        then
+        fi
         echo "Running ansible"
         ANSIBLE_BECOME=false ANSIBLE_BECOME_ASK_PASS=False ${ANS_PB} mythtv.yml --extra-vars="$XTRA_VARS" --limit=localhost
         brew unlink qt
