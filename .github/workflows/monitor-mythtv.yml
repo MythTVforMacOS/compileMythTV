@@ -33,9 +33,9 @@ jobs:
           echo "GIT_CACHE_DIR=$HOME/mythtv" >> $GITHUB_ENV
           echo "DAY_OF_MONTH=$(date +'%d')" >> $GITHUB_ENV
           if [ $DAY_OF_MONTH==1 ]; then
-            echo "USE_PAID_RUNNERS=true >> $GITHUB_ENV
+            echo "USE_PAID_RUNNERS=true" >> $GITHUB_ENV
           else
-            echo "USE_PAID_RUNNERS=false >> $GITHUB_ENV
+            echo "USE_PAID_RUNNERS=false" >> $GITHUB_ENV
           fi
       - name: "Setup Mythtv Repo Cache"
         id: cache
