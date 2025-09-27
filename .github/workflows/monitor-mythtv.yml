@@ -63,18 +63,13 @@ jobs:
         run: |
           echo "UPDATE_MASTER=${{ steps.gitcheck_master.outputs.UPDATED }}" >> $GITHUB_ENV
           echo "UPDATE_FIXES=${{ steps.gitcheck_fixes.outputs.UPDATED }}" >> $GITHUB_ENV
-      - name: Force Updates
-        if: inputs.FORCE_BUILD == 'true'
-        id: force_update
-          echo "UPDATE_MASTER=true" >> $GITHUB_ENV
-          echo "UPDATE_FIXES=true" >> $GITHUB_ENV
   build-mythtv-master-cmake:
     needs: check-mythtv
     if: needs.check-mythtv.outputs.UPDATE_MASTER == 'true'
     uses: ./.github/workflows/build_sign_upload.yml
     with:
       USE_CCACHE: true
-      MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
+      MYTHBRANCH: ${{ inputs.FORCE_BUILD == 'true' || needs.check-mythtv.outputs.MASTER_BRANCH }}
       BUILDTYPE: production
       BUILD_13_X86_64: true
       BUILD_14_X86_64: ${{ needs.set-env-vars.outputs.USE_PAID_RUNNERS }}
@@ -89,7 +84,7 @@ jobs:
     uses: ./.github/workflows/build_sign_upload.yml
     with:
       USE_CCACHE: true
-      MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
+      MYTHBRANCH: ${{ inputs.FORCE_BUILD == 'true' || needs.check-mythtv.outputs.FIXES_BRANCH }}
       BUILDTYPE: production
       BUILD_13_X86_64: true
       BUILD_14_X86_64: ${{ needs.set-env-vars.outputs.USE_PAID_RUNNERS }}
