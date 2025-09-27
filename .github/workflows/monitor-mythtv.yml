@@ -8,8 +8,6 @@ on:  # yamllint disable-line rule:truthy
     - cron: '0 0 1 * *'
   workflow_dispatch:  # workflow_dispatch allows this to be triggered manually
     inputs:
-      text_to_print:
-        description: 'Manual trigger'
       FORCE_BUILD:
         type: boolean
         default: false
@@ -20,11 +18,13 @@ jobs:
     env:
       MASTER_BRANCH: "master"
       FIXES_BRANCH: "fixes/35"
+      USE_PAID_RUNNERS: false
     outputs:
       MASTER_BRANCH: ${{ env.MASTER_BRANCH }}
       UPDATE_MASTER: ${{ env.UPDATE_MASTER }}
       FIXES_BRANCH: ${{ env.FIXES_BRANCH }}
       UPDATE_FIXES: ${{ env.UPDATE_FIXES }}
+      USE_PAID_RUNNERS: ${{ env.USE_PAID_RUNNERS }}
     steps:
       - uses: actions/checkout@master
       - name: "Setup environmental variables"
@@ -33,9 +33,9 @@ jobs:
           echo "GIT_CACHE_DIR=$HOME/mythtv" >> $GITHUB_ENV
           echo "DAY_OF_MONTH=$(date +'%d')" >> $GITHUB_ENV
           if [ $DAY_OF_MONTH==1 ]; then
-            echo "USE_PAID_RUNNERS=true >> $GITHUB_OUTPUT
+            echo "USE_PAID_RUNNERS=true >> $GITHUB_ENV
           else
-            echo "USE_PAID_RUNNERS=false >> $GITHUB_OUTPUT
+            echo "USE_PAID_RUNNERS=false >> $GITHUB_ENV
           fi
       - name: "Setup Mythtv Repo Cache"
         id: cache
