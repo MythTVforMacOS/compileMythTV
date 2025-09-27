@@ -72,7 +72,7 @@ jobs:
       MYTHBRANCH: ${{ inputs.FORCE_BUILD == 'true' || needs.check-mythtv.outputs.MASTER_BRANCH }}
       BUILDTYPE: production
       BUILD_13_X86_64: true
-      BUILD_14_X86_64: ${{ needs.set-env-vars.outputs.USE_PAID_RUNNERS }}
+      BUILD_14_X86_64: ${{ needs.check-mythtv.outputs.USE_PAID_RUNNERS }}
       BUILD_14_ARM64: true
       BUILD_15_X86_64: false
       BUILD_15_ARM64: true
@@ -87,7 +87,7 @@ jobs:
       MYTHBRANCH: ${{ inputs.FORCE_BUILD == 'true' || needs.check-mythtv.outputs.FIXES_BRANCH }}
       BUILDTYPE: production
       BUILD_13_X86_64: true
-      BUILD_14_X86_64: ${{ needs.set-env-vars.outputs.USE_PAID_RUNNERS }}
+      BUILD_14_X86_64: ${{ needs.check-mythtv.outputs.USE_PAID_RUNNERS }}
       BUILD_14_ARM64: true
       BUILD_15_X86_64: false
       BUILD_15_ARM64: true
