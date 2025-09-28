@@ -121,7 +121,7 @@ jobs:
             ;;
           esac
           # PKGMGR overrids
-          case ${{ inputs.PKGMGR }} in
+          case $PKGMGR in
             macports)
               DBVERS=mysql8
             ;;
