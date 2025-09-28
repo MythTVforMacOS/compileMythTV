@@ -28,7 +28,7 @@ runs:
           sudo rm -Rf "$CACHE_DIR"
           mkdir -p "$CACHE_DIR"
           cd "$CACHE_DIR"
-          git clone -b "$BRANCH" https://github.com/MythTV/mythtv.git
+          git clone -b "$BRANCH" --single-branch https://github.com/MythTV/mythtv.git
           UPDATED="true"
         else
           cd "$CACHE_DIR/mythtv"
