@@ -109,6 +109,18 @@ jobs:
         run: |
           PYVERS=313
           PYDOTVERS=3.13
+          # os overrides
+          case ${{ matrix.os }} in
+            'macOS-13')
+              PKGMGR=macports
+              QTVERS=qt5
+            ;;
+            *)
+              PKGMGR=${{ inputs.PKGMGR }}
+              QTVERS=qt6
+            ;;
+          esac
+          # PKGMGR overrids
           case ${{ inputs.PKGMGR }} in
             macports)
               DBVERS=mysql8
@@ -117,16 +129,8 @@ jobs:
               DBVERS=mariadb
             ;;
           esac
-          # override qt for macOS13 due to compatability issues
-          case ${{ matrix.os }} in
-            'macOS-13')
-              QTVERS=qt5
-            ;;
-            *)
-              QTVERS=qt6
-            ;;
-          esac
 
+          echo "PKGMGR=${PKGMGR}" >> $GITHUB_ENV
           echo "DBVERS=${DBVERS}" >> $GITHUB_ENV
           echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
           echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
@@ -208,7 +212,7 @@ jobs:
           repository: MythTV/ansible
           path: ansible
       - name: "Install Homebrew Packages"
-        if: ${{ inputs.PKGMGR == 'homebrew' && env.OS_VERS != 13 }}
+        if: ${{ env.PKGMGR == 'homebrew' && env.OS_VERS != 13 }}
         uses: ./.github/actions/installBrewPackages
         id: installHB
         with:
@@ -219,7 +223,7 @@ jobs:
           PYDOTVERS: ${{ env.PYDOTVERS }}
           QTVERS: ${{ env.QTVERS }}
       - name: "Install MacPorts Packages"
-        if: ${{ inputs.PKGMGR == 'macports' || env.OS_VERS == 13 }}
+        if: ${{ env.PKGMGR == 'macports' || env.OS_VERS == 13 }}
         uses: ./.github/actions/installPorts
         id: installPorts
         with:
