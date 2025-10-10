@@ -31,8 +31,9 @@ Configure and Build Options
   --skip-ansible=SKIP_ANSIBLE             Skip ansible install (false)
                                             This avoids re-running ansible and should only be used
                                             if all packages have been correctly installed.
-  --repackage-only=REPACKAGE_ONLY          Perform only the tasks necessary to repackage an app bundle
+  --repackage-only=REPACKAGE_ONLY         Perform only the tasks necessary to repackage an app bundle
                                             This is used when you just want to repackage (false)
+  --cmake_libs_use_installed              Reuse libraries installed by previous runs of cmake. (ON)
   --extra-cmake-flags=EXTRA_CMAKE_FLAGS   Addtional configure flags for mythtv ("")
 Bundling, Signing, and Notarization Options
   --frontend-bundle=BUILD_FRONTEND_BUNDLE Generate an Applicaiton Bundle for Mythfrontend (OFF)
@@ -161,6 +162,7 @@ WORKING_DIR_BASE=$HOME
 INSTALL_DIR=""
 UPDATE_GIT=true
 SKIP_ANSIBLE=false
+LIBS_USE_INSTALLED=ON
 REPACKAGE_ONLY=false
 EXTRA_CMAKE_FLAGS=""
 DISTIBUTE_APP=OFF
@@ -224,6 +226,9 @@ for i in "$@"; do
       ;;
       --skip-ansible=*)
         SKIP_ANSIBLE="${i#*=}"
+      ;;
+      --cmake_libs_use_installed=*)
+        LIBS_USE_INSTALLED="${i#*=}"
       ;;
       --repackage-only=*)
         REPACKAGE_ONLY="${i#*=}"
@@ -336,6 +341,7 @@ if $BUNDLE_APPLICTION; then
   if [ -z $INSTALL_DIR ]; then
     INSTALL_DIR="$WORKING_DIR/$VERS-osx-64bit"
   fi
+
   EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS \
                      -DCMAKE_BUILD_TYPE=Release \
                      -DENABLE_LTO=OFF \
@@ -546,6 +552,7 @@ configureAndBuild(){
                     -G Ninja                              \
                     -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR   \
                     -DCMAKE_RUN_PREFIX=$RUNPREFIX         \
+                    -DLIBS_USE_INSTALLED=$LIBS_USE_INSTALLED \
                     $EXTRA_CMAKE_FLAGS"
   eval "${CONFIG_CMD}"
   echoC "------------ Building MythTV ------------" GREEN
