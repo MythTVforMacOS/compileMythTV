@@ -53,7 +53,7 @@ runs:
       if: ${{ inputs.USE_CCACHE == 'true' }}
       uses: actions/cache@master
       env:
-        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}-legacy
+        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}
       with:
         path: ${{ env.CCACHE_DIR }}
         key: mythtv-ccache-${{ env.CCACHE_STORE }}-${{ github.sha }}
@@ -108,7 +108,7 @@ runs:
       id: ccache_save
       if: ${{ steps.build_with.outcome == 'success' && inputs.USE_CCACHE == 'true' }}
       env:
-        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}-legacy
+        CCACHE_STORE: ${{ inputs.VERSNUM }}-${{ inputs.OS }}-${{ inputs.ARCH }}
       with:
         path: ${{ env.CCACHE_DIR }}
         key: mythtv-ccache-${{ env.CCACHE_STORE }}-${{ github.sha }}
