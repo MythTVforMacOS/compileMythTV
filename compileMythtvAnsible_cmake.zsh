@@ -341,7 +341,6 @@ if $BUNDLE_APPLICTION; then
   if [ -z $INSTALL_DIR ]; then
     INSTALL_DIR="$WORKING_DIR/$VERS-osx-64bit"
   fi
-
   EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS \
                      -DCMAKE_BUILD_TYPE=Release \
                      -DENABLE_LTO=OFF \
