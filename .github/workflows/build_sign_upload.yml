@@ -107,8 +107,6 @@ jobs:
       - name: Setup default versions
         id: version_setup
         run: |
-          PYVERS=313
-          PYDOTVERS=3.13
           # os overrides
           case ${{ matrix.os }} in
             'macOS-13')
@@ -124,9 +122,13 @@ jobs:
           case $PKGMGR in
             macports)
               DBVERS=mysql8
+              PYVERS=313
+              PYDOTVERS=3.13
             ;;
             homebrew)
               DBVERS=mariadb
+              PYVERS=314
+              PYDOTVERS=3.14
             ;;
           esac
 
