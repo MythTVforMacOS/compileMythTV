@@ -126,7 +126,7 @@ jobs:
               PYDOTVERS=3.13
             ;;
             homebrew)
-              DBVERS=mysql
+              DBVERS=mariadb
               PYVERS=314
               PYDOTVERS=3.14
             ;;

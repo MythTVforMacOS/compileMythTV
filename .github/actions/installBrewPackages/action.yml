@@ -86,8 +86,8 @@ runs:
         echo "Install requested python"
         ${PKGMGR_CMD} install --force --overwrite \
                               python3 python-setuptools python-packaging
-        echo "Installing ansible and ${{ inputs.DBVERS }}"
-        ${PKGMGR_CMD} install --force --overwrite ansible ${{ inputs.DBVERS }} pkg-config
+        echo "Installing ansible"
+        ${PKGMGR_CMD} install --force --overwrite ansible
     - name: "Install required packages via ansible"
       id: ansible_install
       shell: bash
