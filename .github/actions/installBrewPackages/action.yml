@@ -80,7 +80,7 @@ runs:
         PKGMGR_BIN=$PKGMGR_PREFIX/bin
         echo "PKGMGR_BIN=$PKGMGR_BIN" >> $GITHUB_ENV
         export PATH=$PATH:$PKGMGR_BIN
-        if [ ${{ env.OS_VERS }} <= 13 ];then
+        if [ ${{ env.OS_VERS }} <= 13 ]; then
           export HOMEBREW_NO_AUTO_UPDATE=1
         fi
         echo "Install requested python"
@@ -95,6 +95,7 @@ runs:
         cd ansible
         echo "Installing packages via ansible playbook"
         XTRA_VARS="database_version=${{ inputs.DBVERS }}"
+        XTRA_VARS="$XTRA_VARS ansible_python_interpreter=$PKGMGR_PREFIX/bin/python${{ inputs.PYDOTVERS }}"
         if [ ${{ inputs.QTVERS }} == "qt@5" ] || [ ${{ inputs.QTVERS }} == "qt5" ]; then
           XTRA_VARS="$XTRA_VARS qt5=true"
         fi
