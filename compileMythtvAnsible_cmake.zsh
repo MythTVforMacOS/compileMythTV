@@ -186,7 +186,7 @@ case $PKGMGR in
   homebrew)
     DATABASE_VERS=mariadb
     QT_PKMGR_VERS=qt@6
-    PYTHON_VERS="313"
+    PYTHON_VERS="314"
   ;;
 esac
 
