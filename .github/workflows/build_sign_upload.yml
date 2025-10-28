@@ -199,7 +199,7 @@ jobs:
             15)
               OS_NAME="Sequoia"
             ;;
-            24)
+            26)
               OS_NAME="Tahoe"
             ;;
             *)
