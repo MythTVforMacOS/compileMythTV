@@ -202,6 +202,7 @@ jobs:
                 13|14)
                   PYVERS=313
                   PYDOTVERS=3.13
+                ;;
                 *)
                   PYVERS=314
                   PYDOTVERS=3.14
