@@ -194,7 +194,7 @@ jobs:
           echo "DBVERS=${DBVERS}" >> $GITHUB_ENV
           echo "QTVERS=${QTVERS}" >> $GITHUB_ENV
       - name: Setup initial build flags
-        if: bld_flags
+        id: bld_flags
         run: |
           # note the code sigining ID needs to be passed in later
           # as its a secret variable
