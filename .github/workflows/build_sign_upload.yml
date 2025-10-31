@@ -158,7 +158,8 @@ jobs:
               OS_NAME="Tahoe"
             ;;
             *)
-              OS_NAME="$(awk '/SOFTWARE LICENSE AGREEMENT FOR macOS/' '/System/Library/CoreServices/Setup Assistant.app/Contents/Resources/en.lproj/OSXSoftwareLicense.rtf' | awk -F 'macOS ' '{print $NF}' | awk '{print substr($0, 0, length($0)-1)}')"
+              echo "Unsupported OS"
+              exit 1
             ;;
           esac
           echo "OS_VERS=$OS_VERS" >> $GITHUB_ENV
