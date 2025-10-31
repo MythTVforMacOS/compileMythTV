@@ -42,10 +42,10 @@ runs:
         echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
         ANS_PB="${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
         echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
-        if [ ${{ env.OS_VERS }} == 13 ];then
-          echo "Updating homebrew"
-          brew update
-        fi
+        #if [ ${{ env.OS_VERS }} > 13 ];then
+        #  echo "Updating homebrew"
+        #  ${PKGMGR_CMD} update
+        #fi
   #  - name: "Corss-Compile: Remove and reinstall homebrew install"
   #    id: setup_brew_cross_compile
   #    if: ${{ inputs.CROSS_COMPILE == 'true' }}
@@ -80,14 +80,18 @@ runs:
         PKGMGR_BIN=$PKGMGR_PREFIX/bin
         echo "PKGMGR_BIN=$PKGMGR_BIN" >> $GITHUB_ENV
         export PATH=$PATH:$PKGMGR_BIN
-        if [ ${{ env.OS_VERS }} <= 13 ]; then
-          export HOMEBREW_NO_AUTO_UPDATE=1
-        fi
-        echo "Install requested python"
-        ${PKGMGR_CMD} install --force --overwrite \
-                              python@${{ inputs.PYDOTVERS }} python-setuptools python-packaging
-        echo "Installing ansible"
+        #if [ ${{ env.OS_VERS }} <= 13 ]; then
+        #  export HOMEBREW_NO_AUTO_UPDATE=1
+        #fi
+        echo "Install python ${{ inputs.PYDOTVERS }}"
+        ${PKGMGR_CMD} install --force --overwrite python@${{ inputs.PYDOTVERS }}
+        ${PKGMGR_CMD} unlink python3
         ${PKGMGR_CMD} link --force python@${{ inputs.PYDOTVERS }}
+        echo "Installing python support packages"
+        ${PKGMGR_CMD} install python-setuptools python-packaging
+        ${PKGMGR_CMD} link python-setuptools
+        ${PKGMGR_CMD} link python-packaging
+        echo "Installing ansible"
         ${PKGMGR_CMD} install --force --overwrite ansible
     - name: "Install required packages via ansible"
       id: ansible_install
@@ -102,8 +106,8 @@ runs:
         fi
         echo "Running ansible"
         ANSIBLE_BECOME=false ANSIBLE_BECOME_ASK_PASS=False ${ANS_PB} mythtv.yml --extra-vars="$XTRA_VARS" --limit=localhost
-        brew unlink qt
-        brew link qt
+        ${PKGMGR_CMD}  unlink qt
+        ${PKGMGR_CMD}  link qt
     - name: Fix the HDHomeRun library on ARM64
       shell: bash
       run: ln -s $PKGMGR_PREFIX/opt/libhdhomerun/lib/libhdhomerun.dylib $PKGMGR_PREFIX/opt/libhdhomerun/lib/libhdhomerun_arm64.dylib
