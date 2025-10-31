@@ -206,9 +206,9 @@ jobs:
                   PYVERS=314
                   PYDOTVERS=3.14
                 ;;
+              esac
             ;;
           esac
-
           echo "PKGMGR=${PKGMGR}" >> $GITHUB_ENV
           echo "DBVERS=${DBVERS}" >> $GITHUB_ENV
           echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
