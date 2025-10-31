@@ -184,16 +184,20 @@ jobs:
               DBVERS=mysql8
               PYVERS=313
               PYDOTVERS=3.13
-              echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
-              echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
             ;;
             homebrew)
               DBVERS=mariadb
+              PYTHVERS_MAJ=$(python3 -c "import sys; print(sys.version_info.major)")
+              PYTHVERS_MIN=$(python3 -c "import sys; print(sys.version_info.minor)")
+              PYVERS="$PYTHVERS_MAJ$PYTHVERS_MIN"
+              PYDOTVERS="$PYTHVERS_MAJ.$PYTHVERS_MIN"
             ;;
           esac
           echo "PKGMGR=${PKGMGR}" >> $GITHUB_ENV
           echo "DBVERS=${DBVERS}" >> $GITHUB_ENV
           echo "QTVERS=${QTVERS}" >> $GITHUB_ENV
+          echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
+          echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
       - name: Setup initial build flags
         id: bld_flags
         run: |
@@ -202,6 +206,7 @@ jobs:
           BLD_FLGS="--working_dir=${GITHUB_WORKSPACE} \
             --version=${MYTHBRANCH} \
             --qt-version=${{ env.QTVERS }} \
+            --python-version=${{ env.PYVERS }}
             --frontend-bundle=ON \
             --generate-distribution=true \
             --signing-id=\"${{ vars.PROD_MACOS_CERTIFICATE_NAME }}\" \
