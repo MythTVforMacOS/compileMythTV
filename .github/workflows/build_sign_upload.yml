@@ -195,17 +195,15 @@ jobs:
               DBVERS=mysql8
               PYVERS=313
               PYDOTVERS=3.13
+              echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
+              echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
             ;;
             homebrew)
               DBVERS=mariadb
-              PYVERS=314
-              PYDOTVERS=3.14
             ;;
           esac
           echo "PKGMGR=${PKGMGR}" >> $GITHUB_ENV
           echo "DBVERS=${DBVERS}" >> $GITHUB_ENV
-          echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
-          echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
           echo "QTVERS=${QTVERS}" >> $GITHUB_ENV
       - name: "Checkout MythTV/ansible repository"
         uses: actions/checkout@v4
@@ -220,8 +218,6 @@ jobs:
           ARCH: ${{ env.ARCH }}
           CROSS_COMPILE: false
           DBVERS: ${{ env.DBVERS }}
-          PYVERS: ${{ env.PYVERS }}
-          PYDOTVERS: ${{ env.PYDOTVERS }}
           QTVERS: ${{ env.QTVERS }}
       - name: "Install MacPorts Packages"
         if: ${{ env.PKGMGR == 'macports' || env.OS_VERS == 13 }}

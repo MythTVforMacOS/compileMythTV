@@ -11,12 +11,6 @@ inputs:
   DBVERS:
     required: true
     type: string
-  PYVERS:
-    required: true
-    type: string
-  PYDOTVERS:
-    required: true
-    type: string
   QTVERS:
     required: true
     type: string
@@ -83,10 +77,6 @@ runs:
         #if [ ${{ env.OS_VERS }} <= 13 ]; then
         #  export HOMEBREW_NO_AUTO_UPDATE=1
         #fi
-        echo "Install python ${{ inputs.PYDOTVERS }}"
-        ${PKGMGR_CMD} install --force --overwrite python@${{ inputs.PYDOTVERS }}
-        ${PKGMGR_CMD} unlink python3
-        ${PKGMGR_CMD} link --force python@${{ inputs.PYDOTVERS }}
         echo "Installing python support packages"
         ${PKGMGR_CMD} install python-setuptools python-packaging
         ${PKGMGR_CMD} link python-setuptools
@@ -100,7 +90,6 @@ runs:
         cd ansible
         echo "Installing packages via ansible playbook"
         XTRA_VARS="database_version=${{ inputs.DBVERS }}"
-        XTRA_VARS="$XTRA_VARS ansible_python_interpreter=$PKGMGR_PREFIX/bin/python${{ inputs.PYDOTVERS }}"
         if [ ${{ inputs.QTVERS }} == "qt@5" ] || [ ${{ inputs.QTVERS }} == "qt5" ]; then
           XTRA_VARS="$XTRA_VARS qt5=true"
         fi
