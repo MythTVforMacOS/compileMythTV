@@ -42,10 +42,10 @@ runs:
         echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
         ANS_PB="${PKGMGR_PREFIX}/opt/ansible/bin/ansible-playbook"
         echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
-        #if [ ${{ env.OS_VERS }} > 13 ];then
-        #  echo "Updating homebrew"
-        #  brew update
-        #fi
+        if [ ${{ env.OS_VERS }} == 13 ];then
+          echo "Updating homebrew"
+          brew update
+        fi
   #  - name: "Corss-Compile: Remove and reinstall homebrew install"
   #    id: setup_brew_cross_compile
   #    if: ${{ inputs.CROSS_COMPILE == 'true' }}
