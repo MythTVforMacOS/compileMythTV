@@ -104,39 +104,6 @@ jobs:
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       USE_CCACHE: ${{ inputs.USE_CCACHE }}
     steps:
-      - name: Setup default versions
-        id: version_setup
-        run: |
-          # os overrides
-          case ${{ matrix.os }} in
-            'macOS-13')
-              PKGMGR=macports
-              QTVERS=qt5
-            ;;
-            *)
-              PKGMGR=${{ inputs.PKGMGR }}
-              QTVERS=qt6
-            ;;
-          esac
-          # PKGMGR overrids
-          case $PKGMGR in
-            macports)
-              DBVERS=mysql8
-              PYVERS=313
-              PYDOTVERS=3.13
-            ;;
-            homebrew)
-              DBVERS=mariadb
-              PYVERS=314
-              PYDOTVERS=3.14
-            ;;
-          esac
-
-          echo "PKGMGR=${PKGMGR}" >> $GITHUB_ENV
-          echo "DBVERS=${DBVERS}" >> $GITHUB_ENV
-          echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
-          echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
-          echo "QTVERS=${QTVERS}" >> $GITHUB_ENV
       - name: "Check Architecture"
         id: check_arch
         run: |
@@ -208,6 +175,45 @@ jobs:
           esac
           echo "OS_VERS=$OS_VERS" >> $GITHUB_ENV
           echo "OS_NAME=$OS_NAME" >> $GITHUB_ENV
+      - name: Setup default versions
+        id: version_setup
+        run: |
+          # os overrides
+          case ${{ env.OS_VERS }} in
+            'macOS-13')
+              PKGMGR=macports
+              QTVERS=qt5
+            ;;
+            *)
+              PKGMGR=${{ inputs.PKGMGR }}
+              QTVERS=qt6
+            ;;
+          esac
+          # PKGMGR overrids
+          case $PKGMGR in
+            macports)
+              DBVERS=mysql8
+              PYVERS=313
+              PYDOTVERS=3.13
+            ;;
+            homebrew)
+              DBVERS=mariadb
+              case $OS_VERS in
+                13|14)
+                  PYVERS=313
+                  PYDOTVERS=3.13
+                *)
+                  PYVERS=314
+                  PYDOTVERS=3.14
+                ;;
+            ;;
+          esac
+
+          echo "PKGMGR=${PKGMGR}" >> $GITHUB_ENV
+          echo "DBVERS=${DBVERS}" >> $GITHUB_ENV
+          echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
+          echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
+          echo "QTVERS=${QTVERS}" >> $GITHUB_ENV
       - name: "Checkout MythTV/ansible repository"
         uses: actions/checkout@v4
         with:
