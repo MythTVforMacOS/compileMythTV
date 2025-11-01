@@ -202,7 +202,7 @@ jobs:
           echo "QTVERS=${QTVERS}" >> $GITHUB_ENV
           echo "PYVERS=${PYVERS}" >> $GITHUB_ENV
           echo "PYDOTVERS=${PYDOTVERS}" >> $GITHUB_ENV
-      - name: Setup initial build flags
+      - name: Setup build flags
         id: bld_flags
         run: |
           # note the code sigining ID needs to be passed in later
@@ -212,7 +212,7 @@ jobs:
             --qt-version=${{ env.QTVERS }} \
             --python-version=${{ env.PYVERS }}
             --frontend-bundle=ON \
-            --generate-distribution=true \
+            --generate-distribution=ON \
             --signing-id=\"${{ vars.PROD_MACOS_CERTIFICATE_NAME }}\" \
             --notarization-keychain=${NOTAR_KEYCHAIN} \
             --skip-ansible=true \
