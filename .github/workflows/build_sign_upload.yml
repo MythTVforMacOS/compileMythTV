@@ -112,9 +112,12 @@ jobs:
               ARCH='arm64'
               OS=${{ matrix.os }}
             ;;
-            'macOS-13'|'macOS-14-large'|'macOS-15-large')
+          case 'macOS-13')
               ARCH='x86_64'
-              OS=${ ${{ matrix.os }}"-large" }
+              OS=${{ matrix.os }}
+          case 'macOS-14-large'|'macOS-15-large')
+              ARCH='x86_64'
+              OS=${${{ matrix.os }}%"-large"}
             ;;
             *)
               echo "Architecture detection failure"
