@@ -211,8 +211,8 @@ jobs:
             --version=${MYTHBRANCH} \
             --qt-version=${{ env.QTVERS }} \
             --python-version=${{ env.PYVERS }}
-            --frontend-bundle=ON \
-            --generate-distribution=ON \
+            --frontend-bundle=true \
+            --generate-distribution=true \
             --signing-id=\"${{ vars.PROD_MACOS_CERTIFICATE_NAME }}\" \
             --notarization-keychain=${NOTAR_KEYCHAIN} \
             --skip-ansible=true \
