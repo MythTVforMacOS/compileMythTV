@@ -210,9 +210,9 @@ jobs:
           BLD_FLGS="--working_dir=${GITHUB_WORKSPACE} \
             --version=${MYTHBRANCH} \
             --qt-version=${{ env.QTVERS }} \
-            --python-version=${{ env.PYVERS }}
-            --frontend-bundle=true \
-            --generate-distribution=true \
+            --python-version=${{ env.PYVERS }} \
+            --frontend-bundle=ON \
+            --generate-distribution=ON \
             --signing-id=\"${{ vars.PROD_MACOS_CERTIFICATE_NAME }}\" \
             --notarization-keychain=${NOTAR_KEYCHAIN} \
             --skip-ansible=true \
