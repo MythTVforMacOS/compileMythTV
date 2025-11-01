@@ -86,11 +86,11 @@ runs:
         echo "Install python ${{ inputs.PYDOTVERS }}"
         ${PKGMGR_CMD} install --force --overwrite python@${{ inputs.PYDOTVERS }}
         ${PKGMGR_CMD} unlink python3
-        ${PKGMGR_CMD} link --force python@${{ inputs.PYDOTVERS }}
+        ${PKGMGR_CMD} link --force --overwrite python@${{ inputs.PYDOTVERS }}
         echo "Installing python support packages"
         ${PKGMGR_CMD} install python-setuptools python-packaging
-        ${PKGMGR_CMD} link python-setuptools
-        ${PKGMGR_CMD} link python-packaging
+        ${PKGMGR_CMD} link --force --overwrite python-setuptools
+        ${PKGMGR_CMD} link --force --overwrite python-packaging
         echo "Installing ansible"
         ${PKGMGR_CMD} install --force --overwrite ansible
     - name: "Install required packages via ansible"
