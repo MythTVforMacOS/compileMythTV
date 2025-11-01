@@ -175,7 +175,7 @@ jobs:
           case ${{ env.OS_VERS }} in
             *13*)
               PKGMGR=macports
-              QTVERS=qt68
+              QTVERS=qt5
             ;;
             *)
               PKGMGR=${{ inputs.PKGMGR }}
@@ -231,6 +231,8 @@ jobs:
           ARCH: ${{ env.ARCH }}
           CROSS_COMPILE: false
           DBVERS: ${{ env.DBVERS }}
+          PYVERS: ${{ env.PYVERS }}
+          PYDOTVERS: ${{ env.PYDOTVERS }}
           QTVERS: ${{ env.QTVERS }}
       - name: "Install MacPorts Packages"
         if: ${{ env.PKGMGR == 'macports' || env.OS_VERS == 13 }}
