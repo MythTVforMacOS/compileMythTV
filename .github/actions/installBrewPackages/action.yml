@@ -85,7 +85,7 @@ runs:
         #fi
         for formula in python@${{ inputs.PYDOTVERS }} python-packaging python-setuptools ansible; do
           ${PKGMGR_CMD} unlink $formula
-          if brew list --versions $formula > /dev/null; then
+          if brew list --formulae | grep -q $formula; then
             echo "Re-installing $formula"
             ${PKGMGR_CMD} reinstall $formula
           else
