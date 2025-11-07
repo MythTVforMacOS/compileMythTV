@@ -83,16 +83,19 @@ runs:
         #if [ ${{ env.OS_VERS }} <= 13 ]; then
         #  export HOMEBREW_NO_AUTO_UPDATE=1
         #fi
-        echo "Install python ${{ inputs.PYDOTVERS }}"
-        ${PKGMGR_CMD} install --force --overwrite python@${{ inputs.PYDOTVERS }}
-        ${PKGMGR_CMD} unlink python3
-        ${PKGMGR_CMD} link --force --overwrite python@${{ inputs.PYDOTVERS }}
-        echo "Installing python support packages"
-        ${PKGMGR_CMD} install python-setuptools python-packaging
-        ${PKGMGR_CMD} link --force --overwrite python-setuptools
-        ${PKGMGR_CMD} link --force --overwrite python-packaging
-        echo "Installing ansible"
-        ${PKGMGR_CMD} install --force --overwrite ansible
+        for formula in python${{ inputs.PYDOTVERS }} python-packaging python-setuptools ansible; do
+          ${PKGMGR_CMD} unlink $formula
+          if brew list --versions $formula > /dev/null; then
+            echo "Re-installing $formula"
+            ${PKGMGR_CMD} reinstall $formula
+          else
+            echo "Installing $formula"
+            ${PKGMGR_CMD} install $formula
+          fi
+          echo "Re-linking $formula"
+          ${PKGMGR_CMD} unlink $formula
+          ${PKGMGR_CMD} link $formula
+        done
     - name: "Install required packages via ansible"
       id: ansible_install
       shell: bash
