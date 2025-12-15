@@ -94,7 +94,7 @@ jobs:
       BUILD_13_X86_64: true
       BUILD_14_X86_64: false
       BUILD_14_ARM64: true
-      BUILD_15_X86_64: false
+      BUILD_15_X86_64: true
       BUILD_15_ARM64: true
       BUILD_26_ARM64: true
     secrets: inherit
@@ -109,7 +109,7 @@ jobs:
       BUILD_13_X86_64: true
       BUILD_14_X86_64: false
       BUILD_14_ARM64: true
-      BUILD_15_X86_64: false
+      BUILD_15_X86_64: true
       BUILD_15_ARM64: true
       BUILD_26_ARM64: true
     secrets: inherit

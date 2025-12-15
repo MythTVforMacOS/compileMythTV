@@ -73,9 +73,8 @@ jobs:
           fi
           # macOS 15 x86_64 runner
           if [ ${{ inputs.BUILD_15_X86_64 }} == 'true' ]; then
-            ### THIS IS A PAID RUNNER ###
             echo "Adding macOS 15 x84_64 runner"
-            RUNNER="$RUNNER macOS-15-large"
+            RUNNER="$RUNNER macOS-15-intel"
           fi
           # macOS 15 arm64 runner
           if [ ${{ inputs.BUILD_15_ARM64 }} == 'true' ]; then

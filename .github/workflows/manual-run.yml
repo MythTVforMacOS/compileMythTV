@@ -32,7 +32,7 @@ on:  # yamllint disable-line rule:truthy
         default: true
       BUILD_15_X86_64:
         type: boolean
-        description: "Build for macOS 15 x86_64 (PAID)"
+        description: "Build for macOS 15 x86_64"
         default: false
       BUILD_15_ARM64:
         type: boolean
