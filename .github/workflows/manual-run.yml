@@ -37,7 +37,7 @@ on:  # yamllint disable-line rule:truthy
       BUILD_26_ARM64:
         type: boolean
         description: "Build for macOS 26"
-        default: false
+        default: true
       BUILDTYPE:
         type: choice
         description: "Choose a build type"
