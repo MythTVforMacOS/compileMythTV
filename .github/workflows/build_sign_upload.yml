@@ -16,10 +16,6 @@ on:  # yamllint disable-line rule:truthy
         required: false
         type: string
         default: production
-      BUILD_13_X86_64:
-        required: true
-        type: boolean
-        default: false
       BUILD_14_X86_64:
         required: true
         type: boolean
@@ -55,11 +51,6 @@ jobs:
         id: generate-matrix
         run: |
           RUNNER=''
-          # macOS 13 runner is intel only and requires macports
-          if [ ${{ inputs.BUILD_13_X86_64 }} == 'true' ]; then
-            echo "Adding macOS 13 x84_64 runner"
-            RUNNER="$RUNNER macOS-13"
-          fi
           # macOS 14 x86_64 runner
           if [ ${{ inputs.BUILD_14_X86_64 }} == 'true' ]; then
             ### THIS IS A PAID RUNNER ###
