@@ -17,7 +17,7 @@ jobs:
     runs-on: 'macos-latest'
     env:
       MASTER_BRANCH: "master"
-      FIXES_BRANCH: "fixes/35"
+      FIXES_BRANCH: "fixes/36"
       USE_PAID_RUNNERS: false
     outputs:
       MASTER_BRANCH: ${{ env.MASTER_BRANCH }}

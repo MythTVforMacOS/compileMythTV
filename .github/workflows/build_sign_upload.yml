@@ -89,7 +89,7 @@ jobs:
         os: ${{ fromJson(needs.init.outputs.RUNNER) }}
     runs-on: ${{ matrix.os }}
     env:
-      MASTER_VERS: 36
+      MASTER_VERS: 37
       NOTAR_KEYCHAIN: "notary"
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       USE_CCACHE: ${{ inputs.USE_CCACHE }}
