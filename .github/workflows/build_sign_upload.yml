@@ -201,7 +201,7 @@ jobs:
             --update-git=false"
           echo "BLD_FLGS=${BLD_FLGS}" >> $GITHUB_ENV
       - name: "Checkout MythTV/ansible repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@master
         with:
           repository: MythTV/ansible
           path: ansible
@@ -228,7 +228,7 @@ jobs:
           PYDOTVERS: ${{ env.PYDOTVERS }}
           QTVERS: ${{ env.QTVERS }}
       - name: Checkout Mythtv/mythtv repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@master
         with:
           repository: MythTV/mythtv
           ref: ${{ env.MYTHBRANCH }}
