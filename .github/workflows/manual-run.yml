@@ -12,17 +12,12 @@ on:  # yamllint disable-line rule:truthy
           - "master"
           - "fixes/36"
           - "fixes/35"
-          - "fixes/34"
       PKGMGR:
         type: choice
         description: "Choose a package manager"
         options:
           - "homebrew"
           - "macports"
-      BUILD_14_X86_64:
-        type: boolean
-        description: "Build for macOS 14 x86_64 (PAID)"
-        default: false
       BUILD_14_ARM64:
         type: boolean
         description: "Build for macOS 14 arm64"
@@ -35,9 +30,13 @@ on:  # yamllint disable-line rule:truthy
         type: boolean
         description: "Build for macOS 15 arm64"
         default: true
+      BUILD_26_X86_64:
+        type: boolean
+        description: "Build for macOS 26 x86_64"
+        default: true
       BUILD_26_ARM64:
         type: boolean
-        description: "Build for macOS 26"
+        description: "Build for macOS 26 arm64"
         default: true
       BUILDTYPE:
         type: choice
@@ -67,10 +66,10 @@ jobs:
       USE_CCACHE: false
       MYTHBRANCH: ${{ inputs.MYTHBRANCH }}
       BUILDTYPE: ${{ inputs.BUILDTYPE }}
-      BUILD_14_X86_64: ${{ inputs.BUILD_14_X86_64 }}
       BUILD_14_ARM64: ${{ inputs.BUILD_14_ARM64 }}
       BUILD_15_X86_64: ${{ inputs.BUILD_15_X86_64 }}
       BUILD_15_ARM64: ${{ inputs.BUILD_15_ARM64 }}
+      BUILD_26_X86_64: ${{ inputs.BUILD_26_ARM64 }}
       BUILD_26_ARM64: ${{ inputs.BUILD_26_ARM64 }}
       PKGMGR: ${{ inputs.PKGMGR }}
     secrets: inherit

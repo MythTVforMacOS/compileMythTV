@@ -18,24 +18,17 @@ jobs:
     env:
       MASTER_BRANCH: "master"
       FIXES_BRANCH: "fixes/36"
-      USE_PAID_RUNNERS: false
     outputs:
       MASTER_BRANCH: ${{ env.MASTER_BRANCH }}
       UPDATE_MASTER: ${{ env.UPDATE_MASTER }}
-      UPDATE_MASTER_PAID: ${{ env.UPDATE_MASTER_PAID }}
       FIXES_BRANCH: ${{ env.FIXES_BRANCH }}
       UPDATE_FIXES: ${{ env.UPDATE_FIXES }}
-      UPDATE_FIXES_PAID: ${{ env.UPDATE_FIXES_PAID }}
     steps:
       - uses: actions/checkout@master
       - name: "Setup environmental variables"
         id: set-env-vars
         run: |
           echo "GIT_CACHE_DIR=$HOME/mythtv" >> $GITHUB_ENV
-          echo "DAY_OF_MONTH=$(date +'%d')" >> $GITHUB_ENV
-          if [ $DAY_OF_MONTH = 1 ]; then
-            echo "USE_PAID_RUNNERS=true" >> $GITHUB_ENV
-          fi
       - name: "Setup Mythtv Repo Cache"
         id: cache
         env:
@@ -62,12 +55,6 @@ jobs:
         run: |
           UPDATE_MASTER=${{ steps.gitcheck_master.outputs.UPDATED }}
           UPDATE_FIXES=${{ steps.gitcheck_fixes.outputs.UPDATED }}
-          if [ $UPDATE_MASTER && ${USE_PAID_RUNNERS} == 'true' ]; then
-            UPDATE_MASTER_PAID=true
-          fi
-          if [ $UPDATE_FIXES && ${USE_PAID_RUNNERS} == 'true' ]; then
-            UPDATE_FIXES_PAID=true
-          fi
           # force overide
           if ${FORCE_BUILD}; then
             UPDATE_MASTER=true
@@ -76,13 +63,9 @@ jobs:
           # debug output
           echo "UPDATE_MASTER=$UPDATE_MASTER"
           echo "UPDATE_FIXES=$UPDATE_FIXES"
-          echo "UPDATE_MASTER_PAID=$UPDATE_MASTER_PAID"
-          echo "UPDATE_FIXES_PAID=$UPDATE_FIXES_PAID"
           # instrument environmental vars
           echo "UPDATE_MASTER=$UPDATE_MASTER" >> $GITHUB_ENV
           echo "UPDATE_FIXES=$UPDATE_FIXES" >> $GITHUB_ENV
-          echo "UPDATE_MASTER_PAID=$UPDATE_MASTER_PAID" >> $GITHUB_ENV
-          echo "UPDATE_FIXES_PAID=$UPDATE_FIXES_PAID" >> $GITHUB_ENV
   build-mythtv-master-cmake:
     needs: check-mythtv
     if: needs.check-mythtv.outputs.UPDATE_MASTER == 'true'
@@ -91,10 +74,10 @@ jobs:
       USE_CCACHE: true
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
       BUILDTYPE: production
-      BUILD_14_X86_64: false
       BUILD_14_ARM64: true
       BUILD_15_X86_64: true
       BUILD_15_ARM64: true
+      BUILD_26_X86_64: true
       BUILD_26_ARM64: true
     secrets: inherit
   build-mythtv-fixes-cmake:
@@ -105,37 +88,9 @@ jobs:
       USE_CCACHE: true
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
       BUILDTYPE: production
-      BUILD_14_X86_64: false
       BUILD_14_ARM64: true
       BUILD_15_X86_64: true
       BUILD_15_ARM64: true
+      BUILD_26_X86_64: true
       BUILD_26_ARM64: true
-    secrets: inherit
-  build-mythtv-master-paid:
-    needs: check-mythtv
-    if: needs.check-mythtv.outputs.MASTER_BRANCH_PAID == 'true'
-    uses: ./.github/workflows/build_sign_upload.yml
-    with:
-      USE_CCACHE: true
-      MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
-      BUILDTYPE: production
-      BUILD_14_X86_64: true
-      BUILD_14_ARM64: false
-      BUILD_15_X86_64: false
-      BUILD_15_ARM64: false
-      BUILD_26_ARM64: false
-    secrets: inherit
-  build-mythtv-fixes-paid:
-    needs: check-mythtv
-    if: needs.check-mythtv.outputs.UPDATE_FIXES_PAID == 'true'
-    uses: ./.github/workflows/build_sign_upload.yml
-    with:
-      USE_CCACHE: true
-      MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
-      BUILDTYPE: production
-      BUILD_14_X86_64: true
-      BUILD_14_ARM64: false
-      BUILD_15_X86_64: false
-      BUILD_15_ARM64: false
-      BUILD_26_ARM64: false
     secrets: inherit
