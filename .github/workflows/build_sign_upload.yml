@@ -211,7 +211,6 @@ jobs:
         id: installHB
         with:
           ARCH: ${{ env.ARCH }}
-          CROSS_COMPILE: false
           DBVERS: ${{ env.DBVERS }}
           PYVERS: ${{ env.PYVERS }}
           PYDOTVERS: ${{ env.PYDOTVERS }}
@@ -222,7 +221,6 @@ jobs:
         id: installPorts
         with:
           ARCH: ${{ env.ARCH }}
-          CROSS_COMPILE: false
           DBVERS: ${{ env.DBVERS }}
           PYVERS: ${{ env.PYVERS }}
           PYDOTVERS: ${{ env.PYDOTVERS }}
@@ -251,7 +249,6 @@ jobs:
           DMG_OUT_DIR: ${{ env.DMG_OUT_DIR }}
           OS: ${{ env.OS }}
           ARCH: ${{ env.ARCH }}
-          CROSS_COMPILE: false
           VERSNUM: ${{ env.VERSNUM }}
           BLD_FLGS: ${{ env.BLD_FLGS }}
           USE_CCACHE: ${{ env.USE_CCACHE }}

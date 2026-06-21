@@ -181,7 +181,7 @@ case $PKGMGR in
       DATABASE_VERS=mariadb-10.5
     fi
     QT_PKMGR_VERS=qt6
-    PYTHON_VERS="313"
+    PYTHON_VERS="314"
   ;;
   homebrew)
     DATABASE_VERS=mariadb

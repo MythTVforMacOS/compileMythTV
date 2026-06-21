@@ -11,9 +11,6 @@ inputs:
   ARCH:
     require: true
     type: string
-  CROSS_COMPILE:
-    required: true
-    type: boolean
   VERSNUM:
     require: true
     type: string
@@ -40,14 +37,6 @@ runs:
         ZSH_CMD="arch -${ARCH} /bin/zsh"
         echo "ZSH_CMD=$ZSH_CMD" >> $GITHUB_ENV
         echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
-    - name: "Setup Cross-Compile"
-      id: crosscompile
-      if: ${{ inputs.CROSS_COMPILE == 'true' }}
-      shell: bash
-      run: |
-        CX_CMD="arch -${{ inputs.ARCH }}"
-        ZSH_CMD="$CX_CMD /bin/zsh"
-        echo "ZSH_CMD=$ZSH_CMD" >> $GITHUB_ENV
     - name: Check ccache
       id: setup_ccache
       if: ${{ inputs.USE_CCACHE == 'true' }}

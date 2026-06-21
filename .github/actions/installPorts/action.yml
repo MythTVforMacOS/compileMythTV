@@ -5,9 +5,6 @@ inputs:
   ARCH:
     required: true
     type: string
-  CROSS_COMPILE:
-    required: true
-    type: boolean
   PYVERS:
     required: true
     type: string
@@ -58,12 +55,7 @@ runs:
       shell: bash
       run: |
         PKGMGR_CMD=$(which port)
-        # If we're cross-compiling, we need to change this to the selected arch
-        if $CROSS_COMPILE; then
-          PKGMGR_CMD="sudo arch -${ARCH} $PKGMGR_CMD"
-        else
-          PKGMGR_CMD="sudo $PKGMGR_CMD"
-        fi
+        PKGMGR_CMD="sudo $PKGMGR_CMD"
         echo "PKGMGR_CMD=$PKGMGR_CMD" >> $GITHUB_ENV
         echo "PKGMGR_BIN=$PKGMGR_PREFIX/bin" >> $GITHUB_ENV
         export PATH=$PATH:$PKGMGR_BIN
@@ -90,9 +82,6 @@ runs:
         ${PKGMGR_CMD} select --set ansible py${PYVERS}-ansible
         ${PKGMGR_CMD} select --set virtualenv virtualenv${PYVERS}
         ANS_PB="${PKGMGR_BIN}/ansible-playbook-${PYDOTVERS}"
-        if $CROSS_COMPILE; then
-          ANS_PB="arch -${ARCH} $ANS_PB"
-        fi
         echo "ANS_PB=$ANS_PB" >> $GITHUB_ENV
     - name: "Install required ports via ansible"
       id: ansible_install
