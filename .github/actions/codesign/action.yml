@@ -78,13 +78,13 @@ runs:
         # prompt with a UI dialog asking for the certificate password, which we
         # can't use in a headless CI environment
         if [ -f ~/Library/Keychains/build.keychain-db ]; then
-          security delete-keychain build.keychain
+          security delete-keychain build.keychain-db
         fi
-        security create-keychain -p "${CI_PWD}" build.keychain
-        security default-keychain -s build.keychain
-        security unlock-keychain -p "${CI_PWD}" build.keychain
-        security import CERT.p12 -P "${CERT_PWD}" -A -t cert -f pkcs12 -k build.keychain
-        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${CI_PWD}" build.keychain
+        security create-keychain -p "${CI_PWD}" build.keychain-db
+        security default-keychain -s build.keychain-db
+        security unlock-keychain -p "${CI_PWD}" build.keychain-db
+        security import CERT.p12 -P "${CERT_PWD}" -A -t cert -f pkcs12 -k build.keychain-db
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${CI_PWD}" build.keychain-db
         security set-keychain-settings -t 10800
     - name: "Setup Notarization Credentials"
       id: notarize_creds
@@ -92,7 +92,7 @@ runs:
       run: |
         # setup notraization keychain
         echo "Create keychain profile"
-        security unlock-keychain -p "$CI_PWD" build.keychain
+        security unlock-keychain -p "$CI_PWD" build.keychain-db
         xcrun notarytool store-credentials "notary" --apple-id "${APPLE_ID}" --team-id "${TEAM_ID}" --password "${NOTA_PWD}"
     - name: "Sign App Bundles"
       id: sign_apps
@@ -147,7 +147,7 @@ runs:
       run: |
         echo "Notarize Applications"
         for APP in "$APP_W" "$APP_WO"; do
-          security unlock-keychain -p "$CI_PWD" build.keychain
+          security unlock-keychain -p "$CI_PWD" build.keychain-db
           xcrun notarytool submit "$APP.zip" --keychain-profile "notary" --wait
           xcrun stapler staple "$APP"
           rm "$APP.zip"
@@ -175,7 +175,7 @@ runs:
         echo "Notarizing DMGs"
         for DMG in "${DMG_W}" "${DMG_WO}"; do
           echo "Codesigning $DMG"
-          security unlock-keychain -p "$CI_PWD" build.keychain
+          security unlock-keychain -p "$CI_PWD" build.keychain-db
           codesign --force --sign "$CERT_NAME" "$DMG"
           echo "Notarizing $DMG"
           xcrun notarytool submit "$DMG" --keychain-profile "notary" --wait
@@ -188,5 +188,5 @@ runs:
       continue-on-error: true
       run: |
         # for ephemeral runners, this stup is unnecessary...
-        security delete-keychain build.keychain
+        security delete-keychain build.keychain-db
         rm CERT.p12
