@@ -46,7 +46,7 @@ runs:
         security unlock-keychain -p "${{ inputs.CI_PWD }}" build.keychain-db
         security import CERT.p12 -P "${{ inputs.CERT_PWD }}" -A -t cert -f pkcs12 -k build.keychain-db
         security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ inputs.CI_PWD }}" build.keychain-db
-        security set-keychain-settings -t 14400
+        security set-keychain-settings -lut 14400 build.keychain-db
     - name: "Setup Notarization Credentials"
       id: notarize_creds
       shell: bash
@@ -54,4 +54,4 @@ runs:
         # setup notraization keychain
         echo "Create keychain profile"
         security unlock-keychain -p "${{ inputs.CI_PWD }}" build.keychain-db
-        xcrun notarytool store-credentials ${{ inputs.NOTAR_KEYCHAIN }} --apple-id "${{ inputs.APPLE_ID }}" --team-id "${{ inputs.TEAM_ID }}" --password "${{ inputs.NOTAR_PWD }}"
+        xcrun notarytool store-credentials ${{ inputs.NOTAR_KEYCHAIN }} --apple-id "${{ inputs.APPLE_ID }}" --team-id "${{ inputs.TEAM_ID }}" --password "${{ inputs.NOTAR_PWD }}" --keychain build.keychain-db

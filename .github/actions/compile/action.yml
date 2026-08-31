@@ -53,8 +53,8 @@ runs:
       run: |
         # First build with plugins
         export CCACHE_DIR=${CCACHE_DIR}
-        /usr/bin/security unlock-keychain
-        security unlock-keychain -p "${{ inputs.CI_PWD }}" build.keychain-db
+        #/usr/bin/security unlock-keychain
+        security unlock-keychain -p "${{ inputs.CI_PWD }}" ~/Library/Keychains/build.keychain-db
         ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh ${{ inputs.BLD_FLGS }} --build-plugins=true
         echo "compile complete, copying into ${{ inputs.DMG_OUT_DIR }}"
         mv ${DMG} "${{ inputs.DMG_OUT_DIR }}/mythfrontend_with.dmg"
@@ -63,8 +63,8 @@ runs:
       shell: bash
       run: |
         # Now make it without plugins
-        /usr/bin/security unlock-keychain
-        security unlock-keychain -p "${{ inputs.CI_PWD }}" build.keychain-db
+        #/usr/bin/security unlock-keychain
+        security unlock-keychain -p "${{ inputs.CI_PWD }}" ~/Library/Keychains/build.keychain-db
         ${ZSH_CMD} ./compileMythtvAnsible_cmake.zsh ${{ inputs.BLD_FLGS }} --build-plugins=false --repackage-only=true
         echo "compile complete, copying into ${{ inputs.DMG_OUT_DIR }}"
         mv ${DMG} "${{ inputs.DMG_OUT_DIR }}/mythfrontend_without.dmg"

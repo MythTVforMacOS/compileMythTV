@@ -82,7 +82,7 @@ runs:
         fi
         security create-keychain -p "${CI_PWD}" build.keychain-db
         security default-keychain -s build.keychain-db
-        security unlock-keychain -p "${CI_PWD}" build.keychain-db
+        security unlock-keychain -p "${{ inputs.CI_PWD }}" ~/Library/Keychains/build.keychain-db
         security import CERT.p12 -P "${CERT_PWD}" -A -t cert -f pkcs12 -k build.keychain-db
         security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${CI_PWD}" build.keychain-db
         security set-keychain-settings -t 10800
