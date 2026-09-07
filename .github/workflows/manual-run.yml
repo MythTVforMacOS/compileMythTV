@@ -69,7 +69,7 @@ jobs:
       BUILD_14_ARM64: ${{ inputs.BUILD_14_ARM64 }}
       BUILD_15_X86_64: ${{ inputs.BUILD_15_X86_64 }}
       BUILD_15_ARM64: ${{ inputs.BUILD_15_ARM64 }}
-      BUILD_26_X86_64: ${{ inputs.BUILD_26_ARM64 }}
+      BUILD_26_X86_64: ${{ inputs.BUILD_26_X86_64 }}
       BUILD_26_ARM64: ${{ inputs.BUILD_26_ARM64 }}
       PKGMGR: ${{ inputs.PKGMGR }}
     secrets: inherit
