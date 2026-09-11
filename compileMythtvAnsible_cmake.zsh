@@ -462,8 +462,7 @@ configureAndBuild(){
   esac
 
   echoC "------------ Source the Python Virtual Environment ------------" GREEN
-  # since we're using a custom python virtual environment, we need to source it to get the
-  # build process to use it.
+  # Source the custom virtual environment and abort immediately if the activation script is missing
   if [ -f "$PYTHON_VENV_PATH/bin/activate" ]; then
     source "$PYTHON_VENV_PATH/bin/activate"
   else
@@ -482,10 +481,6 @@ configureAndBuild(){
   echoC "------------ Configuring MythTV ------------" GREEN
   # configure mythtv
   cd "$SRC_DIR" || exit 1
-  #GIT_VERS=$(git log -1 --format="%h")
-  #GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
-  #GIT_TAG=$(git describe --tags --exact-match 2>/dev/null)
-  #GIT_BRANCH_OR_TAG="${GIT_BRANCH:-${GIT_TAG}}"
 
   if $REPACKAGE_ONLY; then
     echoC "    Cleaning up past Builds" BLUE
@@ -502,27 +497,48 @@ configureAndBuild(){
   else
       EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS -DMYTH_BUILD_PLUGINS=OFF"
   fi
+  # mythtv master pre-37 introduces a new install step that does not require
+  # RUNPREFIX to be set.
+  # !!!!! remove this when master per-37 is cut to fixes/37
+  if [[ "$MYTHTV_VERS" != master* ]]; then
+      EXTRA_CMAKE_FLAGS="$EXTRA_CMAKE_FLAGS -DCMAKE_RUN_PREFIX=$RUNPREFIX"
+  fi
+
   echoC "    Configuring via cmake" BLUE
-  CONFIG_CMD="cmake --preset $QT_CMAKE_VERS               \
-                    -B $CMAKE_BUILD_DIR                   \
-                    -G Ninja                              \
-                    -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR   \
-                    -DCMAKE_RUN_PREFIX=$RUNPREFIX         \
+  CONFIG_CMD="cmake --preset $QT_CMAKE_VERS                  \
+                    -B $CMAKE_BUILD_DIR                      \
+                    -G Ninja                                 \
+                    -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR      \
                     -DLIBS_USE_INSTALLED=$LIBS_USE_INSTALLED \
                     $EXTRA_CMAKE_FLAGS"
   eval "${CONFIG_CMD}"
+
   echoC "------------ Building MythTV ------------" GREEN
-  #compile MythTV
   echoC "    Building via cmake" BLUE
-  BUILD_CMD="cmake --build build-$QT_CMAKE_VERS"
+  BUILD_CMD="cmake --build $CMAKE_BUILD_DIR"
   eval "${BUILD_CMD}" || { echo 'Building MythTV failed' ; exit 1; }
-  TEST_CMD="cmake --build build-$QT_CMAKE_VERS -t MythTV-tests"
-  eval "${TEST_CMD}" || { echo 'Testing MythTV failed' ; exit 1; }
-  echoC "    Testing via cmake" BLUE
 }
 
-# function to perform any post compile activities
-postBuild(){
+# Function to test built application and install
+testAndInstall(){
+  echoC "------------ Testing MythTV ------------" GREEN
+  echoC "    Testing via cmake" BLUE
+  TEST_CMD="cmake --build $CMAKE_BUILD_DIR -t MythTV-tests"
+  eval "${TEST_CMD}" || { echo 'Testing MythTV failed' ; exit 1; }
+
+  # Only mythtv 37 and later have the cmake install stage.
+  # Previously, it was handled in build.
+  # !!!!! remove the else statement when master per-37 is cut to fixes/37
+  if [[ "$MYTHTV_VERS" == master* ]] || [[ "$VERS" -gt 36 ]]; then
+    echoC "------------ Installing MythTV (Modern Pipeline) ------------" GREEN
+    echoC "    Installing via native cmake install tool" BLUE
+    INSTALL_CMD="cmake --install $CMAKE_BUILD_DIR"
+    eval "${INSTALL_CMD}" || { echo 'Installing MythTV failed' ; exit 1; }
+  fi
+}
+
+# Function to perform any post compile activities
+postInstall(){
   cd "$WORKING_DIR" || exit 1
   echoC "------------ Performing Post Compile Cleanup ------------" GREEN
     if [[ $DISTRIBUTE_APP == "OFF" ]]; then
@@ -536,7 +552,7 @@ postBuild(){
     done
   else
     echoC "------------ Generating DragNDrop dmg's with CPack ------------" GREEN
-    # no need to request security unlock on github
+    # Skip local macOS keychain security unlocking when running inside headless GitHub Action runners
     if [[ "$isGITHUB" == "false" ]]; then
       # see help message for note on keychain lock time
       /usr/bin/security unlock-keychain
@@ -551,4 +567,5 @@ postBuild(){
 runAnsible         || exit 1
 getSource          || exit 1
 configureAndBuild  || exit 1
-postBuild          || exit 1
+testAndInstall     || exit 1
+postInstall        || exit 1
