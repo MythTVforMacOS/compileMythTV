@@ -12,14 +12,14 @@ Standard Options:
                                                      fixes/35 for version 35
   --build-plugins=BUILD_PLUGINS           Build MythTV Plugins (false)
 Environmental Options:
-  --database-version=DATABASE_VERS        Requested version of mariadb/mysql to build agains (${3})
+  --database-version=DATABASE_VERS        Requested version of mariadb/mysql to build against (${3})
 
   --qt-version=QT_PKMGR_VERS              Select Qt version to build against (${4})
                                             Example: qt5 for qt5
                                                      qt6 for qt6
   --python-version=PYTHON_VERS            Desired Python 3 Version (${2})
                                             Example: ${2}
-  --working_dir=WORKING_DIR_BASE          Directory base to install the working directorty ("")
+  --working_dir=WORKING_DIR_BASE          Directory base to install the working directory ("")
 
   --custom-install-dir=INSTALL_DIR        Directory to copy executables and support files. ("")
                                             This defaults to the MacPort's or Homebrew's prefix
@@ -34,13 +34,13 @@ Configure and Build Options
   --repackage-only=REPACKAGE_ONLY         Perform only the tasks necessary to repackage an app bundle
                                             This is used when you just want to repackage (false)
   --cmake_libs_use_installed              Reuse libraries installed by previous runs of cmake. (ON)
-  --extra-cmake-flags=EXTRA_CMAKE_FLAGS   Addtional configure flags for mythtv ("")
+  --extra-cmake-flags=EXTRA_CMAKE_FLAGS   Additional configure flags for mythtv ("")
 Bundling, Signing, and Notarization Options
-  --frontend-bundle=BUILD_FRONTEND_BUNDLE Generate an Applicaiton Bundle for Mythfrontend (OFF)
+  --frontend-bundle=BUILD_FRONTEND_BUNDLE Generate an Application Bundle for Mythfrontend (OFF)
                                             Setting this to ON builds a working MythFrontend.app.
                                             If building for unix-style executables,
                                             set this to OFF.
-  --generate-distribution=DISTIBUTE_APP   Generate the Distribution Package (OFF)
+  --generate-distribution=DISTRIBUTE_APP   Generate the Distribution Package (OFF)
                                             Setting to ON will enable App Signing and Notarization
   --signing-id=CODESIGN_ID                ID for signing the app bundles. ("")
                                             Default uses the environmental variable CODESIGN_ID.
@@ -50,8 +50,8 @@ Bundling, Signing, and Notarization Options
                                             Default uses the environmental variable NOTAR_KEYCHAIN.
                                             IF NOTAR_KEYCHAIN is not set, the distribution package
                                             will not be notarized
-                                            hese can be stored by running the following command:
-xcrun notarytool store-credentials KEYCHAIN_NAME --apple-id APPLE_ID --team-id=TEAM_ID --password APP_PWD"
+                                            These can be stored by running the following command:
+xcrun notarytool store-credentials KEYCHAIN_NAME --apple-id APPLE_ID --team-id=TEAM_ID --password APP_PWD
                                           Note: Notarization can take quite a bit of time
                                                 occasionally beyond the default keychain lock time.
                                                 To extend (unfortunately permanently) the keychain
@@ -144,7 +144,7 @@ OS_VERS=$(/usr/bin/sw_vers -productVersion)
 OS_VERS_PARTS=(${(@s:.:)OS_VERS})
 OS_MINOR=${OS_VERS_PARTS[2]}
 OS_MAJOR=${OS_VERS_PARTS[1]}
-OS_ARCH=$(/usr/bin/arch)
+#OS_ARCH=$(/usr/bin/arch)
 
 ### Github Specific Variables ##########################################################################
 isGITHUB=false
@@ -155,9 +155,8 @@ fi
 # setup default variables
 MYTHTV_VERS="master"
 BUILD_PLUGINS=false
-BUNDLE_APPLICTION=false
+BUNDLE_APPLICATION=false
 BUILD_FRONTEND_BUNDLE=OFF
-BUNDLE_APPLICTION=false
 WORKING_DIR_BASE=$HOME
 INSTALL_DIR=""
 UPDATE_GIT=true
@@ -165,7 +164,7 @@ SKIP_ANSIBLE=false
 LIBS_USE_INSTALLED=ON
 REPACKAGE_ONLY=false
 EXTRA_CMAKE_FLAGS=""
-DISTIBUTE_APP=OFF
+DISTRIBUTE_APP=OFF
 if [[ ! -v CODESIGN_ID ]]; then
   CODESIGN_ID=""
 fi
@@ -237,7 +236,7 @@ for i in "$@"; do
         EXTRA_CMAKE_FLAGS="${i#*=}"
       ;;
       --generate-distribution=*)
-        DISTIBUTE_APP=$(setONOFF "${i#*=}")
+        DISTRIBUTE_APP=$(setONOFF "${i#*=}")
       ;;
       --signing-id=*)
         CODESIGN_ID="${i#*=}"
@@ -262,11 +261,11 @@ if [ ! -z $INSTALL_DIR ]; then
 fi
 # check is we're bundling any applications
 if [[ $BUILD_FRONTEND_BUNDLE == "ON" ]]; then
-  BUNDLE_APPLICTION=true
+  BUNDLE_APPLICATION=true
 fi
 
 # if we're signing an application frontend bundling must be enabled
-if [[ $DISTIBUTE_APP == "ON" && $BUILD_FRONTEND_BUNDLE == "OFF" ]]; then
+if [[ $DISTRIBUTE_APP == "ON" && $BUILD_FRONTEND_BUNDLE == "OFF" ]]; then
   echoC 'Error: Signing, Notarizing, and Bundling requires at least one App Bundle to be made' RED
   exit 1
 fi
@@ -288,8 +287,7 @@ case $MYTHTV_VERS in
     ;;
     # This case covers versions prior to v34 which do not support cmake
     $((MYTHTV_VERS<34))*)
-      echo -e 'Error: only versions 34 and newer support for cmake builds. '"\033[31m"$i"\033[m"
-              # unknown option
+      echo -e 'Error: only versions 34 and newer support for cmake builds. '"\033[31m"$MYTHTV_VERS"\033[m"
       exit 1
     ;;
     # this condition covers v34 and later
@@ -307,22 +305,24 @@ case $PKGMGR in
     PKGMGR_BIN="$PKGMGR_INST_PATH/bin"
     PKGMGR_LIB="$PKGMGR_INST_PATH/lib"
     ANSIBLE_PB_EXE="$PKGMGR_BIN/ansible-playbook-$PYTHON_DOT_VERS"
-    FONT_PATH="$PKGMGR_INST_PATH/share/fonts"
   ;;
   homebrew)
     PKGMGR_INST_PATH=$(brew --prefix)
     PKGMGR_BIN="$PKGMGR_INST_PATH/bin"
     PKGMGR_LIB="$PKGMGR_INST_PATH/lib"
     ANSIBLE_PB_EXE="ANSIBLE_BECOME=false ANSIBLE_BECOME_ASK_PASS=False $PKGMGR_BIN/ansible-playbook"
-    FONT_PATH="$HOME/Library/Fonts"
   ;;
 esac
 export PATH=$PKGMGR_LIB/$DATABASE_VERS/bin:$PATH
 
 ### Setup QT Specific Parameters ###################################################################
 case $PKGMGR in
+  macports)
+    QT_LIB_PATH=$PKGMGR_INST_PATH/libexec/$QT_PKMGR_VERS/lib
+  ;;
   homebrew)
     QT_PKMGR_VERS="qt@${QT_PKMGR_VERS: -1}"
+    QT_LIB_PATH=$PKGMGR_INST_PATH/opt/"${QT_PKMGR_VERS//@}"/lib
   ;;
 esac
 QT_CMAKE_VERS="${QT_PKMGR_VERS//@}"
@@ -336,7 +336,7 @@ CMAKE_BUILD_DIR=$CMAKE_CONFIGURE_DIR/build-$QT_CMAKE_VERS
 
 # Setup app build outputs and lib linking
 # INSTALL_DIR should be set to empty unless a user flag overrides it.
-if $BUNDLE_APPLICTION; then
+if $BUNDLE_APPLICATION; then
   # If not set by the user, install in the working directory.
   if [ -z $INSTALL_DIR ]; then
     INSTALL_DIR="$WORKING_DIR/$VERS-osx-64bit"
@@ -345,7 +345,7 @@ if $BUNDLE_APPLICTION; then
                      -DCMAKE_BUILD_TYPE=Release \
                      -DENABLE_LTO=OFF \
                      -DDARWIN_FRONTEND_BUNDLE=$BUILD_FRONTEND_BUNDLE \
-                     -DDARWIN_GENERATE_DISTRIBUTION=$DISTIBUTE_APP \
+                     -DDARWIN_GENERATE_DISTRIBUTION=$DISTRIBUTE_APP \
                      -DDARWIN_SIGNING_ID=\"$CODESIGN_ID\" \
                      -DDARWIN_NOTARIZATION_KEYCHAIN=\"$NOTAR_KEYCHAIN\""
 else
@@ -423,7 +423,7 @@ runAnsible(){
     fi
   # clone the repo
   else
-    echoC "    Cloning mythtv-anisble git repo" BLUE
+    echoC "    Cloning mythtv-ansible git repo" BLUE
     git clone $ANSIBLE_GIT_REPO
   fi
   cd "$WORKING_DIR/ansible" || exit 1
@@ -451,7 +451,7 @@ checkQT_MYSQL(){
       QMAKE_CMD=$QT_PATH/bin/qmake
       QTVERS=$($QMAKE_CMD -query QT_VERSION)
       QT_SOURCES="$(pwd)/qt5_src/$QT_PKMGR_VERS-$QTVERS"
-      QT_INSTALL_PREFIX="$($QMAKE_CMD -query QT_INSTALL_PREFIX)"
+      #QT_INSTALL_PREFIX="$($QMAKE_CMD -query QT_INSTALL_PREFIX)"
       QT_SQLDRIVERS_SRC="$QT_SOURCES/qtbase/src/plugins/sqldrivers"
       MYSQL_PREFIX=$(brew --prefix $DATABASE_VERS)
       MYSQL_INCDIR="$MYSQL_PREFIX/include/mysql"
@@ -497,7 +497,7 @@ getSource(){
   fi
 }
 
-# funtion to call cmake to configure and build mythtv
+# function to call cmake to configure and build mythtv
 configureAndBuild(){
   case $DATABASE_VERS in
     mariadb*)
@@ -515,20 +515,20 @@ configureAndBuild(){
   source "$PYTHON_VENV_PATH/bin/activate"
   if [ ! -n "$VIRTUAL_ENV" ]; then
     if [[ $BUILD_FRONTEND_BUNDLE == "ON" ]]; then
-      echoC "Error: no python virtual envirnment found, exiting" RED
+      echoC "Error: no python virtual environment found, exiting" RED
       exit 1
     else
-      echoC "Warning: no python virtual envirnment found, using system python" Yellow
+      echoC "Warning: no python virtual environment found, using system python" Yellow
     fi
   fi
 
   echoC "------------ Configuring MythTV ------------" GREEN
   # configure mythtv
   cd "$SRC_DIR" || exit 1
-  GIT_VERS=$(git log -1 --format="%h")
-  GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
-  GIT_TAG=$(git describe --tags --exact-match 2>/dev/null)
-  GIT_BRANCH_OR_TAG="${GIT_BRANCH:-${GIT_TAG}}"
+  #GIT_VERS=$(git log -1 --format="%h")
+  #GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
+  #GIT_TAG=$(git describe --tags --exact-match 2>/dev/null)
+  #GIT_BRANCH_OR_TAG="${GIT_BRANCH:-${GIT_TAG}}"
 
   if $REPACKAGE_ONLY; then
     echoC "    Cleaning up past Builds" BLUE
@@ -568,7 +568,7 @@ configureAndBuild(){
 postBuild(){
   cd "$WORKING_DIR" || exit 1
   echoC "------------ Performing Post Compile Cleanup ------------" GREEN
-  if ! $GENERATE_APP; then
+    if [[ $DISTRIBUTE_APP == "OFF" ]]; then
     echoC "    Re-basing @rpath to $RUNPREFIX" GREEN
     for mythExec in "$INSTALL_DIR/bin/"myth*; do
           if [ -x "$mythExec" ] && file "$mythExec" | grep -q "Mach-O"; then
@@ -578,17 +578,15 @@ postBuild(){
           fi
     done
   else
-    if [[ $DISTIBUTE_APP == "ON" ]]; then
-      echoC "------------ Generating DragNDrop dmg's with CPack ------------" GREEN
-      # no need to request security unlock on github
-      if ! $isGITHUB; then
-        # see help message for note on keychain lock time
-        /usr/bin/security unlock-keychain
-      fi
-      CPACK_CFG=$(find $WORKING_DIR/mythtv/ -name "CPackConfig.cmake")
-      CPACK_CMD="cpack --config $CPACK_CFG"
-      eval "${CPACK_CMD}" || { echo 'Bundling MythTV failed' ; exit 1; }
+    echoC "------------ Generating DragNDrop dmg's with CPack ------------" GREEN
+    # no need to request security unlock on github
+    if [[ "$isGITHUB" == "false" ]]; then
+      # see help message for note on keychain lock time
+      /usr/bin/security unlock-keychain
     fi
+    CPACK_CFG=$(find $WORKING_DIR/mythtv/ -name "CPackConfig.cmake")
+    CPACK_CMD="cpack --config $CPACK_CFG"
+    eval "${CPACK_CMD}" || { echo 'Bundling MythTV failed' ; exit 1; }
   fi
 }
 
