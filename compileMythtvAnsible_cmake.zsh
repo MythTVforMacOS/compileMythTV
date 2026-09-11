@@ -464,13 +464,18 @@ configureAndBuild(){
   echoC "------------ Source the Python Virtual Environment ------------" GREEN
   # since we're using a custom python virtual environment, we need to source it to get the
   # build process to use it.
-  source "$PYTHON_VENV_PATH/bin/activate"
+  if [ -f "$PYTHON_VENV_PATH/bin/activate" ]; then
+    source "$PYTHON_VENV_PATH/bin/activate"
+  else
+    echoC "Error: Specified Python Virtual Environment path does not exist at $PYTHON_VENV_PATH" RED
+    exit 1
+  fi
   if [ ! -n "$VIRTUAL_ENV" ]; then
     if [[ $BUILD_FRONTEND_BUNDLE == "ON" ]]; then
       echoC "Error: no python virtual environment found, exiting" RED
       exit 1
     else
-      echoC "Warning: no python virtual environment found, using system python" Yellow
+      echoC "Warning: no python virtual environment found, using system python" YELLOW
     fi
   fi
 
