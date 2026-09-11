@@ -14,9 +14,6 @@ Standard Options:
 Environmental Options:
   --database-version=DATABASE_VERS        Requested version of mariadb/mysql to build against (${3})
 
-  --qt-version=QT_PKMGR_VERS              Select Qt version to build against (${4})
-                                            Example: qt5 for qt5
-                                                     qt6 for qt6
   --python-version=PYTHON_VERS            Desired Python 3 Version (${2})
                                             Example: ${2}
   --working_dir=WORKING_DIR_BASE          Directory base to install the working directory ("")
@@ -207,9 +204,6 @@ for i in "$@"; do
       ;;
       --database-version=*)
         DATABASE_VERS="${i#*=}"
-      ;;
-      --qt-version=*)
-        QT_PKMGR_VERS="${i#*=}"
       ;;
       --python-version=*)
         PYTHON_VERS="${i#*=}"
@@ -427,53 +421,11 @@ runAnsible(){
     git clone $ANSIBLE_GIT_REPO
   fi
   cd "$WORKING_DIR/ansible" || exit 1
-  case $QT_PKMGR_VERS in
-      *5*)
-         ANSIBLE_EXTRA_FLAGS="--extra-vars \"qt5=true ansible_python_interpreter=$PYTHON_PKMGR_BIN database_version=$DATABASE_VERS\""
-      ;;
-      *)
-         ANSIBLE_EXTRA_FLAGS="--extra-vars \"qt6=true ansible_python_interpreter=$PYTHON_PKMGR_BIN database_version=$DATABASE_VERS\""
-      ;;
-  esac
+  ANSIBLE_EXTRA_FLAGS="--extra-vars \"qt6=true ansible_python_interpreter=$PYTHON_PKMGR_BIN database_version=$DATABASE_VERS\""
   ANSIBLE_FULL_CMD="$ANSIBLE_PB_EXE --limit=localhost $ANSIBLE_EXTRA_FLAGS mythtv.yml"
   # Need to use eval as zsh does not split multiple-word variables (https://zsh.sourceforge.io/FAQ/zshfaq03.html)
   eval "${ANSIBLE_FULL_CMD}"
   cd $WORKING_DIR
-}
-
-# QT5 on homebrew no does not provide QTMYSQL driver so we might have to do this manually...
-checkQT_MYSQL(){
-  echoC "------------ Verifying QT / MySQL Plugin ------------" GREEN
-  # if we're on homebrew and using qt5, we need to do more work to get the QTMYSQL plugin working...
-  case $PKGMGR in
-    homebrew)
-      QT_PATH="$PKGMGR_INST_PATH/opt/$QT_PKMGR_VERS"
-      QMAKE_CMD=$QT_PATH/bin/qmake
-      QTVERS=$($QMAKE_CMD -query QT_VERSION)
-      QT_SOURCES="$(pwd)/qt5_src/$QT_PKMGR_VERS-$QTVERS"
-      #QT_INSTALL_PREFIX="$($QMAKE_CMD -query QT_INSTALL_PREFIX)"
-      QT_SQLDRIVERS_SRC="$QT_SOURCES/qtbase/src/plugins/sqldrivers"
-      MYSQL_PREFIX=$(brew --prefix $DATABASE_VERS)
-      MYSQL_INCDIR="$MYSQL_PREFIX/include/mysql"
-      MYSQL_LIBDIR="$MYSQL_PREFIX/lib"
-      case $QT_PKMGR_VERS in
-        *5*)
-          if [ ! -f $QT_PATH/plugins/sqldrivers/libqsqlmysql.dylib ]; then
-            echoC "    Homebrew: Installing QTMYSQL plugin for $QT_PKMGR_VERS" BLUE
-            brew unpack $QT_PKMGR_VERS --destdir qt5_src
-            echoC "    Building QT SQL Plugin" BLUE
-            cd "$QT_SQLDRIVERS_SRC"
-            $($QMAKE_CMD sqldrivers.pro -- MYSQL_INCDIR=$MYSQL_INCDIR MYSQL_LIBDIR=$MYSQL_LIBDIR)
-            echoC "    Building QT MySQL Plugin" BLUE
-            cd "$QT_SQLDRIVERS_SRC/mysql"
-            $($QMAKE_CMD mysql.pro)
-            make
-            cp -vr "$QT_SQLDRIVERS_SRC/plugins/sqldrivers/libqsqlmysql.dylib" "$QT_PATH/plugins/sqldrivers/"
-          fi
-        ;;
-      esac
-    ;;
-  esac
 }
 
 # function to clone or update the mythtv git repo
@@ -592,7 +544,6 @@ postBuild(){
 
 ### Run through Necessary Functions ################################################################
 runAnsible         || exit 1
-checkQT_MYSQL      || exit 1
 getSource          || exit 1
 configureAndBuild  || exit 1
 postBuild          || exit 1
