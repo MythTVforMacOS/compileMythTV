@@ -155,10 +155,6 @@ jobs:
         run: |
           # os overrides
           case ${{ env.OS_VERS }} in
-            *13*)
-              PKGMGR=macports
-              QTVERS=qt5
-            ;;
             *)
               PKGMGR=${{ inputs.PKGMGR }}
               QTVERS=qt6
@@ -191,7 +187,6 @@ jobs:
           # as its a secret variable
           BLD_FLGS="--working_dir=${GITHUB_WORKSPACE} \
             --version=${MYTHBRANCH} \
-            --qt-version=${{ env.QTVERS }} \
             --python-version=${{ env.PYVERS }} \
             --frontend-bundle=ON \
             --generate-distribution=ON \
