@@ -164,11 +164,12 @@ jobs:
           case $PKGMGR in
             macports)
               DBVERS=mysql8
-              PYVERS=313
-              PYDOTVERS=3.13
+              PYVERS=314
+              PYDOTVERS=3.14
             ;;
             homebrew)
-              DBVERS=mariadb
+              #DBVERS=mariadb
+              DBVERS=mysql
               PYTHVERS_MAJ=$(python3 -c "import sys; print(sys.version_info.major)")
               PYTHVERS_MIN=$(python3 -c "import sys; print(sys.version_info.minor)")
               PYVERS="$PYTHVERS_MAJ$PYTHVERS_MIN"
