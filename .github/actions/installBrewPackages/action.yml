@@ -28,7 +28,7 @@ runs:
         echo "Removing all previously install formula"
         brew remove --cask --force $(brew list)
         brew remove --force $(brew list --formula)
-    - name: "Setup Homebre Environmental Variables"
+    - name: "Setup Homebrew Environmental Variables"
       id: setup_brew_vars
       shell: bash
       run: |
