@@ -72,7 +72,8 @@ runs:
         cd ansible
         echo "Installing packages via ansible playbook"
         XTRA_VARS="database_version=${{ inputs.DBVERS }}"
-        XTRA_VARS="$XTRA_VARS ansible_python_interpreter=$PKGMGR_PREFIX/bin/python${{ inputs.PYDOTVERS }}"
+        SPECIFIC_PYTHON=$(brew --prefix python@${{ inputs.PYDOTVERS }})/bin/python${{ inputs.PYDOTVERS }}
+        XTRA_VARS="$XTRA_VARS ansible_python_interpreter=$SPECIFIC_PYTHON"
         if [ ${{ inputs.QTVERS }} == "qt@5" ] || [ ${{ inputs.QTVERS }} == "qt5" ]; then
           XTRA_VARS="$XTRA_VARS qt5=true"
         fi
