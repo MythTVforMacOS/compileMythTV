@@ -16,10 +16,6 @@ on:  # yamllint disable-line rule:truthy
         required: false
         type: string
         default: production
-      BUILD_14_ARM64:
-        required: true
-        type: boolean
-        default: false
       BUILD_15_X86_64:
         required: true
         type: boolean
@@ -51,11 +47,6 @@ jobs:
         id: generate-matrix
         run: |
           RUNNER=''
-          # macOS 14 arm64 runner
-          if [ ${{ inputs.BUILD_14_ARM64 }} == 'true' ]; then
-            echo "Adding macOS 14 arm64 runner"
-            RUNNER="$RUNNER macOS-14"
-          fi
           # macOS 15 x86_64 runner
           if [ ${{ inputs.BUILD_15_X86_64 }} == 'true' ]; then
             echo "Adding macOS 15 x84_64 runner"
@@ -97,7 +88,7 @@ jobs:
         id: check_arch
         run: |
           case ${{ matrix.os }} in
-            'macOS-14'|'macOS-15'|'macOS-26')
+            'macOS-15'|'macOS-26')
               ARCH='arm64'
               OS=${{ matrix.os }}
             ;;
@@ -134,9 +125,6 @@ jobs:
           echo "VERSNUM=$VERSNUM" >> $GITHUB_ENV
           OS_VERS="$(sw_vers -productVersion | awk -F '.' '{print $1}')"
           case $OS_VERS in
-            14)
-              OS_NAME="Sonoma"
-            ;;
             15)
               OS_NAME="Sequoia"
             ;;

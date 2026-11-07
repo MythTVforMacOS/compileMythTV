@@ -350,6 +350,10 @@ else
   fi
 fi
 RUNPREFIX=$INSTALL_DIR
+# if the INSTALL_DIR does not exist, create it
+if [[ ! -d "$INSTALL_DIR/lib" ]]; then
+  mkdir -p "$INSTALL_DIR/lib"
+fi
 echoC "    Installing Build Outputs to $INSTALL_DIR" BLUE
 
 ### Setup Python Specific variables ################################################################

@@ -74,7 +74,6 @@ jobs:
       USE_CCACHE: true
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.MASTER_BRANCH }}
       BUILDTYPE: production
-      BUILD_14_ARM64: true
       BUILD_15_X86_64: true
       BUILD_15_ARM64: true
       BUILD_26_X86_64: true
@@ -88,7 +87,6 @@ jobs:
       USE_CCACHE: true
       MYTHBRANCH: ${{ needs.check-mythtv.outputs.FIXES_BRANCH }}
       BUILDTYPE: production
-      BUILD_14_ARM64: true
       BUILD_15_X86_64: true
       BUILD_15_ARM64: true
       BUILD_26_X86_64: true
