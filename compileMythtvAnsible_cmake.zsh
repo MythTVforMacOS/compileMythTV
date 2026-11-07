@@ -180,8 +180,8 @@ case $PKGMGR in
     PYTHON_VERS="314"
   ;;
   homebrew)
-    #DATABASE_VERS=mariadb
-    DATABASE_VERS=mysql
+    DATABASE_VERS=mariadb
+    #DATABASE_VERS=mysql
     QT_PKMGR_VERS=qt@6
     PYTHON_VERS="314"
   ;;
