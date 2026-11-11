@@ -65,6 +65,11 @@ runs:
           ${PKGMGR_CMD} unlink $formula
           ${PKGMGR_CMD} link $formula
         done
+    - name: "Install mariabdb-connector from source for x86_64"
+      id: mariadb_connector
+      shell: bash
+      run: brew update && brew install --build-from-source mariadb-connector-c
+      if: ${{ inputs.ARCH == 'x86_64' && inputs.DBVERS == 'mariadb' }}
     - name: "Install required packages via ansible"
       id: ansible_install
       shell: bash
